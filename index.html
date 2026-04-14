@@ -359,14 +359,22 @@ footer {
   .nav-links {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(3,6,20,0.97);
+    background: rgba(3,6,20,0.98);
     backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
     flex-direction: column; align-items: center; justify-content: center;
-    gap: 2.5rem; z-index: 190;
+    gap: 2.5rem; z-index: 300; /* au-dessus de la nav (200) */
   }
   .nav-links.open { display: flex; }
   .nav-links a { font-size: 1.2rem; color: #fff; }
-  .nav-toggle { display: flex; z-index: 201; }
+  /* Le bouton hamburger reste toujours visible par-dessus le menu */
+  .nav-toggle { display: flex; z-index: 310; }
+  /* Quand le menu est ouvert, masquer le backdrop de la nav pour éviter le bleeding */
+  nav.menu-open {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-color: transparent !important;
+  }
 
   /* ── Hero ── */
   #hero {
@@ -616,8 +624,14 @@ window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.
 /* ── Menu burger ── */
 const toggle = document.getElementById('navToggle');
 const links  = document.getElementById('navLinks');
-toggle.addEventListener('click', () => links.classList.toggle('open'));
-function closeMenu() { links.classList.remove('open'); }
+toggle.addEventListener('click', () => {
+  links.classList.toggle('open');
+  nav.classList.toggle('menu-open', links.classList.contains('open'));
+});
+function closeMenu() {
+  links.classList.remove('open');
+  nav.classList.remove('menu-open');
+}
 
 /* ── Navigation entre pages ── */
 function showPage(id) {
