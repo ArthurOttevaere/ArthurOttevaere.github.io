@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Portfolio — Data & IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
@@ -80,6 +80,8 @@ nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   display: flex; align-items: center; justify-content: space-between;
   padding: 1.3rem 3rem;
+  /* Remonte la nav jusqu'au bord physique de l'écran (notch, Dynamic Island) */
+  padding-top: calc(1.3rem + env(safe-area-inset-top));
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s, background 0.3s;
 }
@@ -353,7 +355,10 @@ footer {
 
 @media (max-width: 768px) {
   /* ── Nav ── */
-  nav { padding: 1.1rem 1.4rem; }
+  nav {
+    padding: 1.1rem 1.4rem;
+    padding-top: calc(1.1rem + env(safe-area-inset-top));
+  }
 
   /* Menu burger : superposition plein écran */
   .nav-links {
@@ -362,7 +367,9 @@ footer {
     background: rgba(3,6,20,0.98);
     backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
     flex-direction: column; align-items: center; justify-content: center;
-    gap: 2.5rem; z-index: 300; /* au-dessus de la nav (200) */
+    gap: 2.5rem; z-index: 300;
+    /* Padding safe area pour que les liens ne soient pas sous le notch */
+    padding-top: env(safe-area-inset-top);
   }
   .nav-links.open { display: flex; }
   .nav-links a { font-size: 1.2rem; color: #fff; }
@@ -380,8 +387,9 @@ footer {
   #hero {
     min-height: 100vh;
     padding: 0 1.4rem;
-    padding-top: 80px;       /* espace sous la nav fixe */
-    padding-bottom: 5rem;    /* espace pour le scroll indicator */
+    /* safe-area-inset-top + hauteur nav (~60px) + marge */
+    padding-top: calc(env(safe-area-inset-top) + 80px);
+    padding-bottom: 5rem;
     justify-content: center;
     gap: 0;
   }
