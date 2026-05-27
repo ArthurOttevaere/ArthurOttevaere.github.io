@@ -58,6 +58,16 @@ const Icon = {
       <path d="m21 21-4.35-4.35" />
     </svg>
   ),
+  Menu: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  ),
+  Close: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+  ),
 };
 
 window.Icon = Icon;

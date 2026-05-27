@@ -82,14 +82,22 @@ window.PORTFOLIO_DATA = {
 
     /* About — "By the numbers" KPI cards */
     stats: {
-      sqlQueries:      1247,
-      sqlQueryDelta:   "▲ +18% vs 2025",
-      projectsPerYear: 7,
+      // Projects
+      projectsPerYear: 6,
       projectsBars:    [40, 65, 50, 80, 60, 90, 75, 100],   // 8 values for 8 quarters
-      coffeesPerWeek:  14,
-      coffeeDelta:     "▼ −2 vs January",
+
+      // Running — update with your actual data
+      runningKm:       342,
+      runningGoal:     500,
+      runningBars:     [28, 32, 45, 38, 52, 48, 60, 55],    // weekly km, last 8 weeks
+      runningDelta:    "▲ +24 km this week",
+
+      // F1
       f1Watched:       22,
       f1Total:         24,
+
+      // Erasmus countdown
+      erasmusDate:     "2026-09-01",
     },
   },
 

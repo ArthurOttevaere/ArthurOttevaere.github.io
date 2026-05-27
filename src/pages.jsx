@@ -255,7 +255,7 @@ function Landing({ go }) {
 
         {/* Status strip */}
         {P.status && (
-          <div style={{
+          <div className="status-strip" style={{
             marginTop:96,width:'100%',maxWidth:880,
             display:'grid',gridTemplateColumns:'repeat(3,1fr)',
             border:'1px solid var(--border)',borderRadius:14,
@@ -265,7 +265,7 @@ function Landing({ go }) {
             overflow:'hidden',
           }}>
             {P.status.map((c,i)=>(
-              <div key={i} style={{
+              <div key={i} className="status-strip-cell" style={{
                 padding:22,
                 borderLeft:i?'1px solid var(--border)':'none',
                 textAlign:'left',
@@ -493,9 +493,33 @@ function ListRow({ p }) {
         }
         .row:hover .row-arrow{background:var(--blue);color:#ffffff;transform:translate(3px,-3px) rotate(-3deg);}
         .row-arrow svg{width:14px;height:14px;}
-        @media(max-width:880px){
+        @media(min-width:641px) and (max-width:880px){
           .row{grid-template-columns:80px 1fr 28px;}
           .row-thumb,.row-tags{display:none;}
+        }
+        @media(max-width:640px){
+          .row{
+            grid-template-columns: 72px 1fr 22px;
+            gap: 10px;
+            padding: 14px 2px;
+          }
+          .row-thumb{
+            width: 72px;
+            flex-shrink: 0;
+          }
+          .row-meta{ display: none; }
+          .row-tags{ display: none; }
+          .row-sum{
+            font-size: 12px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-top: 3px;
+          }
+          .row:hover{ padding-left: 8px; padding-right: 8px; }
+          .row-arrow{ width: 22px; height: 22px; }
+          .row-arrow svg{ width: 13px; height: 13px; }
         }
       `}</style>
     </a>
@@ -508,12 +532,23 @@ function ListRow({ p }) {
 function About({ go }) {
   const P = PROFILE();
   const S = P.stats || {};
+
+  // KPI — F1 project link
+  const f1Proj = PROJS().find(p=>p.id==='f1');
+  const f1Link = f1Proj?.github && f1Proj.github !== '#' ? f1Proj.github : null;
+
+  // KPI — Erasmus countdown
+  const erasmusTarget   = new Date(S.erasmusDate || '2026-09-01');
+  const daysToRotterdam = Math.max(0, Math.ceil((erasmusTarget - new Date()) / (1000*60*60*24)));
+  const erasmusTotalDays = Math.ceil((erasmusTarget - new Date('2026-01-01')) / (1000*60*60*24));
+  const erasmusPct = Math.min(100, Math.round((erasmusTotalDays - daysToRotterdam) / erasmusTotalDays * 100));
+
   return (
     <div className="page-enter shell" style={{paddingTop:64,maxWidth:920}}>
       <div className="eyebrow">About</div>
       <h2 className="h2" style={{marginTop:10}}>The short version<span style={{color:'var(--fg-faint)'}}>.</span></h2>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:56,marginTop:40}}>
+      <div className="about-layout" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:56,marginTop:40}}>
         {/* Left — bio */}
         <div className="prose">
           <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:28}}>
@@ -601,52 +636,81 @@ function About({ go }) {
         </div>
 
         <div className="data-grid">
-          <div className="data-cell">
-            <span className="dc-k">SQL queries · 2026</span>
-            <span className="dc-v">{(S.sqlQueries||0).toLocaleString()}</span>
-            <div className="dc-spark">
-              <svg viewBox="0 0 80 24" preserveAspectRatio="none">
-                <path d="M 0 18 L 12 16 L 24 19 L 36 14 L 48 12 L 60 8 L 72 9 L 80 4"
-                  fill="none" stroke="var(--blue)" strokeWidth="1.4"/>
-              </svg>
-            </div>
-            <span className="dc-delta up">{S.sqlQueryDelta}</span>
-          </div>
 
-          <div className="data-cell">
+          {/* Card 1 — Projects shipped → lien vers /work */}
+          <div className="data-cell dc-clickable"
+            role="button" tabIndex={0}
+            onClick={()=>go&&go('work')}
+            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go&&go('work');}}}>
             <span className="dc-k">Projects shipped</span>
-            <span className="dc-v">{S.projectsPerYear}<span className="dc-unit"> / yr</span></span>
+            <span className="dc-v">{PROJS().length}<span className="dc-unit"> total</span></span>
             <div className="dc-bars">
               {(S.projectsBars||[40,65,50,80,60,90,75,100]).map((h,i)=>(
                 <span key={i} style={{height:h+'%'}}/>
               ))}
             </div>
-            <span className="dc-delta mono-note">last 8 quarters</span>
+            <span className="dc-delta" style={{display:'flex',alignItems:'center',gap:4}}>
+              View all projects <span style={{marginLeft:1}}>→</span>
+            </span>
           </div>
 
+          {/* Card 2 — Running */}
           <div className="data-cell">
-            <span className="dc-k">Coffees · weekly avg</span>
-            <span className="dc-v">{S.coffeesPerWeek}</span>
-            <div className="dc-cups" aria-hidden="true">
-              {Array.from({length:S.coffeesPerWeek||14}).map((_,i)=><span key={i}/>)}
+            <span className="dc-k">Running · {new Date().getFullYear()}</span>
+            <span className="dc-v">{S.runningKm||0}<span className="dc-unit"> km</span></span>
+            <div className="dc-progress">
+              <div style={{height:4,background:'var(--border)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{
+                  height:'100%',
+                  width:`${Math.min(100,Math.round((S.runningKm||0)/(S.runningGoal||500)*100))}%`,
+                  background:'var(--blue)',borderRadius:2,transition:'width 700ms ease',
+                }}/>
+              </div>
+              <span className="dc-progress-label">
+                goal: {S.runningGoal||500} km · {Math.round((S.runningKm||0)/(S.runningGoal||500)*100)}%
+              </span>
             </div>
-            <span className="dc-delta down">{S.coffeeDelta}</span>
+            <span className="dc-delta up">{S.runningDelta||'▲ tracking'}</span>
           </div>
 
-          <div className="data-cell">
-            <span className="dc-k">F1 races watched · 2026</span>
-            <span className="dc-v">{S.f1Watched}<span className="dc-unit"> / {S.f1Total}</span></span>
+          {/* Card 3 — F1 races → lien vers le projet F1 */}
+          <a href={f1Link||'#'}
+             target={f1Link?'_blank':undefined}
+             rel={f1Link?'noopener noreferrer':undefined}
+             onClick={e=>{if(!f1Link)e.preventDefault();}}
+             className="data-cell"
+             style={{textDecoration:'none',color:'inherit',cursor:f1Link?'pointer':'default'}}>
+            <span className="dc-k">F1 races watched · {new Date().getFullYear()}</span>
+            <span className="dc-v">{S.f1Watched||0}<span className="dc-unit"> / {S.f1Total||24}</span></span>
             <div className="dc-ring">
               <svg viewBox="0 0 40 40">
                 <circle cx="20" cy="20" r="16" fill="none" stroke="var(--border)" strokeWidth="3"/>
                 <circle cx="20" cy="20" r="16" fill="none" stroke="var(--blue)" strokeWidth="3"
-                  strokeDasharray={100.5} strokeDashoffset={100.5*(1-(S.f1Watched||22)/(S.f1Total||24))}
+                  strokeDasharray={100.5}
+                  strokeDashoffset={100.5*(1-(S.f1Watched||0)/(S.f1Total||24))}
                   transform="rotate(-90 20 20)" strokeLinecap="round"/>
               </svg>
-              <span className="dc-ring-l mono">{Math.round((S.f1Watched||22)/(S.f1Total||24)*100)}%</span>
+              <span className="dc-ring-l mono">{Math.round((S.f1Watched||0)/(S.f1Total||24)*100)}%</span>
             </div>
-            <span className="dc-delta up">▲ on track</span>
+            <span className="dc-delta up">▲ on track · see tracker</span>
+          </a>
+
+          {/* Card 4 — Countdown Rotterdam */}
+          <div className="data-cell">
+            <span className="dc-k">Days to Rotterdam</span>
+            <span className="dc-v">{daysToRotterdam}<span className="dc-unit"> days</span></span>
+            <div className="dc-progress">
+              <div style={{height:4,background:'var(--border)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{
+                  height:'100%',width:erasmusPct+'%',
+                  background:'var(--blue)',borderRadius:2,transition:'width 700ms ease',
+                }}/>
+              </div>
+              <span className="dc-progress-label">{erasmusPct}% through the wait</span>
+            </div>
+            <span className="dc-delta mono-note">Erasmus · Fall '26</span>
           </div>
+
         </div>
       </section>
 
@@ -666,23 +730,20 @@ function About({ go }) {
           border-color:var(--blue);transform:translateY(-2px);
           box-shadow:0 12px 30px -16px color-mix(in oklab,var(--blue) 40%,transparent);
         }
+        .dc-clickable{cursor:pointer;}
         .dc-k{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-muted);}
         .dc-v{font-size:32px;letter-spacing:-0.025em;font-weight:500;font-feature-settings:"tnum","ss01";line-height:1.05;margin-top:2px;}
         .dc-unit{font-size:16px;color:var(--fg-muted);font-weight:400;letter-spacing:-0.01em;}
-        .dc-spark{height:24px;margin-top:6px;}
-        .dc-spark svg{width:100%;height:100%;display:block;overflow:visible;}
         .dc-bars{display:flex;gap:3px;height:24px;align-items:flex-end;margin-top:6px;}
         .dc-bars span{flex:1;background:var(--blue);border-radius:1.5px;opacity:0.85;min-height:3px;}
-        .dc-cups{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px;max-width:100px;}
-        .dc-cups span{width:7px;height:9px;border-radius:1px 1px 2px 2px;background:var(--fg);opacity:0.85;}
         .dc-ring{position:relative;width:40px;height:40px;margin-top:4px;}
         .dc-ring svg{width:40px;height:40px;display:block;}
         .dc-ring-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--fg);}
+        .dc-progress{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
+        .dc-progress-label{font-family:'Geist Mono',monospace;font-size:10px;color:var(--fg-faint);}
         .dc-delta{font-family:'Geist Mono',monospace;font-size:10px;color:var(--fg-muted);margin-top:auto;padding-top:6px;}
         .dc-delta.up{color:var(--available);}
         html[data-theme="dark"] .dc-delta.up{color:#4ade80;}
-        .dc-delta.down{color:#dc2626;}
-        html[data-theme="dark"] .dc-delta.down{color:#f87171;}
         .dc-delta.mono-note{color:var(--fg-faint);}
       `}</style>
 
@@ -702,9 +763,6 @@ function About({ go }) {
         .btn-ghost-2 svg{width:14px;height:14px;transition:transform 220ms cubic-bezier(.2,.7,.2,1);}
         @media(max-width:780px){
           .page-enter .prose+aside{grid-column:1/-1;}
-        }
-        @media(max-width:680px){
-          .page-enter>div[style*="grid-template-columns"]{grid-template-columns:1fr!important;}
         }
       `}</style>
     </div>

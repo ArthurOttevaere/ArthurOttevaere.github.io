@@ -572,6 +572,152 @@
     padding: 0 4px 2px;
     transition: color 160ms ease;
   }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE — max-width: 640px
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ── Bottom navigation bar ──────────────────────────────────────── */
+  .mobile-nav { display: none; }
+
+  /* ── Hamburger button — hidden on desktop, shown on mobile ──────── */
+  .mob-hamburger { display: none; }
+
+  @media (max-width: 640px) {
+    /* Show bottom nav */
+    .mobile-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 60;
+      height: 56px;
+      padding: 0 6px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      align-items: center;
+      justify-content: space-around;
+      gap: 2px;
+      background: color-mix(in oklab, var(--bg-elev) 88%, transparent);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-top: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
+      box-shadow: 0 -8px 24px -16px rgba(0,0,0,0.12);
+    }
+    html[data-theme="dark"] .mobile-nav {
+      box-shadow: 0 -8px 24px -16px rgba(0,0,0,0.5);
+    }
+    .mobile-nav-btn {
+      appearance: none; border: 0; background: transparent; cursor: pointer;
+      flex: 1; height: 44px; padding: 0;
+      border-radius: 10px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--fg-muted);
+      transition: color 160ms ease, background 160ms ease;
+    }
+    .mobile-nav-btn.on  { color: var(--blue); }
+    .mobile-nav-btn:hover { background: var(--blue-soft); color: var(--blue-fg); }
+
+    /* ── Header simplification on mobile ──────────────────────────── */
+    /* Nav links → bottom bar. Right controls → hamburger menu.       */
+    .nav-links     { display: none !important; }
+    .nav-right     { display: none !important; }
+    .mob-hamburger { display: inline-flex !important; }
+
+    /* ── Mobile settings sheet ────────────────────────────────────── */
+    .mob-menu-sheet {
+      position: fixed;
+      top: 76px;          /* nav padding-top(12) + nav-inner height(56) + gap(8) */
+      left: 20px; right: 20px;
+      z-index: 55;        /* above content, below bottom nav (60) */
+      padding: 10px;
+      display: flex; flex-direction: column; gap: 2px;
+      background: color-mix(in oklab, var(--bg-elev) 92%, transparent);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
+      border-radius: 16px;
+      box-shadow: 0 20px 56px -20px rgba(0,0,0,0.28),
+                  inset 0 1px 0 rgba(255,255,255,0.18);
+      animation: mobMenuIn 200ms cubic-bezier(.2,.7,.2,1) both;
+    }
+    html[data-theme="dark"] .mob-menu-sheet {
+      box-shadow: 0 20px 56px -20px rgba(0,0,0,0.7),
+                  inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    @keyframes mobMenuIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+    .mob-menu-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 10px;
+      transition: background 140ms ease;
+    }
+    .mob-menu-row:hover { background: var(--hover); }
+    .mob-menu-label {
+      font-size: 14px; color: var(--fg); letter-spacing: -0.01em;
+    }
+    .mob-menu-sep {
+      height: 1px; background: var(--border); margin: 4px 2px;
+    }
+    .mob-menu-cv {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 12px; border-radius: 10px;
+      font-size: 14px; font-weight: 500;
+      color: var(--fg); text-decoration: none;
+      transition: background 160ms ease, color 160ms ease;
+    }
+    .mob-menu-cv:hover { background: var(--blue-soft); color: var(--blue-fg); }
+    .mob-menu-cv svg   { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── Prevent content from going under the bottom nav ──────────── */
+    main  { padding-bottom: 68px !important; }
+    .foot { margin-top: 40px !important; padding-bottom: 72px; }
+
+    /* ── Typography scale-down ────────────────────────────────────── */
+    .h2   { font-size: 30px; }
+
+    /* ── Landing status strip: 3-col → 1-col ─────────────────────── */
+    .status-strip {
+      grid-template-columns: 1fr !important;
+      margin-top: 56px !important;
+    }
+    .status-strip .status-strip-cell {
+      border-left: none !important;
+    }
+    .status-strip .status-strip-cell + .status-strip-cell {
+      border-top: 1px solid var(--border) !important;
+    }
+
+    /* ── About bio + sidebar: 2-col → 1-col ──────────────────────── */
+    .about-layout {
+      grid-template-columns: 1fr !important;
+      gap: 32px !important;
+    }
+
+    /* ── Pill group (SlidingPills) — horizontal scroll ────────────── */
+    .pill-group {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .pill-group::-webkit-scrollbar { display: none; }
+
+    /* ── Landing hero vertical spacing ───────────────────────────── */
+    .hero-spotlight { padding-top: 56px !important; }
+
+    /* ── Projects list row ────────────────────────────────────────── */
+    .row-meta { font-size: 11px; }
+
+    /* ── KPI data grid ────────────────────────────────────────────── */
+    .data-of-me { margin-top: 48px; }
+    .dom-title  { font-size: 22px; }
+
+    /* ── Prevent horizontal overflow ──────────────────────────────── */
+    /* overflow-x:clip ≠ hidden — doesn't create a scroll container,  */
+    /* so position:sticky on .nav still works correctly.              */
+    body { overflow-x: clip; }
+  }
 </style>
 
 <!-- ── Time-of-day accent (14) + nav scroll detector ────────────────── -->

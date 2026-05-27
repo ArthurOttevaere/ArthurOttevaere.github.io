@@ -134,11 +134,13 @@ function AccentPicker() {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function Nav({ route, go, theme, setTheme }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
-  const linksRef = useRef(null);
-  const [ind, setInd] = useState({ x: 0, w: 0, ready: false });
+  const linksRef    = useRef(null);
+  const menuRef     = useRef(null);
+  const hamburgerRef = useRef(null);
+  const [ind, setInd]           = useState({ x: 0, w: 0, ready: false });
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Measure active button position and slide the indicator to it.
-  // useLayoutEffect runs synchronously after paint — no visible flash.
+  // Sliding indicator
   useEffect(()=>{
     function measure() {
       const container = linksRef.current;
@@ -147,7 +149,6 @@ function Nav({ route, go, theme, setTheme }) {
       if (!btn) { setInd(s=>({...s, ready:false})); return; }
       const cr = container.getBoundingClientRect();
       const br = btn.getBoundingClientRect();
-      // 12px = left/right button padding — underline sits inside the padding
       setInd({ x: br.left - cr.left + 12, w: br.width - 24, ready: true });
     }
     measure();
@@ -155,41 +156,92 @@ function Nav({ route, go, theme, setTheme }) {
     return ()=> window.removeEventListener('resize', measure);
   }, [route]);
 
+  // Mobile menu — close on outside click (exclude the hamburger button itself)
+  useEffect(()=>{
+    if (!menuOpen) return;
+    function onDown(e) {
+      const inMenu      = menuRef.current      && menuRef.current.contains(e.target);
+      const inHamburger = hamburgerRef.current && hamburgerRef.current.contains(e.target);
+      if (!inMenu && !inHamburger) setMenuOpen(false);
+    }
+    const t = setTimeout(()=>document.addEventListener('mousedown', onDown), 10);
+    return ()=>{ clearTimeout(t); document.removeEventListener('mousedown', onDown); };
+  }, [menuOpen]);
+
+  // Mobile menu — close on Escape
+  useEffect(()=>{
+    if (!menuOpen) return;
+    function onKey(e){ if (e.key==='Escape') setMenuOpen(false); }
+    document.addEventListener('keydown', onKey);
+    return ()=>document.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
   return (
-    <header className="nav">
-      <div className="shell nav-inner">
-        <button className="brand" onClick={()=>go('home')} aria-label="Home">
-          <span className="brand-dot"/>
-          <span>Arthur O.</span>
-        </button>
+    <>
+      <header className="nav">
+        <div className="shell nav-inner">
+          <button className="brand" onClick={()=>go('home')} aria-label="Home">
+            <span className="brand-dot"/>
+            <span>Arthur O.</span>
+          </button>
 
-        <nav className="nav-links" ref={linksRef} aria-label="Primary">
-          {/* Single sliding underline — glides from link to link */}
-          <span className={'nav-indicator'+(ind.ready?'':' hidden')}
-            style={{ left: ind.x, width: ind.w }}/>
-          {ROUTES.map(r=>(
-            <button key={r.id}
-              className={'nav-link '+(route===r.id?'active':'')}
-              onClick={()=>go(r.id)}>
-              {r.label}
-            </button>
-          ))}
-        </nav>
+          <nav className="nav-links" ref={linksRef} aria-label="Primary">
+            {/* Single sliding underline — glides from link to link */}
+            <span className={'nav-indicator'+(ind.ready?'':' hidden')}
+              style={{ left: ind.x, width: ind.w }}/>
+            {ROUTES.map(r=>(
+              <button key={r.id}
+                className={'nav-link '+(route===r.id?'active':'')}
+                onClick={()=>go(r.id)}>
+                {r.label}
+              </button>
+            ))}
+          </nav>
 
-        <div className="nav-right">
-          <CmdkTrigger/>
-          <ThemeToggle theme={theme} setTheme={setTheme}/>
-          <AccentPicker/>
-          <a href={P.cv&&P.cv!=='#'?P.cv:'#'}
-             target={P.cv&&P.cv!=='#'?'_blank':undefined}
-             rel="noopener noreferrer"
-             onClick={e=>{ if(!P.cv||P.cv==='#') e.preventDefault(); }}
-             className="cv-btn" title="Download CV">
-            <span>CV</span> <Icon.Download/>
-          </a>
+          {/* Desktop right-side controls */}
+          <div className="nav-right">
+            <CmdkTrigger/>
+            <ThemeToggle theme={theme} setTheme={setTheme}/>
+            <AccentPicker/>
+            <a href={P.cv&&P.cv!=='#'?P.cv:'#'}
+               target={P.cv&&P.cv!=='#'?'_blank':undefined}
+               rel="noopener noreferrer"
+               onClick={e=>{ if(!P.cv||P.cv==='#') e.preventDefault(); }}
+               className="cv-btn" title="Download CV">
+              <span>CV</span> <Icon.Download/>
+            </a>
+          </div>
+
+          {/* Mobile hamburger — hidden on desktop via CSS */}
+          <button
+            ref={hamburgerRef}
+            className="mob-hamburger icon-btn"
+            onClick={()=>setMenuOpen(o=>!o)}
+            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={menuOpen}>
+            {menuOpen ? <Icon.Close/> : <Icon.Menu/>}
+          </button>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile settings sheet — appears below the nav pill */}
+      {menuOpen && (
+        <div ref={menuRef} className="mob-menu-sheet">
+          <div className="mob-menu-row">
+            <span className="mob-menu-label">Thème</span>
+            <ThemeToggle theme={theme} setTheme={setTheme}/>
+          </div>
+          <div className="mob-menu-sep"/>
+          {P.cv && P.cv !== '#' && (
+            <a href={P.cv} target="_blank" rel="noopener noreferrer"
+               className="mob-menu-cv"
+               onClick={()=>setMenuOpen(false)}>
+              <Icon.Download/> Télécharger le CV
+            </a>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -215,6 +267,22 @@ function Footer({ route }) {
         </div>
       </div>
     </footer>
+  );
+}
+
+// ─── Mobile bottom navigation ────────────────────────────────────────────────
+function MobileNav({ route, go }) {
+  return (
+    <nav className="mobile-nav" aria-label="Navigation mobile">
+      {ROUTES.map(r=>(
+        <button key={r.id}
+          className={'mobile-nav-btn'+(route===r.id?' on':'')}
+          onClick={()=>go(r.id)}
+          aria-current={route===r.id?'page':undefined}>
+          {r.label}
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -244,6 +312,7 @@ function App() {
       </main>
       <Footer route={route}/>
       <CommandPalette go={go} theme={theme} setTheme={setTheme}/>
+      <MobileNav route={route} go={go}/>
     </div>
   );
 }
