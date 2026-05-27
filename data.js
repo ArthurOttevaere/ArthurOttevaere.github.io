@@ -85,17 +85,14 @@ window.PORTFOLIO_DATA = {
       // Projects
       projectsPerYear: 6,
       projectsBars:    [40, 65, 50, 80, 60, 90, 75, 100],   // 8 values for 8 quarters
-
       // Running — update with your actual data
       runningKm:       342,
       runningGoal:     500,
       runningBars:     [28, 32, 45, 38, 52, 48, 60, 55],    // weekly km, last 8 weeks
       runningDelta:    "▲ +24 km this week",
-
       // F1
       f1Watched:       22,
       f1Total:         24,
-
       // Erasmus countdown
       erasmusDate:     "2026-09-01",
     },
