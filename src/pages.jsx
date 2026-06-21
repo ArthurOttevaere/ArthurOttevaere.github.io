@@ -199,7 +199,7 @@ function CoverImg({ cover, title }) {
   );
   if (isUrl) {
     return (
-      <img src={cover} alt={title||''}
+      <img src={cover} alt={title||''} loading="lazy" decoding="async"
         style={{display:'block',width:'100%',height:'100%',objectFit:'cover'}}/>
     );
   }
@@ -222,6 +222,10 @@ function Landing({ go }) {
   useEffect(()=>{
     const el=spotRef.current;
     if(!el) return;
+    // Cursor-following glow is a pointer affordance only. On touch devices it
+    // would jump to wherever you tap (which looked odd) — there we instead show
+    // a fixed top gradient via CSS, so skip the move listeners entirely.
+    if(!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     // Spotlight is a fixed, full-viewport layer → viewport coords (clientX/Y),
     // so the glow is only ever clipped by the screen edge, never by a box.
     function onMove(e){
@@ -507,9 +511,9 @@ function ListRow({ p }) {
       <div className="row-meta mono">{p.year}</div>
       <div className="row-thumb"><CoverImg cover={p.cover} title={p.title}/></div>
       <div className="row-mid">
-        <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div className="row-head">
           <span className="row-cat">{p.cat}</span>
-          <h4 style={{margin:0,fontSize:17,fontWeight:500,letterSpacing:'-0.01em'}}>{p.title}</h4>
+          <h4 className="row-title">{p.title}</h4>
         </div>
         <p className="row-sum">{p.summary}</p>
       </div>
@@ -527,7 +531,9 @@ function ListRow({ p }) {
         html[data-theme="dark"] .row:hover{background:color-mix(in oklab,var(--blue) 12%,var(--bg));}
         .row:hover h4{color:var(--blue-fg);}
         .row-meta{font-size:12px;color:var(--fg-muted);}
-        .row-thumb{aspect-ratio:16/9;width:120px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+        .row-thumb{aspect-ratio:16/9;width:120px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg-soft);}
+        .row-head{display:flex;align-items:center;gap:8px;}
+        .row-title{margin:0;font-size:17px;font-weight:500;letter-spacing:-0.01em;}
         .row-cat{
           font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
           color:var(--fg-muted);padding:2px 7px;border-radius:4px;
@@ -548,25 +554,40 @@ function ListRow({ p }) {
           .row-thumb,.row-tags{display:none;}
         }
         @media(max-width:640px){
+          /* Top-align so the (short) 16:9 thumb sits level with the title
+             instead of floating in the middle of a tall text block. */
           .row{
-            grid-template-columns: 72px 1fr 22px;
-            gap: 10px;
+            grid-template-columns: 88px 1fr 22px;
+            gap: 12px;
             padding: 14px 2px;
+            align-items: start;
           }
           .row-thumb{
-            width: 72px;
+            width: 88px;
             flex-shrink: 0;
+            margin-top: 2px;
           }
           .row-meta{ display: none; }
           .row-tags{ display: none; }
+          /* Clamp title + summary to keep every row a uniform height. */
+          .row-head{ align-items: flex-start; }
+          .row-title{
+            font-size: 15px; line-height: 1.25;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+          .row-cat{ margin-top: 1px; }
           .row-sum{
             font-size: 12px;
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
-            margin-top: 3px;
+            margin-top: 4px;
           }
+          .row-arrow{ margin-top: 2px; }
           .row:hover{ padding-left: 8px; padding-right: 8px; }
           .row-arrow{ width: 22px; height: 22px; }
           .row-arrow svg{ width: 13px; height: 13px; }

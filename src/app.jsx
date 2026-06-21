@@ -106,7 +106,7 @@ function AccentPicker() {
   const current = ACCENTS.find(a=>a.id===accent) || ACCENTS[0];
 
   return (
-    <div style={{position:'relative'}} ref={ref}>
+    <div className="accent-wrap" style={{position:'relative'}} ref={ref}>
       {/* Button — shows the current accent as a live dot */}
       <button
         className="accent-btn"
@@ -145,11 +145,8 @@ function AccentPicker() {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function Nav({ route, go, theme, setTheme }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
-  const linksRef    = useRef(null);
-  const menuRef     = useRef(null);
-  const hamburgerRef = useRef(null);
-  const [ind, setInd]           = useState({ x: 0, w: 0, ready: false });
-  const [menuOpen, setMenuOpen] = useState(false);
+  const linksRef = useRef(null);
+  const [ind, setInd] = useState({ x: 0, w: 0, ready: false });
 
   // Sliding indicator
   useEffect(()=>{
@@ -167,92 +164,43 @@ function Nav({ route, go, theme, setTheme }) {
     return ()=> window.removeEventListener('resize', measure);
   }, [route]);
 
-  // Mobile menu — close on outside click (exclude the hamburger button itself)
-  useEffect(()=>{
-    if (!menuOpen) return;
-    function onDown(e) {
-      const inMenu      = menuRef.current      && menuRef.current.contains(e.target);
-      const inHamburger = hamburgerRef.current && hamburgerRef.current.contains(e.target);
-      if (!inMenu && !inHamburger) setMenuOpen(false);
-    }
-    const t = setTimeout(()=>document.addEventListener('mousedown', onDown), 10);
-    return ()=>{ clearTimeout(t); document.removeEventListener('mousedown', onDown); };
-  }, [menuOpen]);
-
-  // Mobile menu — close on Escape
-  useEffect(()=>{
-    if (!menuOpen) return;
-    function onKey(e){ if (e.key==='Escape') setMenuOpen(false); }
-    document.addEventListener('keydown', onKey);
-    return ()=>document.removeEventListener('keydown', onKey);
-  }, [menuOpen]);
-
   return (
-    <>
-      <header className="nav">
-        <div className="shell nav-inner">
-          <button className="brand" onClick={()=>go('home')} aria-label="Home">
-            <span className="brand-dot"/>
-            <span>Arthur O.</span>
-          </button>
+    <header className="nav">
+      <div className="shell nav-inner">
+        <button className="brand" onClick={()=>go('home')} aria-label="Home">
+          <span className="brand-dot"/>
+          <span>Arthur O.</span>
+        </button>
 
-          <nav className="nav-links" ref={linksRef} aria-label="Primary">
-            {/* Single sliding underline — glides from link to link */}
-            <span className={'nav-indicator'+(ind.ready?'':' hidden')}
-              style={{ left: ind.x, width: ind.w }}/>
-            {ROUTES.map(r=>(
-              <button key={r.id}
-                className={'nav-link '+(route===r.id?'active':'')}
-                onClick={()=>go(r.id)}>
-                {r.label}
-              </button>
-            ))}
-          </nav>
+        <nav className="nav-links" ref={linksRef} aria-label="Primary">
+          {/* Single sliding underline — glides from link to link */}
+          <span className={'nav-indicator'+(ind.ready?'':' hidden')}
+            style={{ left: ind.x, width: ind.w }}/>
+          {ROUTES.map(r=>(
+            <button key={r.id}
+              className={'nav-link '+(route===r.id?'active':'')}
+              onClick={()=>go(r.id)}>
+              {r.label}
+            </button>
+          ))}
+        </nav>
 
-          {/* Desktop right-side controls */}
-          <div className="nav-right">
-            <CmdkTrigger/>
-            <ThemeToggle theme={theme} setTheme={setTheme}/>
-            <AccentPicker/>
-            <a href={P.cv&&P.cv!=='#'?P.cv:'#'}
-               target={P.cv&&P.cv!=='#'?'_blank':undefined}
-               rel="noopener noreferrer"
-               onClick={e=>{ if(!P.cv||P.cv==='#') e.preventDefault(); }}
-               className="cv-btn" title="Download CV">
-              <span>CV</span> <Icon.Download/>
-            </a>
-          </div>
-
-          {/* Mobile hamburger — hidden on desktop via CSS */}
-          <button
-            ref={hamburgerRef}
-            className="mob-hamburger icon-btn"
-            onClick={()=>setMenuOpen(o=>!o)}
-            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            aria-expanded={menuOpen}>
-            {menuOpen ? <Icon.Close/> : <Icon.Menu/>}
-          </button>
+        {/* Right-side controls. On mobile (page links live in the bottom bar)
+            only the theme toggle + CV remain — cmdk & accent are desktop-only. */}
+        <div className="nav-right">
+          <CmdkTrigger/>
+          <AccentPicker/>
+          <ThemeToggle theme={theme} setTheme={setTheme}/>
+          <a href={P.cv&&P.cv!=='#'?P.cv:'#'}
+             target={P.cv&&P.cv!=='#'?'_blank':undefined}
+             rel="noopener noreferrer"
+             onClick={e=>{ if(!P.cv||P.cv==='#') e.preventDefault(); }}
+             className="cv-btn" title="Download CV">
+            <span>CV</span> <Icon.Download/>
+          </a>
         </div>
-      </header>
-
-      {/* Mobile settings sheet — appears below the nav pill */}
-      {menuOpen && (
-        <div ref={menuRef} className="mob-menu-sheet">
-          <div className="mob-menu-row">
-            <span className="mob-menu-label">Thème</span>
-            <ThemeToggle theme={theme} setTheme={setTheme}/>
-          </div>
-          <div className="mob-menu-sep"/>
-          {P.cv && P.cv !== '#' && (
-            <a href={P.cv} target="_blank" rel="noopener noreferrer"
-               className="mob-menu-cv"
-               onClick={()=>setMenuOpen(false)}>
-              <Icon.Download/> Télécharger le CV
-            </a>
-          )}
-        </div>
-      )}
-    </>
+      </div>
+    </header>
   );
 }
 
@@ -304,11 +252,38 @@ function MobileNav({ route, go }) {
 function App() {
   const [theme, setTheme] = useTheme();
   const [route, setRoute] = useState('home');
+  // Count navigations: the first paint (0) is revealed by the boot splash fade,
+  // so we skip the page-enter animation then and only animate once the user
+  // actually navigates. Keeps the boot→home reveal clean (no double motion).
+  const [navCount, setNavCount] = useState(0);
 
-  const go = useCallback(r=>{ setRoute(r); window.scrollTo({top:0,behavior:'instant'}); }, []);
+  const go = useCallback(r=>{
+    setRoute(r);
+    setNavCount(c=>c+1);   // any user navigation re-enables the page-enter anim
+    window.scrollTo({top:0,behavior:'instant'});
+  }, []);
 
   // Expose for in-prose links
   useEffect(()=>{ window.__go = go; }, [go]);
+
+  // Boot → landing handoff. The page stays hidden while the splash fades out,
+  // and only fades in once the splash is fully gone — so the splash greeting
+  // and the landing greeting never overlap (no double "Bonjour" mid-fade).
+  const [revealed, setRevealed] = useState(false);
+  useEffect(()=>{
+    const bl = document.getElementById('boot-loader');
+    const start = window.__bootStart || performance.now();
+    const MIN_MS = 1700;          // minimum splash time (greetings read as intro)
+    const FADE_MS = 500;          // splash fade-out duration (matches CSS)
+    const wait = Math.max(0, MIN_MS - (performance.now() - start));
+    let t2;
+    const t1 = setTimeout(()=>{
+      if (bl) bl.classList.add('boot-done');   // splash fades out
+      // Reveal the page the moment the splash is fully transparent.
+      t2 = setTimeout(()=>{ if (bl) bl.remove(); setRevealed(true); }, FADE_MS);
+    }, wait);
+    return ()=>{ clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   let Page;
   switch(route) {
@@ -319,7 +294,9 @@ function App() {
   }
 
   return (
-    <div>
+    <div className={navCount===0 ? 'app-no-enter' : ''}
+         style={{ opacity: revealed ? 1 : 0,
+                  transition: 'opacity 560ms cubic-bezier(.4,0,.2,1)' }}>
       <Nav route={route} go={go} theme={theme} setTheme={setTheme}/>
       <main key={route} style={{minHeight:'calc(100vh - 64px - 96px)'}}>
         {Page}
@@ -332,17 +309,7 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-
-// Fade out the boot loader once the app has painted. A small minimum delay
-// keeps the splash from flashing too briefly on fast loads.
-(function dismissBootLoader(){
-  const bl = document.getElementById('boot-loader');
-  if (!bl) return;
-  const start = window.__bootStart || performance.now();
-  const MIN_MS = 600;
-  const wait = Math.max(0, MIN_MS - (performance.now() - start));
-  requestAnimationFrame(()=> setTimeout(()=>{
-    bl.classList.add('boot-done');
-    setTimeout(()=> bl.remove(), 500);
-  }, wait));
-})();
+// Note: the boot splash is dismissed by App's reveal effect (see above), which
+// keeps the page hidden until the splash has fully faded — preventing the
+// splash + landing greetings from overlapping. The 12s safety-net in
+// index.html still force-removes the splash if React never mounts.
