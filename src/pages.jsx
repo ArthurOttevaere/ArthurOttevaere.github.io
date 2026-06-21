@@ -222,21 +222,20 @@ function Landing({ go }) {
   useEffect(()=>{
     const el=spotRef.current;
     if(!el) return;
-    // Cursor-following glow is a pointer affordance only. On touch devices it
-    // would jump to wherever you tap (which looked odd) — there we instead show
-    // a fixed top gradient via CSS, so skip the move listeners entirely.
-    if(!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     // Spotlight is a fixed, full-viewport layer → viewport coords (clientX/Y),
     // so the glow is only ever clipped by the screen edge, never by a box.
+    // Works for both mouse and touch: pointerdown lights it at the touch point,
+    // pointermove follows the finger/cursor as it drags or scrolls.
     function onMove(e){
       el.style.setProperty('--mx',e.clientX+'px');
       el.style.setProperty('--my',e.clientY+'px');
       if(!el.classList.contains('live')) el.classList.add('live');
     }
     function onLeave(){ el.classList.remove('live'); }
+    window.addEventListener('pointerdown',onMove);
     window.addEventListener('pointermove',onMove);
     window.addEventListener('pointerleave',onLeave);
-    return ()=>{ window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerleave',onLeave); };
+    return ()=>{ window.removeEventListener('pointerdown',onMove); window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerleave',onLeave); };
   },[]);
 
   return (

@@ -427,28 +427,6 @@
   }
   @media (prefers-reduced-motion: reduce) { .spotlight-layer { display: none; } }
 
-  /* On touch / mobile there's no cursor to follow, so instead of a glow that
-     jumps to wherever you tapped, we paint a fixed accent gradient anchored at
-     the top of the screen — calm and always-on. A multi-stop falloff (peak →
-     mid → transparent) spread over a tall radius makes the tint melt smoothly
-     into the page instead of reading as a hard-edged solid colour band. */
-  @media (max-width: 640px) {
-    .spotlight-layer {
-      opacity: 1 !important;
-      background: radial-gradient(125% 72% at 50% -16%,
-        color-mix(in oklab, var(--blue) 22%, transparent) 0%,
-        color-mix(in oklab, var(--blue) 9%,  transparent) 38%,
-        transparent 72%) !important;
-    }
-    html[data-theme="dark"] .spotlight-layer {
-      background: radial-gradient(125% 72% at 50% -16%,
-        color-mix(in oklab, var(--blue) 40%, transparent) 0%,
-        color-mix(in oklab, var(--blue) 16%, transparent) 38%,
-        transparent 74%) !important;
-      mix-blend-mode: screen;
-    }
-  }
-
   /* ── 01 · Variable headline letters ─────────────────────────────── */
   .vh-l {
     display: inline-block;
