@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build / output
+dist/
+build/
+out/
+.parcel-cache/
+.cache/
+.next/
+.nuxt/
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+coverage.json
+*.lcov
+
+# Agent / assistant local folders
+.agents/
+.claude/
+
+# Misc
+.sass-cache/
+*.pem
+*.key
+
+/index_old
