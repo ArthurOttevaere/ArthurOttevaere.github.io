@@ -881,7 +881,15 @@
       top: calc(env(safe-area-inset-top, 0px) + 76px);
       left: 14px;
       right: 14px;
+      background: color-mix(in oklab, var(--bg-elev) 96%, transparent);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid color-mix(in oklab, var(--border-strong) 70%, transparent);
+      box-shadow:
+        0 18px 50px -24px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.14);
     }
+    .accent-label { display: none !important; }
     .accent-swatches { justify-content: center; }
   }
 

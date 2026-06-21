@@ -70,12 +70,25 @@ function AccentPicker() {
   const [open, setOpen]        = useState(false);
   const ref = useRef(null);
 
+  function isMobileDevice() {
+    return window.matchMedia('(max-width: 640px)').matches
+      || /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+  }
+
   function pick(id) {
     setAccentRaw(id);
     localStorage.setItem('ao-accent-manual', id);
-    // Re-run the shared applyAccent function so --blue updates immediately.
-    window.__refreshAccent && window.__refreshAccent();
     setOpen(false);
+    // On mobile devices, the top-of-page accent glow can get stuck on the old
+    // colour until a reload. The accent is persisted in localStorage and
+    // re-applied by the inline script on boot, so a quick reload cleanly
+    // repaints everything.
+    if (isMobileDevice()) {
+      location.reload();
+      return;
+    }
+    // Desktop: re-run the shared applyAccent so --blue updates immediately.
+    window.__refreshAccent && window.__refreshAccent();
   }
 
   // Close on outside click
