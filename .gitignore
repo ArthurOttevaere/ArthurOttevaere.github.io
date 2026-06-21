@@ -48,4 +48,4 @@ coverage.json
 *.pem
 *.key
 
-/index_old
+index_old.html
