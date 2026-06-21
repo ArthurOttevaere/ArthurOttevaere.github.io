@@ -63,7 +63,8 @@ window.PORTFOLIO_DATA = {
     /* About — education timeline */
     education: [
       { period: "2025 — Present", degree: "M. Business Engineering",  school: "Business Analytics track · (UCL-LSM)" },
-      { period: "2022 — 2025", degree: "B. Business Engineering",  school: "UCLouvain FUCaM Mons (LSM)" },
+      {period: "Fall 2026", degree: "Erasmus Semester", school: "RSM - Erasmus University Rotterdam"},
+      { period: "2022 — 2025", degree: "B. Business Engineering",  school: "UCLouvain FUCaM Mons (UCL-LSM)" },
     ],
 
     /* About — skill tags */
