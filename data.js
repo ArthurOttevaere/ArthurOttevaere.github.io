@@ -172,7 +172,7 @@ window.PORTFOLIO_DATA = {
       summary:  "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
       long:     "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
       tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
-      cover:    "/movix.png",
+      cover:    "/assets/images/movix.png",
       github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",     // 🔗 https://github.com/arthurottevaere/...
       featured: true,
     },
