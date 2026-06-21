@@ -21,20 +21,29 @@ const ACCENTS = [
 ];
 
 // ─── Theme hook ───────────────────────────────────────────────────────────────
-// Respects system preference on first visit; localStorage overrides on return.
+// Follows the OS appearance (prefers-color-scheme): the site's day/night mode
+// matches the user's device and updates live when the system flips. The toggle
+// button still allows a manual override for the current session.
 function useTheme() {
-  const [theme, setTheme] = useState(()=>{
-    if (typeof window==='undefined') return 'light';
-    const saved = localStorage.getItem('ao-theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const systemTheme = () =>
+    (typeof window!=='undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark' : 'light';
+  const [theme, setTheme] = useState(systemTheme);
+
   useEffect(()=>{
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('ao-theme', theme);
     // Refresh time-of-day accent after theme change
     if (window.__refreshAccent) window.__refreshAccent();
   }, [theme]);
+
+  // Live-follow the system: when the OS switches light/dark, the site follows.
+  useEffect(()=>{
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e)=> setTheme(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', onChange);
+    return ()=> mq.removeEventListener('change', onChange);
+  }, []);
+
   return [theme, setTheme];
 }
 
@@ -121,7 +130,9 @@ function AccentPicker() {
                 aria-pressed={accent===a.id}
                 onClick={()=>pick(a.id)}
                 style={a.swatch ? { background:a.swatch, '--swatch':a.swatch } : undefined}
-              />
+              >
+                {a.id==='auto' && <Icon.AutoTheme/>}
+              </button>
             ))}
           </div>
           <div className="accent-label">{current.label}</div>
@@ -251,8 +262,12 @@ function Footer({ route }) {
   return (
     <footer className="foot">
       <div className="shell foot-inner">
-        <span style={{fontSize:12,fontWeight:500,letterSpacing:'-0.01em'}}>Arthur Ottevaere</span>
-        <div style={{display:'flex',alignItems:'center',gap:20}}>
+        <span className="foot-brand">
+          <span className="foot-dot"/>
+          Arthur Ottevaere
+        </span>
+        <span className="foot-mid mono">© {new Date().getFullYear()} · Tournai, BE</span>
+        <div className="foot-links">
           <ULink href={P.linkedin&&P.linkedin!=='#'?P.linkedin:'#'}
                  target={P.linkedin&&P.linkedin!=='#'?'_blank':undefined}
                  rel="noopener noreferrer"
@@ -263,7 +278,6 @@ function Footer({ route }) {
                  rel="noopener noreferrer"
                  onClick={e=>{ if(!P.github||P.github==='#') e.preventDefault(); }}
                  seed={2}>GitHub</ULink>
-          <span className="mono" style={{color:'var(--fg-faint)'}}>v1.0</span>
         </div>
       </div>
     </footer>
@@ -318,3 +332,17 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+// Fade out the boot loader once the app has painted. A small minimum delay
+// keeps the splash from flashing too briefly on fast loads.
+(function dismissBootLoader(){
+  const bl = document.getElementById('boot-loader');
+  if (!bl) return;
+  const start = window.__bootStart || performance.now();
+  const MIN_MS = 600;
+  const wait = Math.max(0, MIN_MS - (performance.now() - start));
+  requestAnimationFrame(()=> setTimeout(()=>{
+    bl.classList.add('boot-done');
+    setTimeout(()=> bl.remove(), 500);
+  }, wait));
+})();

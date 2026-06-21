@@ -4,7 +4,23 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Arthur Ottevaere — Portfolio</title>
-<meta name="description" content="Portfolio of Arthur Ottevaere — Business Engineering & Analytics student, Brussels."/>
+<meta name="description" content="Portfolio of Arthur Ottevaere — Business Engineering & Business Analytics student in Belgium. Dashboards, data projects, and the occasional Formula 1 build."/>
+
+<!-- Favicon — inline, on-brand blue mark (no external file needed) -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563eb'/><rect x='11' y='11' width='10' height='10' rx='2' fill='white'/></svg>"/>
+
+<!-- Open Graph / Twitter — link preview when shared (LinkedIn, etc.) -->
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://arthurottevaere.github.io/"/>
+<meta property="og:title" content="Arthur Ottevaere — Portfolio"/>
+<meta property="og:description" content="Business Engineering & Business Analytics student. Dashboards, data projects, and the occasional Formula 1 build."/>
+<meta property="og:image" content="https://arthurottevaere.github.io/og-image.svg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Arthur Ottevaere — Portfolio"/>
+<meta name="twitter:description" content="Business Engineering & Business Analytics student. Dashboards, data projects, and the occasional Formula 1 build."/>
+<meta name="twitter:image" content="https://arthurottevaere.github.io/og-image.svg"/>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,23 +110,32 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 24px;
     border-radius: 999px;
-    border: 1px solid color-mix(in oklab, var(--border-strong) 60%, transparent);
-    background: color-mix(in oklab, var(--bg-elev) 58%, transparent);
-    backdrop-filter: blur(22px) saturate(180%);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
+    /* Liquid glass: low base opacity so page content reads through, lifted by
+       a heavy blur + saturation boost and a bright top-edge highlight. */
+    background: color-mix(in oklab, var(--bg-elev) 40%, transparent);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
     box-shadow:
       0 14px 40px -20px rgba(0,0,0,0.18),
-      inset 0 1px 0 rgba(255,255,255,0.35);
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
     transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
   }
   html[data-theme="dark"] .nav-inner {
-    background: color-mix(in oklab, var(--bg-elev) 60%, transparent);
+    background: color-mix(in oklab, var(--bg-elev) 44%, transparent);
     box-shadow:
       0 14px 40px -20px rgba(0,0,0,0.6),
-      inset 0 1px 0 rgba(255,255,255,0.06);
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.2);
   }
+  /* Once scrolled, firm up slightly for legibility over busy content — but
+     stay translucent so it still reads as glass. */
   .nav.scrolled .nav-inner {
-    background: color-mix(in oklab, var(--bg-elev) 78%, transparent);
+    background: color-mix(in oklab, var(--bg-elev) 60%, transparent);
+  }
+  html[data-theme="dark"] .nav.scrolled .nav-inner {
+    background: color-mix(in oklab, var(--bg-elev) 64%, transparent);
   }
 
   /* Brand */
@@ -159,9 +184,9 @@
   /* Nav right */
   .nav-right { display: flex; align-items: center; gap: 8px; }
 
-  /* Icon button (theme toggle) */
+  /* Icon button (theme toggle) — circular to echo the rounded glass nav */
   .icon-btn {
-    width: 36px; height: 36px; border-radius: 8px;
+    width: 36px; height: 36px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid var(--border); background: var(--bg-elev);
     color: var(--fg); cursor: pointer;
@@ -171,10 +196,10 @@
   .icon-btn:active { transform: scale(0.94) rotate(-10deg); }
   .icon-btn svg { width: 16px; height: 16px; }
 
-  /* CV button */
+  /* CV button — pill-shaped so its corner matches the rounded nav edge */
   .cv-btn {
     display: inline-flex; align-items: center; gap: 8px;
-    height: 36px; padding: 0 14px; border-radius: 8px;
+    height: 36px; padding: 0 16px; border-radius: 999px;
     border: 1px solid var(--border); background: var(--bg-elev);
     font-size: 13px; color: var(--fg); cursor: pointer; text-decoration: none;
     transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
@@ -192,10 +217,27 @@
   }
 
   /* ── Footer ─────────────────────────────────────────────────────── */
-  .foot { margin-top: 180px; padding: 14px 0; border-top: 1px solid var(--border); }
+  /* Compact, single-line. margin-top kept modest so it never floats far
+     below short pages (matches the tighter feel of the work/about pages). */
+  .foot { margin-top: 88px; padding: 14px 0; border-top: 1px solid var(--border); }
   .foot-inner {
     display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
     font-size: 12px; color: var(--fg-muted);
+  }
+  .foot-brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg);
+  }
+  .foot-dot {
+    width: 8px; height: 8px; border-radius: 2px; background: var(--blue);
+    flex-shrink: 0; transition: transform 240ms cubic-bezier(.2,.7,.2,1);
+  }
+  .foot-brand:hover .foot-dot { transform: rotate(-12deg) scale(1.15); }
+  .foot-mid { font-size: 11px; color: var(--fg-faint); letter-spacing: 0.01em; }
+  .foot-links { display: flex; align-items: center; gap: 18px; }
+  @media (max-width: 640px) {
+    .foot-mid { display: none; }   /* keep one tidy line on narrow screens */
   }
 
   /* ── Typography utilities ───────────────────────────────────────── */
@@ -271,8 +313,25 @@
   .pill-group {
     position: relative;
     display: flex; align-items: center; gap: 4px; padding: 4px;
-    border: 1px solid var(--border); border-radius: 999px;
-    background: var(--bg-elev); flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    /* Liquid glass: translucent + blurred so content shows through, with a
+       bright top-edge highlight, matching the nav. */
+    border: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--bg-elev) 45%, transparent);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    box-shadow:
+      0 8px 24px -16px rgba(0,0,0,0.16),
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
+  }
+  html[data-theme="dark"] .pill-group {
+    background: color-mix(in oklab, var(--bg-elev) 48%, transparent);
+    box-shadow:
+      0 8px 24px -16px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.07),
+      inset 0 -1px 0 rgba(0,0,0,0.2);
   }
   .pill-slider {
     position: absolute; top: 4px; bottom: 4px; left: 0;
@@ -327,32 +386,28 @@
   .ulink:hover { color: var(--blue-fg); }
 
   /* ── 06 · Hero spotlight ────────────────────────────────────────── */
-  .hero-spotlight { position: relative; isolation: isolate; }
-  .hero-spotlight::before {
-    content: "";
-    position: absolute;
-    /* -40px at the top bleeds under the nav; -400px at the bottom lets the
-       gradient (520px radius, fades at 65% ≈ 340px) dissolve well below the
-       status strip. z-index:3 puts the gradient ON TOP of .shell (z-index:1)
-       so it renders over the glass strip instead of being hidden behind it.
-       pointer-events:none keeps all interactions intact. */
-    inset: -40px 0 -400px 0;
+  /* The cursor glow lives on a FIXED, full-viewport layer (not a pseudo-
+     element bound to the hero box). That way the radial gradient is only ever
+     clipped by the screen edge — it never hits a container boundary and cuts
+     off near the top of the page or the footer — and being fixed it adds no
+     scroll height. Coordinates are viewport-relative (clientX/clientY). */
+  .hero-spotlight { position: relative; }
+  .hero-spotlight > .shell { position: relative; z-index: 1; }
+  .spotlight-layer {
+    position: fixed; inset: 0;
+    z-index: 5;            /* over content, below the nav (50) */
+    pointer-events: none; opacity: 0;
+    transition: opacity 320ms ease;
     background: radial-gradient(520px circle at var(--mx,50%) var(--my,30%),
       color-mix(in oklab, var(--blue) 11%, transparent), transparent 65%);
-    pointer-events: none; z-index: 3; opacity: 0;
-    transition: opacity 320ms ease;
-    /* Light theme: normal blend — very subtle 11% tint floats over content */
   }
-  html[data-theme="dark"] .hero-spotlight::before {
+  .spotlight-layer.live { opacity: 1; }
+  html[data-theme="dark"] .spotlight-layer {
     background: radial-gradient(560px circle at var(--mx,50%) var(--my,30%),
       color-mix(in oklab, var(--blue) 28%, transparent), transparent 65%);
-    /* screen blend: gradient adds luminosity over dark content,
-       exactly like a real light source — shines through the glass strip too */
-    mix-blend-mode: screen;
+    mix-blend-mode: screen;   /* adds luminosity over dark content */
   }
-  .hero-spotlight.live::before { opacity: 1; }
-  /* shell keeps z-index:1 — still above the page background, below ::before */
-  .hero-spotlight > .shell { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { .spotlight-layer { display: none; } }
 
   /* ── 01 · Variable headline letters ─────────────────────────────── */
   .vh-l {
@@ -380,14 +435,145 @@
   }
   .featured.is-tilting:hover .featured-sheen { opacity: 1; }
 
-  /* ── Available badge ────────────────────────────────────────────── */
-  .available-chip {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 14px; border-radius: 999px;
-    border: 1px solid var(--border); background: var(--bg-elev);
-    font-size: 13px; color: var(--fg-muted); white-space: nowrap;
+  /* ── Landing · variable-headline word grouping ──────────────────── */
+  /* Words stay intact (no mid-word wrap). On mobile the name stacks
+     first-name over last-name to avoid awkward overflow. */
+  .vh-name .vh-word { display: inline-block; white-space: nowrap; }
+  .vh-name .vh-space { display: inline; }
+  @media (max-width: 640px) {
+    .vh-name {
+      display: flex; flex-direction: column; align-items: center;
+      line-height: 0.98;
+    }
+    .vh-name .vh-space { display: none; }
   }
-  @keyframes pulse { 0%{transform:scale(1);opacity:0.45} 100%{transform:scale(2.2);opacity:0} }
+
+  /* ── Landing · looping project carousel ─────────────────────────── */
+  /* Vertical padding gives the cards headroom so a hover scale (which grows
+     past the content box) is never clipped by the wrap's overflow. The
+     horizontal fade is done with mask-image, not overflow, so left/right
+     growth isn't clipped either. */
+  .pm-wrap {
+    position: relative; width: 100%; margin-top: 56px;
+    padding: 30px 0;
+    /* Clip horizontal scroll but let vertical shadows breathe. The edge fade
+       is done with overlay gradients (.pm-fade), NOT mask-image — a mask clips
+       to the border-box and would cut the cards' drop shadows. */
+    overflow-x: clip; overflow-y: visible;
+  }
+  /* Soft curtains that dissolve the cards into the page at the left/right
+     edges. Vertical strips only, so they never cut a card's shadow. */
+  .pm-fade {
+    position: absolute; top: 0; bottom: 0; width: 9%;
+    z-index: 2; pointer-events: none;
+  }
+  .pm-fade-l { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
+  .pm-fade-r { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
+  .pm-track {
+    display: flex; gap: 16px; width: max-content;
+    animation: pmScroll 46s linear infinite;
+  }
+  .pm-wrap:hover .pm-track { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) { .pm-track { animation: none; } }
+  @keyframes pmScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .pm-card {
+    flex: 0 0 auto; width: 300px;
+    display: flex; flex-direction: column;
+    border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit;
+    border: 1px solid color-mix(in oklab, var(--border-strong) 60%, transparent);
+    background: color-mix(in oklab, var(--bg-elev) 58%, transparent);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: 0 10px 30px -20px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.28);
+    /* Only transform/box-shadow/border animate — all GPU-friendly. */
+    transition: transform 220ms cubic-bezier(.2,.7,.2,1), border-color 220ms ease, box-shadow 220ms ease;
+  }
+  html[data-theme="dark"] .pm-card {
+    box-shadow: 0 10px 30px -20px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  /* Whole card + its border grow together (scale), gated to real pointers so
+     a tap on touch never leaves it stuck enlarged. Neutral shadow only — no
+     coloured glow (it read as a clipped blue smudge at the bottom). */
+  @media (hover: hover) and (pointer: fine) {
+    .pm-card:hover {
+      transform: scale(1.05);
+      border-color: var(--blue);
+      box-shadow: 0 16px 40px -24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+  }
+  .pm-cover { aspect-ratio: 16/9; width: 100%; overflow: hidden; background: var(--bg-soft); }
+  .pm-cover img, .pm-cover svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pm-meta { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .pm-cat {
+    font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-muted); padding: 3px 7px; border-radius: 5px;
+    background: var(--tag-bg); border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .pm-title {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  @media (max-width: 640px) {
+    .pm-wrap { margin-top: 56px; }
+    .pm-card { width: 230px; }
+  }
+
+  /* ── Projects · date-sort toggle ────────────────────────────────── */
+  .sort-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 38px; padding: 0 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--bg-elev);
+    font-size: 13px; color: var(--fg-muted); cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+  .sort-btn:hover { background: var(--blue-soft); border-color: var(--blue); color: var(--blue-fg); }
+  .sort-arrow { width: 14px; height: 14px; transition: transform 320ms cubic-bezier(.34,1.15,.6,1); }
+  .sort-arrow.asc { transform: rotate(180deg); }
+
+  /* ── About · looping interests band ─────────────────────────────── */
+  .interests { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--border); }
+  .interests-title { font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 500; margin: 10px 0 0; }
+  /* Vertical padding gives chips headroom for the hover scale. Edge fade via
+     overlay gradients (.ib-fade), not mask-image, so no shadow gets clipped. */
+  .ib-wrap {
+    position: relative; width: 100%; margin-top: 6px; padding: 22px 0;
+    overflow-x: clip; overflow-y: visible;
+  }
+  .ib-fade {
+    position: absolute; top: 0; bottom: 0; width: 7%;
+    z-index: 2; pointer-events: none;
+  }
+  .ib-fade-l { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
+  .ib-fade-r { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
+  .ib-track {
+    display: flex; gap: 12px; width: max-content;
+    animation: ibScroll 32s linear infinite;
+  }
+  .ib-wrap:hover .ib-track { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) { .ib-track { animation: none; flex-wrap: wrap; } }
+  @keyframes ibScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ib-chip {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; gap: 10px;
+    height: 48px; padding: 0 18px 0 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--bg-elev);
+    transition: border-color 200ms ease, transform 200ms cubic-bezier(.2,.7,.2,1);
+  }
+  /* Whole chip + border scale together. Border-only emphasis — no drop shadow
+     (the coloured shadow looked clipped/odd under the pills). */
+  @media (hover: hover) and (pointer: fine) {
+    .ib-chip:hover {
+      border-color: var(--blue); transform: scale(1.08);
+    }
+  }
+  .ib-ico {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--blue-soft); color: var(--blue-fg);
+  }
+  .ib-ico svg { width: 16px; height: 16px; }
+  .ib-label { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
 
   /* ── Command palette ────────────────────────────────────────────── */
   .cmdk-back {
@@ -459,7 +645,7 @@
   /* Command palette trigger in nav */
   .cmdk-trigger {
     display:inline-flex; align-items:center; gap:8px;
-    height:36px; padding:0 10px 0 12px; border-radius:8px;
+    height:36px; padding:0 10px 0 14px; border-radius:999px;
     border:1px solid var(--border); background:var(--bg-elev);
     font-size:12px; color:var(--fg-muted); cursor:pointer;
     transition:background 160ms ease,border-color 160ms ease,color 160ms ease;
@@ -482,7 +668,7 @@
   /* ── 15 · Accent colour picker ──────────────────────────────────── */
   /* Button: same dimensions as icon-btn, shows live accent dot        */
   .accent-btn {
-    width: 36px; height: 36px; border-radius: 8px;
+    width: 36px; height: 36px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid var(--border); background: var(--bg-elev);
     cursor: pointer;
@@ -551,16 +737,18 @@
     box-shadow: 0 0 0 2px var(--bg-elev), 0 0 0 4px var(--swatch, var(--blue));
   }
 
-  /* Auto swatch: conic gradient of the 4 time-of-day hues */
+  /* Auto swatch: a sun/moon glyph (day & night) on a neutral surface */
   .accent-swatch-auto {
-    background: conic-gradient(
-      #ea7c2c 0deg 90deg,
-      #2563eb 90deg 180deg,
-      #dc2626 180deg 270deg,
-      #7c3aed 270deg 360deg
-    );
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    color: var(--fg-muted);
+    transition: color 160ms ease, transform 180ms cubic-bezier(.2,.7,.2,1);
   }
+  .accent-swatch-auto svg { width: 15px; height: 15px; }
+  .accent-swatch-auto:hover { color: var(--fg); }
   .accent-swatch-auto.on {
+    color: var(--fg);
     box-shadow: 0 0 0 2px var(--bg-elev), 0 0 0 4px var(--fg-faint);
   }
 
@@ -678,18 +866,6 @@
     /* ── Typography scale-down ────────────────────────────────────── */
     .h2   { font-size: 30px; }
 
-    /* ── Landing status strip: 3-col → 1-col ─────────────────────── */
-    .status-strip {
-      grid-template-columns: 1fr !important;
-      margin-top: 56px !important;
-    }
-    .status-strip .status-strip-cell {
-      border-left: none !important;
-    }
-    .status-strip .status-strip-cell + .status-strip-cell {
-      border-top: 1px solid var(--border) !important;
-    }
-
     /* ── About bio + sidebar: 2-col → 1-col ──────────────────────── */
     .about-layout {
       grid-template-columns: 1fr !important;
@@ -709,14 +885,52 @@
     /* ── Projects list row ────────────────────────────────────────── */
     .row-meta { font-size: 11px; }
 
-    /* ── KPI data grid ────────────────────────────────────────────── */
-    .data-of-me { margin-top: 48px; }
-    .dom-title  { font-size: 22px; }
+    /* ── Interests band scale-down ────────────────────────────────── */
+    .interests { margin-top: 48px; }
+    .interests-title { font-size: 22px; }
 
     /* ── Prevent horizontal overflow ──────────────────────────────── */
     /* overflow-x:clip ≠ hidden — doesn't create a scroll container,  */
     /* so position:sticky on .nav still works correctly.              */
     body { overflow-x: clip; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     TOUCH DEVICES (no hover) — don't leave text recoloured after a tap
+     ═══════════════════════════════════════════════════════════════ */
+  @media (hover: none) {
+    /* Links & rows: keep their normal text colour even while "hovered"
+       (which on touch means "just tapped" and would otherwise stick). */
+    .ulink:hover                 { color: inherit !important; }
+    .ulink:hover > .ulink-svg path { stroke-dashoffset: 220 !important; }
+    .row:hover h4                { color: inherit !important; }
+    .row:hover                   { background: transparent !important; }
+    html[data-theme="dark"] .row:hover { background: transparent !important; }
+    .nav-link:hover              { color: var(--fg-muted) !important; background: transparent !important; }
+    .mobile-nav-btn:hover        { color: var(--fg-muted) !important; background: transparent !important; }
+    .mobile-nav-btn.on:hover     { color: var(--blue) !important; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     BOOT LOADER — full-screen splash shown while the app compiles/mounts.
+     Black or white depending on theme, with a polyglot "Hello".
+     ═══════════════════════════════════════════════════════════════ */
+  #boot-loader {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    transition: opacity 450ms ease;
+  }
+  #boot-loader.boot-done { opacity: 0; pointer-events: none; }
+  .boot-hello {
+    font-family: 'Geist', 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(30px, 5vw, 52px);
+    font-style: italic; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--fg);
+    will-change: opacity, transform;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .boot-hello { transition: none !important; }
   }
 </style>
 
@@ -786,14 +1000,14 @@
   // Apply once DOM is ready
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(onScroll, 100); });
 
-  // Respect system preference on first visit (no saved theme yet).
-  // This runs synchronously so there's no flash.
-  if (!localStorage.getItem('ao-theme')) {
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-  } else {
-    document.documentElement.setAttribute('data-theme', localStorage.getItem('ao-theme'));
+  // Follow the OS appearance. Runs synchronously so there's no flash, and
+  // listens for live system changes (React's useTheme also follows it).
+  var darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+  function applySystemTheme() {
+    document.documentElement.setAttribute('data-theme', darkMq.matches ? 'dark' : 'light');
   }
+  applySystemTheme();
+  darkMq.addEventListener('change', applySystemTheme);
 })();
 </script>
 
@@ -804,6 +1018,41 @@
 </head>
 <body>
 <div id="root"></div>
+
+<!-- Boot loader — shown instantly while React/Babel compile & mount.
+     app.jsx fades it out once the app has rendered. -->
+<div id="boot-loader"><span id="boot-hello" class="boot-hello">Hello</span></div>
+<script>
+(function(){
+  window.__bootStart = performance.now();
+  var hellos = ["Hello","Bonjour","Hallo","Hola","Ciao","こんにちは","Olá","Hej"];
+  var el = document.getElementById('boot-hello');
+  if (!el) return;
+  var i = 0;
+  setInterval(function(){
+    el.style.transition = 'opacity 240ms ease, transform 240ms ease';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(function(){
+      i = (i + 1) % hellos.length;
+      el.textContent = hellos[i];
+      el.style.transition = 'none';
+      el.style.transform = 'translateY(8px)';
+      el.style.opacity = '0';
+      requestAnimationFrame(function(){
+        el.style.transition = 'opacity 240ms ease, transform 240ms ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    }, 240);
+  }, 900);
+  // Safety net: never trap the user behind the splash if mounting stalls.
+  setTimeout(function(){
+    var bl = document.getElementById('boot-loader');
+    if (bl && !bl.classList.contains('boot-done')) { bl.classList.add('boot-done'); setTimeout(function(){ bl.remove(); }, 500); }
+  }, 12000);
+})();
+</script>
 
 <!-- Data (edit data.js to update your portfolio) -->
 <script src="data.js"></script>

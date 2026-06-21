@@ -68,6 +68,66 @@ const Icon = {
       <path d="M18 6L6 18M6 6l12 12"/>
     </svg>
   ),
+  // Auto theme = half sun (day) / half moon (night), for the "Auto" accent swatch.
+  AutoTheme: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="6"/>
+      <path d="M12 6a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/>
+      <path d="M12 4V2M4 12H2M6.3 6.3 4.9 4.9M6.3 17.7 4.9 19.1M12 20v2"/>
+    </svg>
+  ),
+  // Vertical arrow used for the date-sort toggle (rotate 180° for ascending).
+  ArrowDown: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 5v14M6 13l6 6 6-6"/>
+    </svg>
+  ),
+
+  // ── Interest icons (About page marquee) ──────────────────────────
+  Music: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M9 18V5l12-2v13"/>
+      <circle cx="6" cy="18" r="3"/>
+      <circle cx="18" cy="16" r="3"/>
+    </svg>
+  ),
+  Football: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 8.2l3.3 2.4-1.25 3.9H9.95L8.7 10.6z"/>
+      <path d="M12 8.2V3.4M15.3 10.6l4.2-1.5M14.05 14.5l2.7 3.5M9.95 14.5l-2.7 3.5M8.7 10.6 4.5 9.1"/>
+    </svg>
+  ),
+  Stock: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 17l6-6 4 4 8-8"/>
+      <path d="M16 7h5v5"/>
+    </svg>
+  ),
+  Chip: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="7" y="7" width="10" height="10" rx="1.5"/>
+      <path d="M10 2.5v3M14 2.5v3M10 18.5v3M14 18.5v3M2.5 10h3M2.5 14h3M18.5 10h3M18.5 14h3"/>
+    </svg>
+  ),
+  Flag: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M5 21V4"/>
+      <path d="M5 4.5c4-2.2 8 1.8 12-.3v8.4c-4 2.1-8-1.9-12 .3"/>
+      <path d="M5 4.4l6 3.6M11 8.1l6-3.9M5 12.6l6 3.6M11 16.6l6-3.9"/>
+    </svg>
+  ),
+  Apple: (p) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...p}>
+      <path d="M17.05 12.94c-.02-2.18 1.78-3.23 1.86-3.28-1.01-1.48-2.59-1.69-3.15-1.71-1.34-.13-2.61.79-3.29.79-.68 0-1.72-.77-2.83-.75-1.46.02-2.8.85-3.55 2.16-1.51 2.62-.39 6.5 1.09 8.63.72 1.04 1.58 2.21 2.71 2.17 1.09-.04 1.5-.7 2.82-.7 1.31 0 1.68.7 2.83.68 1.17-.02 1.91-1.06 2.62-2.11.83-1.21 1.17-2.38 1.19-2.44-.03-.01-2.28-.88-2.3-3.46zM14.9 6.35c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/>
+    </svg>
+  ),
+  Planet: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="6"/>
+      <ellipse cx="12" cy="12" rx="11" ry="4" transform="rotate(-22 12 12)"/>
+    </svg>
+  ),
 };
 
 window.Icon = Icon;

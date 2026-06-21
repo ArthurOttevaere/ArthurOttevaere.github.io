@@ -14,6 +14,10 @@ function VariableHeadline({ text }) {
   useEffect(()=>{
     const el = ref.current;
     if (!el) return;
+    // Cursor-driven weight/colour is a pointer affordance only. On touch
+    // devices (no real hover) it would leave letters stuck blue after a tap,
+    // so we skip it entirely there.
+    if (!window.matchMedia('(hover: hover)').matches) return;
     const spans = Array.from(el.querySelectorAll('.vh-l'));
     let raf=0, target={x:-9999,y:-9999};
     function apply() {
@@ -33,13 +37,23 @@ function VariableHeadline({ text }) {
     window.addEventListener('pointerleave',onLeave);
     return ()=>{ window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerleave',onLeave); if(raf) cancelAnimationFrame(raf); };
   },[text]);
-  const chars=Array.from(text);
+  // Group letters into words so each word stays on one line (and the whole
+  // name can stack first-name-over-last-name on mobile). The trailing dot
+  // rides along with the last word so it never lands on its own line.
+  const words = text.split(' ');
   return (
-    <h1 className="h1" ref={ref} style={{maxWidth:980}}>
-      {chars.map((c,i)=>(
-        <span key={i} className="vh-l">{c===' '?' ':c}</span>
+    <h1 className="h1 vh-name" ref={ref} style={{maxWidth:980}}>
+      {words.map((w,wi)=>(
+        <React.Fragment key={wi}>
+          {wi>0 && <span className="vh-space"> </span>}
+          <span className="vh-word">
+            {Array.from(w).map((c,i)=>(
+              <span key={i} className="vh-l">{c}</span>
+            ))}
+            {wi===words.length-1 && <span className="vh-l vh-dot" style={{color:'var(--fg-faint)'}}>.</span>}
+          </span>
+        </React.Fragment>
       ))}
-      <span style={{color:'var(--fg-faint)'}}>.</span>
     </h1>
   );
 }
@@ -204,37 +218,30 @@ function openGithub(e, github) {
 // ═══════════════════════════════════════════════════════════════
 function Landing({ go }) {
   const P = PROFILE();
-  const heroRef = useRef(null);
+  const spotRef = useRef(null);
   useEffect(()=>{
-    const el=heroRef.current;
+    const el=spotRef.current;
     if(!el) return;
+    // Spotlight is a fixed, full-viewport layer → viewport coords (clientX/Y),
+    // so the glow is only ever clipped by the screen edge, never by a box.
     function onMove(e){
-      // ::before is position:absolute inside hero-spotlight, so coords are element-relative.
-      const r=el.getBoundingClientRect();
-      el.style.setProperty('--mx',(e.clientX-r.left)+'px');
-      el.style.setProperty('--my',(e.clientY-r.top)+'px');
+      el.style.setProperty('--mx',e.clientX+'px');
+      el.style.setProperty('--my',e.clientY+'px');
       if(!el.classList.contains('live')) el.classList.add('live');
     }
     function onLeave(){ el.classList.remove('live'); }
-    el.addEventListener('pointermove',onMove);
-    el.addEventListener('pointerleave',onLeave);
-    return ()=>{ el.removeEventListener('pointermove',onMove); el.removeEventListener('pointerleave',onLeave); };
+    window.addEventListener('pointermove',onMove);
+    window.addEventListener('pointerleave',onLeave);
+    return ()=>{ window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerleave',onLeave); };
   },[]);
 
   return (
-    <div ref={heroRef} className="page-enter hero-spotlight" style={{paddingTop:96}}>
+    <>
+      {/* Fixed cursor-glow layer — kept OUTSIDE .page-enter so its transform
+          doesn't turn position:fixed into a clipped containing block. */}
+      <div ref={spotRef} className="spotlight-layer" aria-hidden="true"/>
+      <div className="page-enter hero-spotlight" style={{paddingTop:72}}>
       <div className="shell" style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center'}}>
-
-        {/* Available badge */}
-        {P.available && (
-          <div className="available-chip" style={{marginBottom:48}}>
-            <span style={{position:'relative',width:8,height:8,flexShrink:0}}>
-              <span style={{position:'absolute',inset:0,borderRadius:'50%',background:'var(--available)'}}/>
-              <span style={{position:'absolute',inset:-3,borderRadius:'50%',background:'var(--available)',opacity:0.25,animation:'pulse 2s ease-out infinite'}}/>
-            </span>
-            <span>{P.availableText}</span>
-          </div>
-        )}
 
         {/* Polyglot greeting + variable headline */}
         <PolyglotHello />
@@ -253,31 +260,52 @@ function Landing({ go }) {
           </button>
         </div>
 
-        {/* Status strip */}
-        {P.status && (
-          <div className="status-strip" style={{
-            marginTop:96,width:'100%',maxWidth:880,
-            display:'grid',gridTemplateColumns:'repeat(3,1fr)',
-            border:'1px solid var(--border)',borderRadius:14,
-            background:'color-mix(in oklab, var(--bg-elev) 62%, transparent)',
-            backdropFilter:'blur(8px) saturate(140%)',
-            WebkitBackdropFilter:'blur(8px) saturate(140%)',
-            overflow:'hidden',
-          }}>
-            {P.status.map((c,i)=>(
-              <div key={i} className="status-strip-cell" style={{
-                padding:22,
-                borderLeft:i?'1px solid var(--border)':'none',
-                textAlign:'left',
-              }}>
-                <div className="eyebrow">{c.key}</div>
-                <div style={{marginTop:8,fontSize:16,fontWeight:500,letterSpacing:'-0.01em'}}>{c.value}</div>
-                <div style={{marginTop:2,fontSize:13,color:'var(--fg-muted)'}}>{c.sub}</div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Looping project carousel — full-bleed liquid glass marquee */}
+      <ProjectMarquee go={go} />
+      </div>
+    </>
+  );
+}
+
+// ─── Landing · looping project carousel ──────────────────────────────────────
+// A continuously scrolling, liquid-glass strip of project previews. The list is
+// rendered twice back-to-back and translated -50% so the loop is seamless. It
+// pauses on hover (pointer devices) so a card can be read/clicked.
+function ProjectMarquee({ go }) {
+  const projects = PROJS();
+  if (!projects.length) return null;
+  // Featured first, then the rest, so the strongest cover leads the strip.
+  const ordered = [...projects].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
+  const loop = [...ordered, ...ordered];
+
+  return (
+    <div className="pm-wrap" aria-label="Project previews">
+      <div className="pm-track">
+        {loop.map((p,i)=>{
+          const href = p.github&&p.github!=='#' ? p.github : undefined;
+          return (
+            <a key={i}
+               href={href||'#'}
+               target={href?'_blank':undefined}
+               rel={href?'noopener noreferrer':undefined}
+               onClick={e=>{ if(!href) e.preventDefault(); }}
+               className="pm-card"
+               aria-hidden={i>=ordered.length}
+               tabIndex={i>=ordered.length?-1:0}>
+              <div className="pm-cover"><CoverImg cover={p.cover} title={p.title}/></div>
+              <div className="pm-meta">
+                <span className="pm-cat">{p.cat}</span>
+                <span className="pm-title">{p.title}</span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+      {/* Soft edge fade so cards dissolve into the page on both sides */}
+      <div className="pm-fade pm-fade-l"/>
+      <div className="pm-fade pm-fade-r"/>
     </div>
   );
 }
@@ -294,11 +322,22 @@ function Projects() {
   const featured = projects.find(p=>p.featured) ?? null;
   const cats      = useMemo(()=>['All',...[...new Set(projects.map(p=>p.cat))]], [projects]);
   const [filter, setFilter] = useState('All');
+  const [sort, setSort]     = useState('desc');   // 'desc' = newest first
+
+  // Year can be "2025" or a range like "2024-2025" — sort on the latest year
+  // mentioned so ranges rank by when the work ended.
+  const yearKey = (p)=>{
+    const yrs = String(p.year||'').match(/\d{4}/g);
+    return yrs ? Math.max(...yrs.map(Number)) : 0;
+  };
 
   const rest = useMemo(()=>{
     const list = projects.filter(p=>p.id!==featured?.id);
-    return filter==='All' ? list : list.filter(p=>p.cat===filter);
-  },[filter,projects,featured]);
+    const filtered = filter==='All' ? list : list.filter(p=>p.cat===filter);
+    return [...filtered].sort((a,b)=>
+      sort==='desc' ? yearKey(b)-yearKey(a) : yearKey(a)-yearKey(b)
+    );
+  },[filter,sort,projects,featured]);
 
   const showFeatured = filter==='All'||filter===featured?.cat;
 
@@ -313,12 +352,23 @@ function Projects() {
             A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.
           </p>
         </div>
-        <SlidingPills
-          items={cats}
-          value={filter}
-          onChange={setFilter}
-          getCount={f=>f==='All'?projects.length:projects.filter(p=>p.cat===f).length}
-        />
+        <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+          <SlidingPills
+            items={cats}
+            value={filter}
+            onChange={setFilter}
+            getCount={f=>f==='All'?projects.length:projects.filter(p=>p.cat===f).length}
+          />
+          <button
+            type="button"
+            className="sort-btn"
+            onClick={()=>setSort(s=>s==='desc'?'asc':'desc')}
+            title={sort==='desc'?'Sorted by newest — click for oldest first':'Sorted by oldest — click for newest first'}
+            aria-label="Toggle date sort order">
+            <span>Date</span>
+            <Icon.ArrowDown className={'sort-arrow'+(sort==='asc'?' asc':'')}/>
+          </button>
+        </div>
       </div>
 
       {/* Featured card */}
@@ -526,22 +576,41 @@ function ListRow({ p }) {
   );
 }
 
+// ─── About · looping interests band ──────────────────────────────────────────
+// A continuously scrolling row of icon chips ("What I'm into"). Rendered twice
+// and translated -50% for a seamless loop; pauses on hover (pointer devices).
+function InterestsBand() {
+  const interests = PROFILE().interests || [];
+  if (!interests.length) return null;
+  const loop = [...interests, ...interests];
+  return (
+    <section className="interests">
+      <div className="eyebrow">What I'm into</div>
+      <h3 className="interests-title">Beyond the data<span style={{color:'var(--fg-faint)'}}>.</span></h3>
+      <div className="ib-wrap" aria-label="Interests">
+        <div className="ib-track">
+          {loop.map((it,i)=>{
+            const Glyph = Icon[it.icon] || Icon.Dot;
+            return (
+              <div key={i} className="ib-chip" aria-hidden={i>=interests.length?true:undefined}>
+                <span className="ib-ico"><Glyph/></span>
+                <span className="ib-label">{it.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="ib-fade ib-fade-l"/>
+        <div className="ib-fade ib-fade-r"/>
+      </div>
+    </section>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════
 // ABOUT
 // ═══════════════════════════════════════════════════════════════
 function About({ go }) {
   const P = PROFILE();
-  const S = P.stats || {};
-
-  // KPI — F1 project link
-  const f1Proj = PROJS().find(p=>p.id==='f1');
-  const f1Link = f1Proj?.github && f1Proj.github !== '#' ? f1Proj.github : null;
-
-  // KPI — Erasmus countdown
-  const erasmusTarget   = new Date(S.erasmusDate || '2026-09-01');
-  const daysToRotterdam = Math.max(0, Math.ceil((erasmusTarget - new Date()) / (1000*60*60*24)));
-  const erasmusTotalDays = Math.ceil((erasmusTarget - new Date('2026-01-01')) / (1000*60*60*24));
-  const erasmusPct = Math.min(100, Math.round((erasmusTotalDays - daysToRotterdam) / erasmusTotalDays * 100));
 
   return (
     <div className="page-enter shell" style={{paddingTop:64,maxWidth:920}}>
@@ -625,127 +694,8 @@ function About({ go }) {
         </aside>
       </div>
 
-      {/* H — By the numbers */}
-      <section className="data-of-me">
-        <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:16,flexWrap:'wrap',marginBottom:18}}>
-          <div>
-            <div className="eyebrow">By the numbers</div>
-            <h3 className="dom-title">This year, in data<span style={{color:'var(--fg-faint)'}}>.</span></h3>
-          </div>
-          <span className="mono" style={{fontSize:12,color:'var(--fg-faint)'}}>// updated weekly · last sync 2 days ago</span>
-        </div>
-
-        <div className="data-grid">
-
-          {/* Card 1 — Projects shipped → lien vers /work */}
-          <div className="data-cell dc-clickable"
-            role="button" tabIndex={0}
-            onClick={()=>go&&go('work')}
-            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go&&go('work');}}}>
-            <span className="dc-k">Projects shipped</span>
-            <span className="dc-v">{PROJS().length}<span className="dc-unit"> total</span></span>
-            <div className="dc-bars">
-              {(S.projectsBars||[40,65,50,80,60,90,75,100]).map((h,i)=>(
-                <span key={i} style={{height:h+'%'}}/>
-              ))}
-            </div>
-            <span className="dc-delta" style={{display:'flex',alignItems:'center',gap:4}}>
-              View all projects <span style={{marginLeft:1}}>→</span>
-            </span>
-          </div>
-
-          {/* Card 2 — Running */}
-          <div className="data-cell">
-            <span className="dc-k">Running · {new Date().getFullYear()}</span>
-            <span className="dc-v">{S.runningKm||0}<span className="dc-unit"> km</span></span>
-            <div className="dc-progress">
-              <div style={{height:4,background:'var(--border)',borderRadius:2,overflow:'hidden'}}>
-                <div style={{
-                  height:'100%',
-                  width:`${Math.min(100,Math.round((S.runningKm||0)/(S.runningGoal||500)*100))}%`,
-                  background:'var(--blue)',borderRadius:2,transition:'width 700ms ease',
-                }}/>
-              </div>
-              <span className="dc-progress-label">
-                goal: {S.runningGoal||500} km · {Math.round((S.runningKm||0)/(S.runningGoal||500)*100)}%
-              </span>
-            </div>
-            <span className="dc-delta up">{S.runningDelta||'▲ tracking'}</span>
-          </div>
-
-          {/* Card 3 — F1 races → lien vers le projet F1 */}
-          <a href={f1Link||'#'}
-             target={f1Link?'_blank':undefined}
-             rel={f1Link?'noopener noreferrer':undefined}
-             onClick={e=>{if(!f1Link)e.preventDefault();}}
-             className="data-cell"
-             style={{textDecoration:'none',color:'inherit',cursor:f1Link?'pointer':'default'}}>
-            <span className="dc-k">F1 races watched · {new Date().getFullYear()}</span>
-            <span className="dc-v">{S.f1Watched||0}<span className="dc-unit"> / {S.f1Total||24}</span></span>
-            <div className="dc-ring">
-              <svg viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="var(--border)" strokeWidth="3"/>
-                <circle cx="20" cy="20" r="16" fill="none" stroke="var(--blue)" strokeWidth="3"
-                  strokeDasharray={100.5}
-                  strokeDashoffset={100.5*(1-(S.f1Watched||0)/(S.f1Total||24))}
-                  transform="rotate(-90 20 20)" strokeLinecap="round"/>
-              </svg>
-              <span className="dc-ring-l mono">{Math.round((S.f1Watched||0)/(S.f1Total||24)*100)}%</span>
-            </div>
-            <span className="dc-delta up">▲ on track · see tracker</span>
-          </a>
-
-          {/* Card 4 — Countdown Rotterdam */}
-          <div className="data-cell">
-            <span className="dc-k">Days to Rotterdam</span>
-            <span className="dc-v">{daysToRotterdam}<span className="dc-unit"> days</span></span>
-            <div className="dc-progress">
-              <div style={{height:4,background:'var(--border)',borderRadius:2,overflow:'hidden'}}>
-                <div style={{
-                  height:'100%',width:erasmusPct+'%',
-                  background:'var(--blue)',borderRadius:2,transition:'width 700ms ease',
-                }}/>
-              </div>
-              <span className="dc-progress-label">{erasmusPct}% through the wait</span>
-            </div>
-            <span className="dc-delta mono-note">Erasmus · Fall '26</span>
-          </div>
-
-        </div>
-      </section>
-
-      <style>{`
-        .data-of-me{margin-top:72px;padding-top:40px;border-top:1px solid var(--border);}
-        .dom-title{font-size:28px;line-height:1.1;letter-spacing:-0.02em;font-weight:500;margin:10px 0 0;}
-        .data-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-        @media(max-width:880px){.data-grid{grid-template-columns:repeat(2,1fr);}}
-        @media(max-width:480px){.data-grid{grid-template-columns:1fr;}}
-        .data-cell{
-          position:relative;display:flex;flex-direction:column;gap:6px;
-          padding:18px 18px 16px;border:1px solid var(--border);border-radius:12px;
-          background:var(--bg-elev);min-height:156px;
-          transition:border-color 200ms ease,transform 240ms cubic-bezier(.2,.7,.2,1),box-shadow 240ms ease;
-        }
-        .data-cell:hover{
-          border-color:var(--blue);transform:translateY(-2px);
-          box-shadow:0 12px 30px -16px color-mix(in oklab,var(--blue) 40%,transparent);
-        }
-        .dc-clickable{cursor:pointer;}
-        .dc-k{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-muted);}
-        .dc-v{font-size:32px;letter-spacing:-0.025em;font-weight:500;font-feature-settings:"tnum","ss01";line-height:1.05;margin-top:2px;}
-        .dc-unit{font-size:16px;color:var(--fg-muted);font-weight:400;letter-spacing:-0.01em;}
-        .dc-bars{display:flex;gap:3px;height:24px;align-items:flex-end;margin-top:6px;}
-        .dc-bars span{flex:1;background:var(--blue);border-radius:1.5px;opacity:0.85;min-height:3px;}
-        .dc-ring{position:relative;width:40px;height:40px;margin-top:4px;}
-        .dc-ring svg{width:40px;height:40px;display:block;}
-        .dc-ring-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--fg);}
-        .dc-progress{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
-        .dc-progress-label{font-family:'Geist Mono',monospace;font-size:10px;color:var(--fg-faint);}
-        .dc-delta{font-family:'Geist Mono',monospace;font-size:10px;color:var(--fg-muted);margin-top:auto;padding-top:6px;}
-        .dc-delta.up{color:var(--available);}
-        html[data-theme="dark"] .dc-delta.up{color:#4ade80;}
-        .dc-delta.mono-note{color:var(--fg-faint);}
-      `}</style>
+      {/* H — What I'm into (looping interest band) */}
+      <InterestsBand />
 
       <style>{`
         .prose p{font-size:16px;line-height:1.7;color:var(--fg);letter-spacing:-0.005em;margin:0 0 16px;}
@@ -774,19 +724,47 @@ function About({ go }) {
 // ═══════════════════════════════════════════════════════════════
 function Contact() {
   const P = PROFILE();
-  const [email, setEmail]   = useState('');
-  const [msg, setMsg]       = useState('');
-  const [topic, setTopic]   = useState('Internship');
-  const [sent, setSent]     = useState(false);
+  const [email, setEmail]     = useState('');
+  const [msg, setMsg]         = useState('');
+  const [topic, setTopic]     = useState('Internship');
+  const [sent, setSent]       = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError]     = useState(false);
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canSend    = validEmail && msg.trim().length>6;
+  const endpoint   = P.formspree && P.formspree !== '#' ? P.formspree : null;
 
-  function send(e) {
+  async function send(e) {
     e.preventDefault();
-    if (!canSend) return;
-    setSent(true);
-    setTimeout(()=>{ setSent(false); setEmail(''); setMsg(''); }, 3200);
+    if (!canSend || sending) return;
+    setError(false);
+
+    // No Formspree endpoint configured → keep the optimistic demo behaviour.
+    if (!endpoint) {
+      setSent(true);
+      setTimeout(()=>{ setSent(false); setEmail(''); setMsg(''); }, 3200);
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+        body: JSON.stringify({ email, topic, message: msg, _subject: `Portfolio · ${topic} — ${email}` }),
+      });
+      setSending(false);
+      if (res.ok) {
+        setSent(true);
+        setTimeout(()=>{ setSent(false); setEmail(''); setMsg(''); }, 3200);
+      } else {
+        setError(true);
+      }
+    } catch (_) {
+      setSending(false);
+      setError(true);
+    }
   }
 
   return (
@@ -826,9 +804,18 @@ function Contact() {
             className="input" style={{resize:'vertical',minHeight:140}}/>
         </label>
 
-        <button type="submit" disabled={!canSend||sent} className="send">
-          {sent ? <><Icon.Check/> Sent — talk soon</> : <>Send <Icon.Arrow/></>}
+        <button type="submit" disabled={!canSend||sent||sending} className="send">
+          {sent
+            ? <><Icon.Check/> Sent — talk soon</>
+            : sending
+              ? <>Sending…</>
+              : <>Send <Icon.Arrow/></>}
         </button>
+        {error && (
+          <p className="mono" style={{margin:'2px 0 0',fontSize:12,color:'#dc2626',textAlign:'center'}}>
+            Something went wrong — please email me directly at {P.email}.
+          </p>
+        )}
       </form>
 
       {/* Social links */}

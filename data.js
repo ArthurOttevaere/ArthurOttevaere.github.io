@@ -37,15 +37,13 @@ window.PORTFOLIO_DATA = {
     name:           "Arthur Ottevaere",
     location:       "Tournai, BE",
     age:            "21",
-    available:      true,
-    availableText:  "Going in Erasmus in Rotterdam · Fall '26",
 
     /* Bio paragraphs — each string becomes a <p> in the About page */
     bio: [
       "I'm a 21-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use — dashboards, short reports, an occasional model.",
       "What draws me to analytics is the full arc from raw, unstructured data to a clear recommendation someone can act on. The interesting work isn't the model — it's deciding what question to ask, what to drop, and how to frame the output so a decision-maker instantly sees the point.",
       "On the side I build small data projects for fun — usually around Formula 1 and daily issues I want to solve. Some of them live on the projects page.",
-      "I'm going in a semester abroad in Rottedam in Fall '26, excited to meet new people and get a fresh perspective on things!",
+      "I'm going on a semester abroad in Rotterdam in Fall '26, excited to meet new people and get a fresh perspective on things!",
     ],
 
     /* Short description shown under your name on the home page */
@@ -57,12 +55,10 @@ window.PORTFOLIO_DATA = {
     github:   "https://github.com/ArthurOttevaere",     // e.g. "https://github.com/arthurottevaere"
     email:    "arthurottevaere7@gmail.com",
 
-    /* Landing page — three info cells */
-    status: [
-      { key: "Currently", value: "Master in Business Engineering",  sub: "Business Analytics · Y1" },
-      { key: "Based in",  value: "Tournai, BE",             sub: "Studying in Mons, Belgium" },
-      { key: "Toolkit",   value: "Python · SQL · R · Office Suite",         sub: "+ PowerBI, Notion, Canva & Git" },
-    ],
+    /* Contact form — paste your Formspree endpoint here to receive messages.
+       Create a form at https://formspree.io → it gives you a URL like
+       "https://formspree.io/f/abcdwxyz". Leave "" to keep the form in demo mode. */
+    formspree: "https://formspree.io/f/mdarnynw",
 
     /* About — education timeline */
     education: [
@@ -80,22 +76,18 @@ window.PORTFOLIO_DATA = {
       ["Dutch",   "B2 — working"],
     ],
 
-    /* About — "By the numbers" KPI cards */
-    stats: {
-      // Projects
-      projectsPerYear: 6,
-      projectsBars:    [40, 65, 50, 80, 60, 90, 75, 100],   // 8 values for 8 quarters
-      // Running — update with your actual data
-      runningKm:       342,
-      runningGoal:     500,
-      runningBars:     [28, 32, 45, 38, 52, 48, 60, 55],    // weekly km, last 8 weeks
-      runningDelta:    "▲ +24 km this week",
-      // F1
-      f1Watched:       22,
-      f1Total:         24,
-      // Erasmus countdown
-      erasmusDate:     "2026-09-01",
-    },
+    /* About — "What I'm into" looping marquee.
+       icon = a key from src/icons.jsx (Music, Football, Stock, Chip,
+       Flag, Apple, Planet …). label = the text shown next to it. */
+    interests: [
+      { icon: "Chip",     label: "Tech" },
+      { icon: "Flag",     label: "Formula 1" },
+      { icon: "Apple",    label: "Apple" },
+      { icon: "Planet",   label: "Astronomy" },
+      { icon: "Music",    label: "Music" },
+      { icon: "Football", label: "Football" },
+      { icon: "Stock",    label: "Stock Market" },
+    ],
   },
 
   /* ── Projects ───────────────────────────────────────────────── */
@@ -110,7 +102,7 @@ window.PORTFOLIO_DATA = {
       tags:     ["Python", "API", "Pandas"],
       cover:    "https://media.formula1.com/image/upload/t_16by9South/c_lfill,w_3392/q_auto/v1740000001/trackside-images/2023/F1_Grand_Prix_of_Abu_Dhabi/1814820481.webp",
       github:   "https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00",     // 🔗 https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00 
-      featured: true,
+      featured: false,
     },
     {
       id:       "dash",
@@ -130,7 +122,7 @@ window.PORTFOLIO_DATA = {
       cat:      "Academic",
       year:     "2025-2026",
       summary:  "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews.",
-      long:     "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews. Using NLP (TF-IDF, SVD) and Network Science, we transformed raw text into a graph to identify influential hubs and semantic bridges between genres.aded the public catalogue into Postgres, wrote ~30 queries across genre mix, release cadence and country footprint, and wired the results into a Jupyter walkthrough.",
+      long:     "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews. Using NLP (TF-IDF, SVD) and Network Science, we transformed raw text into a graph to identify influential hubs and semantic bridges between genres.",
       tags:     ["SQL", "Python", "Pandas"],
       cover:    "https://www.numerama.com/content/uploads/2017/05/netflix.jpeg",
       github:   "https://github.com/ArthurOttevaere/WebMining-Cinema-Reviews",     // 🔗 https://github.com/arthurottevaere/...
@@ -139,7 +131,7 @@ window.PORTFOLIO_DATA = {
     {
       id:       "layoffs",
       title:    "HR Predictive Analytics",
-      cat:      "Personal",
+      cat:      "Academic",
       year:     "2025-2026",
       summary:  "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
       long:     "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
@@ -151,13 +143,13 @@ window.PORTFOLIO_DATA = {
     {
       id:       "coding_project",
       title:    "Student Registration Management System",
-      cat:      "Personal",
+      cat:      "Academic",
       year:     "2024-2025",
       summary:  "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
       long:     "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
       tags:     ["Python", "Pandas", "Excel"],
       cover:    "https://leseng.rosselcdn.net/sites/default/files/dpistyles_v2/ena_16_9_extra_big/2025/10/25/node_707101/32922101/public/2025/10/25/52593243.jpeg?itok=-DeTC7yM1761374705",
-      github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://arthuros.notion.site/Student-Registration-Management-System-26c2a3f21be48010922dc56b9c351f81?source=copy_link",     // ⚠️ TODO: paste the correct link for THIS project (was wrongly pointing to the HR Predictive Analytics page)
       featured: false,
     },
     {
@@ -170,6 +162,42 @@ window.PORTFOLIO_DATA = {
       tags:     ["Python", "API", "Peppol"],
       cover:    "https://comptaperspectives.be/wp-content/uploads/2025/06/e-invoice-Wallonie-scaled.jpg",
       github:   "https://arthuros.notion.site/Automated-VAT-Validation-using-the-Peppol-API-2a62a3f21be48037af2bf93345e05339",     // 🔗 https://github.com/arthurottevaere/...
+      featured: false,
+    },
+    {
+      id:       "recommender_system",
+      title:    "Recommender System",
+      cat:      "Academic",
+      year:     "2026",
+      summary:  "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
+      long:     "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
+      tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
+      cover:    "/movix.png",
+      github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",     // 🔗 https://github.com/arthurottevaere/...
+      featured: true,
+    },
+    {
+      id:       "quantitative_decision_making",
+      title:    "Quantitative Decision Making",
+      cat:      "Academic",
+      year:     "2026",
+      summary:  "A Python-based system for quantitative decision making using statistical models and data analysis.",
+      long:     "A Python-based system for quantitative decision making using statistical models and data analysis.",
+      tags:     ["Python", "Optimization", "HTML Dashboard"],
+      cover:    "https://c0.wallpaperflare.com/preview/631/640/43/boat-sea-ocean-tanker.jpg",
+      github:   "https://github.com/ArthurOttevaere/QDM_GlobalFlow",     // 🔗 https://github.com/arthurottevaere/...
+      featured: false,
+    },
+    {
+      id:       "ai_gesture_recognition",
+      title:    "AI Gesture Recognition",
+      cat:      "Academic",
+      year:     "2026",
+      summary:  "A Python-based system for recognizing gestures using artificial intelligence and machine learning techniques.",
+      long:     "A Python-based system for recognizing gestures using artificial intelligence and machine learning techniques.",
+      tags:     ["Python", "Gesture Recognition", "Machine Learning"],
+      cover:    "https://bluewhaleapps.com/wp-content/uploads/2019/08/Guesture-recognition-technology-blog-feature-image.jpg",
+      github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",     // 🔗 https://github.com/arthurottevaere/...
       featured: false,
     },
   ],
