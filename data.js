@@ -170,8 +170,8 @@ window.PORTFOLIO_DATA = {
       title:    "Recommender System",
       cat:      "Academic",
       year:     "2026",
-      summary:  "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
-      long:     "A Python-based recommender system using collaborative filtering to suggest movies to users based on their preferences and behavior.",
+      summary:  "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
+      long:     "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
       tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
       cover:    "/assets/images/movix.jpg",
       github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",     // 🔗 https://github.com/arthurottevaere/...
@@ -179,11 +179,11 @@ window.PORTFOLIO_DATA = {
     },
     {
       id:       "quantitative_decision_making",
-      title:    "Quantitative Decision Making",
+      title:    "Multi-commodity Logistics Network",
       cat:      "Academic",
       year:     "2026",
-      summary:  "A Python-based system for quantitative decision making using statistical models and data analysis.",
-      long:     "A Python-based system for quantitative decision making using statistical models and data analysis.",
+      summary:  "Designed and optimized a resilient multi-commodity logistics network using Mixed-Integer Programming, analyzing network robustness under geopolitical disruptions across three products.",
+      long:     "Designed and optimized a resilient multi-commodity logistics network using Mixed-Integer Programming, analyzing network robustness under geopolitical disruptions across three products.",
       tags:     ["Python", "Optimization", "HTML Dashboard"],
       cover:    "https://c0.wallpaperflare.com/preview/631/640/43/boat-sea-ocean-tanker.jpg",
       github:   "https://github.com/ArthurOttevaere/QDM_GlobalFlow",     // 🔗 https://github.com/arthurottevaere/...
@@ -194,8 +194,8 @@ window.PORTFOLIO_DATA = {
       title:    "AI Gesture Recognition",
       cat:      "Academic",
       year:     "2026",
-      summary:  "A Python-based system for recognizing gestures using artificial intelligence and machine learning techniques.",
-      long:     "A Python-based system for recognizing gestures using artificial intelligence and machine learning techniques.",
+      summary:  "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
+      long:     "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
       tags:     ["Python", "Gesture Recognition", "Machine Learning"],
       cover:    "https://bluewhaleapps.com/wp-content/uploads/2019/08/Guesture-recognition-technology-blog-feature-image.jpg",
       github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",     // 🔗 https://github.com/arthurottevaere/...
