@@ -8,6 +8,19 @@ const DATA    = () => window.PORTFOLIO_DATA || {};
 const PROFILE = () => DATA().profile   || {};
 const PROJS   = () => DATA().projects  || [];
 
+// ─── Scroll-scene helpers ────────────────────────────────────────────────────
+// Native scroll only — no hijacking. sceneProgress() returns 0→1 for how far a
+// tall section has travelled through the viewport, so its sticky inner content
+// can be animated imperatively (refs + rAF, no React re-render) at 60fps.
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const easeInOut = t => (t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2);
+function sceneProgress(el){
+  const r = el.getBoundingClientRect();
+  const runway = r.height - window.innerHeight;
+  if (runway <= 0) return clamp((window.innerHeight - r.top)/window.innerHeight, 0, 1);
+  return clamp(-r.top/runway, 0, 1);
+}
+
 // ─── 01 · Variable-weight headline ──────────────────────────────────────────
 function VariableHeadline({ text }) {
   const ref = useRef(null);
@@ -216,6 +229,12 @@ function openGithub(e, github) {
 // ═══════════════════════════════════════════════════════════════
 // LANDING
 // ═══════════════════════════════════════════════════════════════
+// The landing is a 3-act scroll narrative (all native scroll — no hijacking):
+//   1 · Hero      — name + greeting, fills the first screen, with a scroll cue.
+//   2 · Manifesto — a short line that de-greys word-by-word as you scroll past.
+//   3 · Deck      — project cards that fan out of a neat pile as you scroll.
+// Acts 2 & 3 are tall sections with a sticky inner stage, so the content holds
+// centre-screen while the section's height acts as the scroll "runway".
 function Landing({ go }) {
   const P = PROFILE();
   const spotRef = useRef(null);
@@ -243,50 +262,226 @@ function Landing({ go }) {
       {/* Fixed cursor-glow layer — kept OUTSIDE .page-enter so its transform
           doesn't turn position:fixed into a clipped containing block. */}
       <div ref={spotRef} className="spotlight-layer" aria-hidden="true"/>
-      <div className="page-enter hero-spotlight" style={{paddingTop:72}}>
-      <div className="shell" style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center'}}>
-
-        {/* Polyglot greeting + variable headline */}
-        <PolyglotHello />
-        <VariableHeadline text={P.name||'Arthur Ottevaere'} />
-
-        <p className="sub" style={{marginTop:22,fontSize:19,maxWidth:620}}>
-          {P.tagline || ''}
-        </p>
-
-        <div style={{display:'flex',gap:10,marginTop:36}}>
-          <button onClick={()=>go('work')} className="btn-primary">
-            View projects <Icon.Arrow/>
-          </button>
-          <button onClick={()=>go('contact')} className="btn-ghost">
-            Get in touch
-          </button>
-        </div>
-
-      </div>
-
-      {/* Looping project carousel — full-bleed liquid glass marquee */}
-      <ProjectMarquee go={go} />
+      <div className="page-enter hero-spotlight">
+        <HeroAct go={go} name={P.name||'Arthur Ottevaere'} />
+        <ManifestoAct text={P.tagline||''} />
+        <DeckAct go={go} />
       </div>
     </>
   );
 }
 
-// ─── Landing · looping project carousel ──────────────────────────────────────
-// A continuously scrolling, liquid-glass strip of project previews. The list is
-// rendered twice back-to-back and translated -50% so the loop is seamless. It
-// pauses on hover (pointer devices) so a card can be read/clicked.
-function ProjectMarquee({ go }) {
-  const projects = PROJS();
-  if (!projects.length) return null;
-  // Featured first, then the rest, so the strongest cover leads the strip.
-  const ordered = [...projects].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
-  const loop = [...ordered, ...ordered];
-
+// ─── Act 1 · Hero ─────────────────────────────────────────────────────────────
+function HeroAct({ go, name }) {
+  const cueRef = useRef(null);
+  // The scroll cue fades out the moment the user starts scrolling — once they've
+  // got the hint, it stops nagging.
+  useEffect(()=>{
+    const el=cueRef.current; if(!el) return;
+    let raf=0;
+    function upd(){ raf=0; el.style.opacity = clamp(1 - window.scrollY/200, 0, 1).toFixed(2); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true});
+    return ()=>{ window.removeEventListener('scroll',s); if(raf) cancelAnimationFrame(raf); };
+  },[]);
   return (
-    <div className="pm-wrap" aria-label="Project previews">
-      <div className="pm-track">
-        {loop.map((p,i)=>{
+    <section className="lp-hero shell">
+      <PolyglotHello />
+      <VariableHeadline text={name} />
+      <div style={{display:'flex',gap:10,marginTop:36}}>
+        <button onClick={()=>go('work')} className="btn-primary">
+          View projects <Icon.Arrow/>
+        </button>
+        <button onClick={()=>go('contact')} className="btn-ghost">
+          Get in touch
+        </button>
+      </div>
+      <div ref={cueRef} className="scroll-cue" aria-hidden="true">
+        <span>Scroll</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+             strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M18 12l-6 6-6-6"/></svg>
+      </div>
+    </section>
+  );
+}
+
+// ─── Act 2 · De-greying manifesto ─────────────────────────────────────────────
+// Each word starts faint and fills to full ink as the scroll head sweeps across
+// it, left→right. Opacity-only (so it's theme-agnostic) and driven imperatively.
+function ManifestoAct({ text }) {
+  const secRef   = useRef(null);
+  const wordsRef = useRef([]);
+  const words = (text||'').split(/\s+/).filter(Boolean);
+  useEffect(()=>{
+    const el=secRef.current; if(!el) return;
+    const spans=wordsRef.current.filter(Boolean);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      spans.forEach(s=>s.style.opacity=1); return;
+    }
+    const n=spans.length, spread=2.4;   // ~2-3 words lighting up at once = soft wipe
+    let raf=0;
+    function upd(){
+      raf=0;
+      // Fill a touch early (×0.92 runway) so the line is fully lit just before
+      // it leaves the screen, rather than completing right at the very edge.
+      const head = clamp(sceneProgress(el)/0.92, 0, 1) * (n + spread);
+      spans.forEach((s,i)=>{
+        const w = clamp((head - i)/spread, 0, 1);
+        s.style.opacity = (0.15 + 0.85*w).toFixed(3);
+      });
+    }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd();
+    window.addEventListener('scroll',s,{passive:true});
+    window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[text]);
+  return (
+    <section ref={secRef} className="lp-manifesto" style={{height:'135vh'}}>
+      <div className="lp-manifesto-sticky">
+        <p className="lp-manifesto-text">
+          {words.map((w,i)=>(
+            <span key={i} className="lp-word" ref={el=>wordsRef.current[i]=el}>
+              {w}{i<words.length-1?' ':''}
+            </span>
+          ))}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Act 3 · Fanning project deck ─────────────────────────────────────────────
+// Picks the strongest few projects, centres the featured one, then fans them
+// from a neat pile into a hand-of-cards spread as the section scrolls past.
+// Mobile gets a simpler staggered reveal (no fan, no captured scroll).
+function DeckAct({ go }) {
+  const all = PROJS();
+  const ordered = [...all].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)).slice(0,6);
+  const cards = centerFirst(ordered);
+  const [mobile, setMobile] = useState(()=>window.matchMedia('(max-width:640px)').matches);
+  useEffect(()=>{
+    const mq=window.matchMedia('(max-width:640px)');
+    const h=e=>setMobile(e.matches);
+    mq.addEventListener('change',h);
+    return ()=>mq.removeEventListener('change',h);
+  },[]);
+  if(!cards.length) return null;
+  return mobile ? <DeckMobile cards={cards} go={go}/> : <DeckFan cards={cards} go={go}/>;
+}
+
+// Re-orders so the first (featured) item lands in the visual centre of the fan,
+// with the rest filling outward from the middle.
+function centerFirst(items){
+  const n=items.length; if(n<2) return items;
+  const mid=Math.round((n-1)/2);
+  const slots=new Array(n);
+  slots[mid]=items[0];
+  let l=mid-1, r=mid+1, k=1;
+  while(k<n){
+    if(r<n){ slots[r++]=items[k++]; }
+    if(k<n && l>=0){ slots[l--]=items[k++]; }
+  }
+  return slots;
+}
+
+function DeckCardInner({ p }){
+  const href = p.github&&p.github!=='#' ? p.github : undefined;
+  return (
+    <a href={href||'#'}
+       target={href?'_blank':undefined}
+       rel={href?'noopener noreferrer':undefined}
+       onClick={e=>{ if(!href) e.preventDefault(); }}
+       className="deck-card-inner">
+      <div className="pm-cover"><CoverImg cover={p.cover} title={p.title}/></div>
+      <div className="pm-meta">
+        <span className="pm-cat">{p.cat}</span>
+        <span className="pm-title">{p.title}</span>
+      </div>
+    </a>
+  );
+}
+
+function DeckFan({ cards, go }) {
+  const secRef   = useRef(null);
+  const cardRefs = useRef([]);
+  const n = cards.length;
+  const center = (n-1)/2;
+  useEffect(()=>{
+    const el=secRef.current; if(!el) return;
+    const els=cardRefs.current.filter(Boolean);
+    const stage = el.querySelector('.lp-deck-stage');
+    function layout(p){
+      const e=easeInOut(clamp(p,0,1));
+      // Responsive spread: keep the widest fanned card inside the stage so it
+      // never clips on narrower desktops. ~240px card + a little rotation slack.
+      const stageW = stage ? stage.clientWidth : 1120;
+      const spreadX = Math.min(140, Math.max(60, (stageW - 280) / Math.max(1, n-1)));
+      const fanRot  = spreadX < 110 ? 4 : 6;
+      els.forEach((c,i)=>{
+        const off=i-center;
+        // pile (e=0): tight stack with a hair of rotation; fan (e=1): hand of cards
+        const x = off*( 7 + (spreadX-7)*e );
+        const y = Math.abs(off)*( 2 + (16-2)*e );
+        const r = off*( 1.5 + (fanRot-1.5)*e );
+        const s = 0.96 + 0.04*e;
+        c.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg) scale(${s.toFixed(3)})`;
+        c.style.zIndex = String(100 - Math.round(Math.abs(off)*10));
+      });
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){ layout(1); return; }
+    let raf=0;
+    function upd(){ raf=0; layout(sceneProgress(el)); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd();
+    window.addEventListener('scroll',s,{passive:true});
+    window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[n]);
+  return (
+    <section ref={secRef} className="lp-deck-section" style={{height:'175vh'}}>
+      <div className="lp-deck-sticky">
+        <div className="lp-deck-head">
+          <div className="eyebrow">Selected work</div>
+          <h2 className="h2" style={{marginTop:10}}>Things I've built.</h2>
+        </div>
+        <div className="lp-deck-stage" aria-label="Project previews">
+          {cards.map((p,i)=>(
+            <div key={i} className="deck-card" ref={el=>cardRefs.current[i]=el}>
+              <DeckCardInner p={p}/>
+            </div>
+          ))}
+        </div>
+        <button onClick={()=>go('work')} className="btn-ghost">
+          View all projects <Icon.Arrow/>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function DeckMobile({ cards, go }) {
+  const listRef = useRef(null);
+  useEffect(()=>{
+    const root=listRef.current; if(!root) return;
+    const items=Array.from(root.querySelectorAll('.lp-reveal-card'));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      items.forEach(i=>i.classList.add('in')); return;
+    }
+    const io=new IntersectionObserver(es=>{
+      es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    },{ threshold:0.2 });
+    items.forEach(i=>io.observe(i));
+    return ()=>io.disconnect();
+  },[]);
+  return (
+    <section className="shell" style={{paddingTop:8}}>
+      <div className="lp-deck-head" style={{textAlign:'left',marginBottom:20}}>
+        <div className="eyebrow">Selected work</div>
+        <h2 className="h2" style={{marginTop:10}}>Things I've built.</h2>
+      </div>
+      <div ref={listRef} className="lp-reveal-list">
+        {cards.map((p,i)=>{
           const href = p.github&&p.github!=='#' ? p.github : undefined;
           return (
             <a key={i}
@@ -294,9 +489,7 @@ function ProjectMarquee({ go }) {
                target={href?'_blank':undefined}
                rel={href?'noopener noreferrer':undefined}
                onClick={e=>{ if(!href) e.preventDefault(); }}
-               className="pm-card"
-               aria-hidden={i>=ordered.length}
-               tabIndex={i>=ordered.length?-1:0}>
+               className="pm-card lp-reveal-card">
               <div className="pm-cover"><CoverImg cover={p.cover} title={p.title}/></div>
               <div className="pm-meta">
                 <span className="pm-cat">{p.cat}</span>
@@ -306,10 +499,11 @@ function ProjectMarquee({ go }) {
           );
         })}
       </div>
-      {/* Soft edge fade so cards dissolve into the page on both sides */}
-      <div className="pm-fade pm-fade-l"/>
-      <div className="pm-fade pm-fade-r"/>
-    </div>
+      <button onClick={()=>go('work')} className="btn-ghost"
+              style={{width:'100%',justifyContent:'center',marginTop:24}}>
+        View all projects <Icon.Arrow/>
+      </button>
+    </section>
   );
 }
 

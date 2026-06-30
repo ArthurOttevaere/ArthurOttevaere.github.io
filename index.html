@@ -466,34 +466,94 @@
     .vh-name .vh-space { display: none; }
   }
 
-  /* ── Landing · looping project carousel ─────────────────────────── */
-  /* Vertical padding gives the cards headroom so a hover scale (which grows
-     past the content box) is never clipped by the wrap's overflow. The
-     horizontal fade is done with mask-image, not overflow, so left/right
-     growth isn't clipped either. */
-  .pm-wrap {
-    position: relative; width: 100%; margin-top: 56px;
-    padding: 30px 0;
-    /* Clip horizontal scroll but let vertical shadows breathe. The edge fade
-       is done with overlay gradients (.pm-fade), NOT mask-image — a mask clips
-       to the border-box and would cut the cards' drop shadows. */
-    overflow-x: clip; overflow-y: visible;
+  /* ── Landing · scroll narrative (3 acts) ────────────────────────── */
+  /* Act 1 — hero fills the first screen and vertically centres its content. */
+  .lp-hero {
+    min-height: 88vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; position: relative;
   }
-  /* Soft curtains that dissolve the cards into the page at the left/right
-     edges. Vertical strips only, so they never cut a card's shadow. */
-  .pm-fade {
-    position: absolute; top: 0; bottom: 0; width: 9%;
-    z-index: 2; pointer-events: none;
+  /* Scroll cue — a gentle "Scroll ↓" that bobs, then fades on first scroll. */
+  .scroll-cue {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: inline-flex; flex-direction: column; align-items: center; gap: 7px;
+    color: var(--fg-faint); pointer-events: none;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
   }
-  .pm-fade-l { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
-  .pm-fade-r { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
-  .pm-track {
-    display: flex; gap: 16px; width: max-content;
-    animation: pmScroll 46s linear infinite;
+  .scroll-cue svg { width: 16px; height: 16px; animation: cueBob 1.8s ease-in-out infinite; }
+  @keyframes cueBob {
+    0%,100% { transform: translateY(0);   opacity: 0.55; }
+    50%     { transform: translateY(4px); opacity: 1;    }
   }
-  .pm-wrap:hover .pm-track { animation-play-state: paused; }
-  @media (prefers-reduced-motion: reduce) { .pm-track { animation: none; } }
-  @keyframes pmScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .scroll-cue svg { animation: none; } }
+
+  /* Act 2 — de-greying manifesto. Tall section = scroll runway; the inner
+     sticky stage holds the line centre-screen while the words fill in. */
+  .lp-manifesto { position: relative; }
+  .lp-manifesto-sticky {
+    position: sticky; top: 0; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lp-manifesto-text {
+    max-width: 780px; margin: 0 auto; padding: 0 32px; text-align: left;
+    font-size: clamp(26px, 3.6vw, 44px); line-height: 1.3;
+    letter-spacing: -0.02em; font-weight: 500; color: var(--fg);
+  }
+  /* Opacity-only fill (theme-agnostic). Tiny transition smooths fast scrubs. */
+  .lp-word { display: inline; opacity: 0.15; transition: opacity 90ms linear; }
+
+  /* Act 3 — fanning project deck. Same sticky-stage pattern as the manifesto. */
+  .lp-deck-section { position: relative; }
+  .lp-deck-sticky {
+    position: sticky; top: 0; min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 30px;
+  }
+  .lp-deck-head { text-align: center; }
+  /* The cards are absolutely centred in this stage; its height just reserves
+     vertical room (overflow stays visible so the fan + hover lift never clip). */
+  .lp-deck-stage {
+    position: relative; width: 100%; max-width: 1120px; height: 300px;
+  }
+  .deck-card {
+    position: absolute; top: 50%; left: 50%; width: 240px;
+    will-change: transform;
+  }
+  .deck-card-inner {
+    display: block; border-radius: 16px; overflow: hidden;
+    text-decoration: none; color: inherit;
+    border: 1px solid color-mix(in oklab, var(--border-strong) 60%, transparent);
+    background: var(--bg-elev);
+    box-shadow: 0 18px 42px -22px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.22);
+    transition: transform 240ms cubic-bezier(.2,.7,.2,1), box-shadow 240ms ease, border-color 240ms ease;
+  }
+  html[data-theme="dark"] .deck-card-inner {
+    box-shadow: 0 18px 42px -22px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  /* Hover lifts the inner card only, so it stacks cleanly on top of the JS
+     transform driving the fan on the outer .deck-card. */
+  @media (hover: hover) and (pointer: fine) {
+    .deck-card-inner:hover {
+      transform: translateY(-12px) scale(1.03);
+      border-color: var(--blue);
+      box-shadow: 0 28px 54px -24px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.28);
+    }
+  }
+  .deck-card .pm-cover { aspect-ratio: 16/10; }
+
+  /* Mobile deck — staggered reveal list (no fan, no captured scroll). */
+  .lp-reveal-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+  .lp-reveal-card {
+    width: 100% !important; flex: none !important;
+    opacity: 0; transform: translateY(26px);
+    transition: opacity 520ms cubic-bezier(.2,.7,.2,1), transform 520ms cubic-bezier(.2,.7,.2,1);
+  }
+  .lp-reveal-card.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-reveal-card { opacity: 1; transform: none; transition: none; }
+  }
 
   .pm-card {
     flex: 0 0 auto; width: 300px;
@@ -533,7 +593,6 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   @media (max-width: 640px) {
-    .pm-wrap { margin-top: 56px; }
     .pm-card { width: 230px; }
   }
 
