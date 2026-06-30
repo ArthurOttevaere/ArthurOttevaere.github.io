@@ -489,6 +489,63 @@
   }
   @media (prefers-reduced-motion: reduce) { .scroll-cue svg { animation: none; } }
 
+  /* Hero composition — FIRST ● LAST with editorial corner labels, the accent
+     dot as centrepiece. The frame's max-width aligns the labels to the name. */
+  .hero-frame {
+    width: 100%; max-width: 1000px;
+    display: flex; flex-direction: column; align-items: stretch;
+  }
+  .hero-tags {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; padding: 0 6px 16px;
+  }
+  .hero-sub { display: flex; justify-content: flex-end; padding: 16px 6px 0; }
+  .hero-tag {
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--fg-muted); white-space: nowrap;
+  }
+  /* Reuse the polyglot greeting as the top-left editorial label (small now). */
+  .hero-tags .polyglot-hello {
+    font-size: 13px; margin: 0; min-height: 0; color: var(--fg-muted);
+  }
+  .hero-name {
+    display: flex; align-items: center; justify-content: center;
+    gap: clamp(14px, 2.4vw, 32px); flex-wrap: nowrap;
+    font-size: clamp(42px, 8.6vw, 96px); line-height: 0.94;
+    letter-spacing: -0.035em; font-weight: 500; margin: 0; text-align: center;
+  }
+  .hero-name .vh-word { display: inline-flex; white-space: nowrap; }
+  .hero-dot {
+    flex: 0 0 auto; border-radius: 50%;
+    width: clamp(16px, 2.4vw, 30px); height: clamp(16px, 2.4vw, 30px);
+    background: var(--blue); box-shadow: 0 0 14px -2px var(--blue);
+  }
+  .hero-cta { display: flex; gap: 10px; margin-top: clamp(28px, 5vh, 46px); }
+
+  /* The scroll thread — accent comet + faint continuity line, spanning the
+     whole landing box. Sits above the (transparent) section backgrounds but is
+     routed through the margins/gaps so it never hides text. */
+  .thread-svg {
+    position: absolute; top: 0; left: 0; width: 100%;
+    z-index: 2; pointer-events: none; overflow: visible;
+  }
+  .thread-trail {
+    stroke: var(--blue); stroke-width: 1.5; opacity: 0.26;
+    stroke-linecap: round;
+  }
+  .thread-dot { fill: var(--blue); }
+  .thread-dot.head { filter: drop-shadow(0 0 7px var(--blue)); }
+  @media (prefers-reduced-motion: reduce) {
+    .thread-trail { opacity: 0.2; }
+  }
+
+  /* Mobile hero — stack the name (dot between), centre the labels. */
+  @media (max-width: 640px) {
+    .hero-tags { flex-direction: column; align-items: center; gap: 6px; padding-bottom: 18px; }
+    .hero-sub  { justify-content: center; padding-top: 18px; }
+    .hero-name { flex-direction: column; gap: 8px; font-size: clamp(44px, 15vw, 74px); }
+  }
+
   /* Act 2 — de-greying manifesto. Tall section = scroll runway; the inner
      sticky stage holds the line centre-screen while the words fill in. */
   .lp-manifesto { position: relative; }
