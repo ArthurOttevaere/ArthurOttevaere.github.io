@@ -983,7 +983,7 @@
   .proj-card:hover .proj-title { color:var(--blue-fg); }
   .proj-sum {
     margin:8px 0 0; font-size:14px; line-height:1.55; color:var(--fg-muted);
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    display:-webkit-box; line-clamp:2; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   }
   .proj-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
   .proj-foot {
@@ -1091,6 +1091,9 @@
   .ab-id { display: flex; align-items: center; gap: 16px; }
   .ab-id-name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-top: 6px; }
   .ab-id-meta { font-size: 13px; color: var(--fg-muted); margin-top: 2px; }
+  /* On desktop the scene/sticky wrappers are inert (display:contents) so the
+     bio lays out exactly as before; on mobile they become a pinned reveal. */
+  .ab-lead-scene, .ab-lead-sticky { display: contents; }
   .ab-lead-group { display: flex; flex-direction: column; gap: 16px; max-width: 880px; }
   .ab-lead {
     margin: 0;
@@ -1213,6 +1216,14 @@
     .ab-intro-sticky, .ab-edu-sticky {
       position: static; min-height: 0; height: auto;
       padding-top: 48px; padding-bottom: 48px;
+    }
+    /* Mobile bio = a pinned reveal scene (like the home manifesto): the scene
+       gives the scroll runway, the inner sticks centre-screen and holds the bio
+       still while it de-greys, instead of letting the text scroll up the page. */
+    .ab-lead-scene { display: block; min-height: 138vh; }
+    .ab-lead-sticky {
+      display: flex; align-items: center;
+      position: sticky; top: 0; height: 100vh;
     }
     /* Base .ab-tools-inner / .ab-pack-inner use `padding: X 0` which zeroes the
        side gutter and beats .shell — restore an explicit gutter here. */

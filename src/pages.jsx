@@ -1143,7 +1143,7 @@ function AboutIntro({ lite, go }) {
   const paras = [P.bio?.[0], P.bio?.[1]].filter(Boolean).map(t=>t.split(/\s+/).filter(Boolean));
   const offsets = []; { let acc=0; paras.forEach(wa=>{ offsets.push(acc); acc+=wa.length; }); }
   const total = offsets.length ? offsets[offsets.length-1]+paras[paras.length-1].length : 0;
-  const secRef = useRef(null), wordsRef = useRef([]);
+  const secRef = useRef(null), wordsRef = useRef([]), leadSceneRef = useRef(null);
   useEffect(()=>{
     const el=secRef.current; if(!el) return;
     const spans=wordsRef.current.filter(Boolean);
@@ -1151,14 +1151,11 @@ function AboutIntro({ lite, go }) {
     const n=spans.length, spread=lite?5.5:3.2;
     let raf=0;
     function upd(){ raf=0;
-      // On mobile the act flows as a normal block whose natural scroll runway is
-      // tiny (content barely taller than the viewport), so scene-progress reveals
-      // too fast. Drive it by scroll DISTANCE instead — 300px to ink the whole
-      // bio — a brisk-but-gradual de-grey that finishes as it leaves the top.
-      // Desktop keeps the scene-progress mapping.
-      let prog;
-      if(lite){ const r=el.getBoundingClientRect(); prog=clamp(-r.top/300,0,1); }
-      else    { prog=clamp(sceneProgress(el),0,1); }
+      // On mobile the bio sits in its own sticky scene (.ab-lead-scene): it pins
+      // centre-screen and de-greys as you scroll the scene's runway — exactly
+      // like the home manifesto (the text freezes, it doesn't scroll past).
+      // Desktop reveals against the whole intro section.
+      const prog=clamp(sceneProgress((lite && leadSceneRef.current) || el),0,1);
       const head=prog*(n+spread);
       spans.forEach((s,i)=>{ const w=clamp((head-i)/spread,0,1); s.style.opacity=(0.14+0.86*w).toFixed(3); });
     }
@@ -1177,14 +1174,18 @@ function AboutIntro({ lite, go }) {
             <div className="ab-id-meta">{P.location} · {P.age}</div>
           </div>
         </div>
-        <div className="ab-lead-group">
-          {paras.map((wa,pi)=>(
-            <p key={pi} className="ab-lead">
-              {wa.map((w,wi)=>{ const idx=offsets[pi]+wi; return (
-                <span key={wi} className="lp-word" ref={el=>wordsRef.current[idx]=el}>{w}{wi<wa.length-1?' ':''}</span>
-              );})}
-            </p>
-          ))}
+        <div className="ab-lead-scene" ref={leadSceneRef}>
+          <div className="ab-lead-sticky">
+            <div className="ab-lead-group">
+              {paras.map((wa,pi)=>(
+                <p key={pi} className="ab-lead">
+                  {wa.map((w,wi)=>{ const idx=offsets[pi]+wi; return (
+                    <span key={wi} className="lp-word" ref={el=>wordsRef.current[idx]=el}>{w}{wi<wa.length-1?' ':''}</span>
+                  );})}
+                </p>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="ab-id-actions">
           {P.cv && <a href={P.cv} target="_blank" rel="noopener noreferrer" className="btn-ghost-2"><Icon.Download/> Resume</a>}
