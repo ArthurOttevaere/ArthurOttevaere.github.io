@@ -21,52 +21,59 @@ function sceneProgress(el){
   return clamp(-r.top/runway, 0, 1);
 }
 
-// ─── 01 · Cursor-driven variable letter weight ──────────────────────────────
-// Letters near the cursor swell in weight, lift, and tint accent. Pointer-only
-// (on touch it would leave letters stuck after a tap). Reused by the hero name.
-function useLetterWeight(ref, deps){
-  useEffect(()=>{
-    const el = ref.current; if (!el) return;
-    if (!window.matchMedia('(hover: hover)').matches) return;
-    const spans = Array.from(el.querySelectorAll('.vh-l'));
-    let raf=0, target={x:-9999,y:-9999};
-    function apply() {
-      raf=0;
-      spans.forEach(s=>{
-        const r=s.getBoundingClientRect();
-        const d=Math.hypot(r.left+r.width/2-target.x, r.top+r.height/2-target.y);
-        const k=Math.max(0,1-d/220);
-        s.style.fontWeight = Math.round(380+k*520);
-        s.style.transform  = `translateY(${(-k*9).toFixed(2)}px)`;
-        s.style.color      = k>0.55?'var(--blue)':'';
-      });
-    }
-    function onMove(e){ target.x=e.clientX; target.y=e.clientY; if(!raf) raf=requestAnimationFrame(apply); }
-    function onLeave(){ target={x:-9999,y:-9999}; if(!raf) raf=requestAnimationFrame(apply); }
-    window.addEventListener('pointermove',onMove);
-    window.addEventListener('pointerleave',onLeave);
-    return ()=>{ window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerleave',onLeave); if(raf) cancelAnimationFrame(raf); };
-  }, deps||[]);
-}
-
-// Hero name laid out as  FIRST ● LAST  with the accent dot as the centrepiece —
-// that dot (id="thread-start") is where the scroll-thread comet is born.
+// ─── 01 · Spotlight hero name ────────────────────────────────────────────────
+// Letters (and the accent dot) nearest the cursor rise straight up; the letters
+// also swell in weight and tint accent. Proximity is distance-based and the
+// letter nodes are queried live each frame, so it engages reliably on every
+// load. As you scroll from the top the dot cross-fades into the scroll-thread
+// comet, so the point in the name IS the point that flies down the page.
 function HeroName({ name }) {
-  const ref = useRef(null);
-  useLetterWeight(ref, [name]);
-  const parts = (name||'').trim().split(/\s+/);
-  const first = parts.shift() || '';
-  const last  = parts.join(' ');
-  const Letters = ({ w }) => (
-    <span className="vh-word">
-      {Array.from(w).map((c,i)=>(<span key={i} className="vh-l">{c}</span>))}
-    </span>
-  );
+  const nameRef = useRef(null);
+  const dotRef  = useRef(null);
+  useEffect(()=>{
+    const el=nameRef.current; if(!el) return;
+    if(!window.matchMedia('(hover: hover)').matches) return;
+    let raf=0, mx=-9999, my=-9999;
+    // Spotlight: whatever the cursor is near rises straight up; letters also
+    // gain weight + accent tint. Distance-based; the letter nodes are queried
+    // live each frame so a re-render that swaps them can never stale us out.
+    const prox=node=>{ const r=node.getBoundingClientRect(); return Math.max(0, 1 - Math.hypot(r.left+r.width/2-mx, r.top+r.height/2-my)/250); };
+    function apply(){
+      raf=0;
+      el.querySelectorAll('.vh-l').forEach(s=>{
+        const k=prox(s);
+        s.style.fontWeight=Math.round(600+k*300);
+        s.style.transform=`translateY(${(-k*12).toFixed(2)}px)`;
+        s.style.color=k>0.5?'var(--blue)':'';
+      });
+      const dot=dotRef.current;
+      if(dot) dot.style.transform=`translateY(${(-prox(dot)*12).toFixed(2)}px)`;
+    }
+    function onMove(e){ mx=e.clientX; my=e.clientY; if(!raf) raf=requestAnimationFrame(apply); }
+    window.addEventListener('pointermove',onMove,{passive:true});
+    return ()=>{ window.removeEventListener('pointermove',onMove); if(raf) cancelAnimationFrame(raf); };
+  },[name]);
+  // Dot → comet hand-off: the name dot fades out over the first bit of scroll
+  // as the comet fades in (ScrollThread), so it reads as the dot lifting away.
+  useEffect(()=>{
+    const dot=dotRef.current; if(!dot) return;
+    let raf=0;
+    function upd(){ raf=0; dot.style.opacity=clamp(1-window.scrollY/64,0,1).toFixed(2); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true});
+    return ()=>{ window.removeEventListener('scroll',s); if(raf) cancelAnimationFrame(raf); };
+  },[]);
+  const parts=(name||'').trim().split(/\s+/);
+  const first=parts.shift()||'';
+  const last =parts.join(' ');
+  // Plain helper (not a component) → the letter spans are stable host nodes that
+  // React reuses across re-renders, so the spotlight effect never loses them.
+  const letters=(w,key)=>Array.from(w).map((c,i)=>(<span key={key+i} className="vh-l">{c}</span>));
   return (
-    <h1 className="h1 hero-name" ref={ref}>
-      <Letters w={first} />
-      <span className="hero-dot" id="thread-start" aria-hidden="true"></span>
-      <Letters w={last} />
+    <h1 className="h1 hero-name" ref={nameRef}>
+      <span className="vh-word">{letters(first,'a')}</span>
+      <span className="hero-dot" id="thread-start" ref={dotRef} aria-hidden="true"></span>
+      <span className="vh-word">{letters(last,'b')}</span>
     </h1>
   );
 }
@@ -292,7 +299,6 @@ function HeroAct({ go, profile }) {
     <section className="lp-hero shell">
       <div className="hero-frame">
         <div className="hero-tags">
-          <PolyglotHello />
           <span className="hero-tag mono">{role}</span>
         </div>
         <HeroName name={profile.name||'Arthur Ottevaere'} />
@@ -335,119 +341,139 @@ function heroClock(){
   }
 }
 
-// ─── The scroll thread · an accent comet linking the three acts ───────────────
-// A curve is built (in landing-box coords) through three DOM anchors: the hero
-// dot, the manifesto text, and the deck heading. The comet rides the curve at a
-// fixed viewport band, so as you scroll it sweeps DOWN the page leaving a fading
-// tail of ghost-dots, drawing the trail behind it — stitching the acts together.
+// ─── The scroll thread · a modern accent comet linking the three acts ─────────
+// Lives BEHIND the content (z-index 0) so it never obstructs text. As you
+// scroll, the comet head holds a fixed viewport band and sweeps DOWN the page,
+// its x gliding along an S-curve through three anchors (name dot → manifesto →
+// deck heading). Behind it a soft gradient streak fades out (no ghost balls),
+// and a faint continuity line marks the whole travelled path. When it reaches
+// the deck heading it LOCKS just above the title and stays there (tracking the
+// sticky heading live) while the deck fans open. Trail is rebuilt per-frame as a
+// short Bézier string — no arc-length sampling — so the live lock is exact.
 function ScrollThread() {
   const wrapRef  = useRef(null);
-  const pathRef  = useRef(null);   // hidden geometry path (for sampling)
-  const trailRef = useRef(null);   // visible faint continuity line
-  const dotsRef  = useRef([]);     // comet head + ghost dots
+  const trailRef = useRef(null);   // faint continuity line  (A0 → head)
+  const glowRef  = useRef(null);   // wide blurred halo along the comet tail
+  const tailRef  = useRef(null);   // crisp gradient core of the comet tail
+  const gradRef  = useRef(null);   // the tail's gradient endpoints
+  const haloRef  = useRef(null);   // soft glow behind the head
+  const coreRef  = useRef(null);   // crisp head dot
   useEffect(()=>{
-    const wrap=wrapRef.current, path=pathRef.current, trail=trailRef.current;
-    if(!wrap||!path) return;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let samples=[], total=0, band=0.46, startY=0, endY=0, dotR=12, raf=0;
+    const wrap=wrapRef.current; if(!wrap) return;
+    const host=wrap.parentElement;                       // .hero-spotlight box
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let A0=null, A1=null, A2=null, dotR=13, hb=null, raf=0;
 
-    function build(){
-      const host = wrap.parentElement;                 // .hero-spotlight box
-      const hb = host.getBoundingClientRect();
-      const pageTop = hb.top + window.scrollY;          // host offset in document
-      const W = host.clientWidth, H = host.scrollHeight;
-      wrap.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      wrap.style.height = H+'px';
-      const get = sel => {
-        const e=document.querySelector(sel); if(!e) return null;
-        const r=e.getBoundingClientRect();
-        return { r, top:r.top+window.scrollY-pageTop, left:r.left-hb.left };
-      };
-      const start=get('#thread-start'), mani=get('[data-thread="manifesto"]'), deck=get('[data-thread="deck"]');
-      if(!start||!mani||!deck) return false;
-      dotR = Math.max(7, Math.min(16, start.r.width/2));
-      const a0={ x:start.left+start.r.width/2, y:start.top+start.r.height/2 };
-      const a1={ x:Math.max(26, mani.left-30),  y:mani.top+22 };
-      const a2={ x:deck.left+deck.r.width/2,     y:deck.top-26 };
-      const cy=(p,q,k)=>p.y+(q.y-p.y)*k;
-      const d=`M ${a0.x} ${a0.y} `
-        + `C ${a0.x} ${cy(a0,a1,.5)}, ${a1.x} ${cy(a1,a0,.5)}, ${a1.x} ${a1.y} `
-        + `C ${a1.x} ${cy(a1,a2,.5)}, ${a2.x} ${cy(a2,a1,.5)}, ${a2.x} ${a2.y}`;
-      path.setAttribute('d',d);
-      if(trail) trail.setAttribute('d',d);
-      total=path.getTotalLength();
-      const N=260; samples=[];
-      for(let i=0;i<=N;i++){ const l=total*i/N; const pt=path.getPointAtLength(l); samples.push({l,x:pt.x,y:pt.y}); }
-      startY=a0.y; endY=a2.y;
-      // measure the resting viewport band from the hero dot's first paint
-      band = clamp(start.r.top/window.innerHeight, 0.30, 0.55);
-      if(trail){ trail.style.strokeDasharray=total; }
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    const smooth=t=>{ t=clamp(t,0,1); return t*t*(3-2*t); };
+    const cubicV=(p,q)=>{ const m=(p.y+q.y)/2; return `C ${p.x.toFixed(1)} ${m.toFixed(1)}, ${q.x.toFixed(1)} ${m.toFixed(1)}, ${q.x.toFixed(1)} ${q.y.toFixed(1)} `; };
+
+    // A0 (name dot) and A1 (manifesto runway) sit in normal flow → constant.
+    function measure(){
+      hb=host.getBoundingClientRect();
+      const W=host.clientWidth, H=host.scrollHeight;
+      wrap.setAttribute('viewBox',`0 0 ${W} ${H}`);
+      wrap.style.height=H+'px';
+      const start=document.querySelector('#thread-start');
+      const mani =document.querySelector('.lp-manifesto');
+      if(!start||!mani) return false;
+      const s=start.getBoundingClientRect();
+      dotR=Math.max(8, Math.min(17, s.width/2));
+      A0={ x:s.left-hb.left+s.width/2, y:s.top-hb.top+s.height/2 };
+      const m=mani.getBoundingClientRect();
+      A1={ x:Math.max(36, W*0.10), y:m.top-hb.top + m.height*0.5 };   // left gutter, runway mid
       return true;
     }
+    // A2 (deck heading) is sticky → measured LIVE each frame.
+    function deckAnchor(){
+      const d=document.querySelector('[data-thread="deck"]'); if(!d) return null;
+      const r=d.getBoundingClientRect();
+      return { x:r.left-hb.left+r.width/2, y:r.top-hb.top, vTop:r.top };
+    }
+    function curveXAtY(y){
+      if(y<=A1.y) return lerp(A0.x, A1.x, smooth((y-A0.y)/Math.max(1,A1.y-A0.y)));
+      return lerp(A1.x, A2.x, smooth((y-A1.y)/Math.max(1,A2.y-A1.y)));
+    }
 
-    function atY(ty){
-      // find sample whose y straddles ty (samples are y-monotonic, descending)
-      ty=clamp(ty, samples[0].y, samples[samples.length-1].y);
-      let lo=0, hi=samples.length-1;
-      for(let i=1;i<samples.length;i++){ if(samples[i].y>=ty){ hi=i; lo=i-1; break; } }
-      const a=samples[lo], b=samples[hi];
-      const t = b.y===a.y ? 0 : (ty-a.y)/(b.y-a.y);
-      return { x:a.x+(b.x-a.x)*t, y:ty, l:a.l+(b.l-a.l)*t };
+    function place(headX, headY){
+      // faint continuity line: A0 → (A1 if passed) → head — links the acts.
+      let d=`M ${A0.x.toFixed(1)} ${A0.y.toFixed(1)} `;
+      if(headY>A1.y) d += cubicV(A0,A1) + cubicV(A1,{x:headX,y:headY});
+      else           d += cubicV(A0,{x:headX,y:headY});
+      trailRef.current.setAttribute('d', d);
+      // Comet tail: a long, smooth ribbon that follows the curve and fades out
+      // behind the head (gradient + soft glow). Sampled as a short polyline so
+      // it hugs the curve even when it spans the bend at A1.
+      const tailLen=Math.max(120, window.innerHeight*0.22);
+      const backY=Math.max(A0.y, headY-tailLen);
+      const steps=10; let dt='';
+      for(let i=0;i<=steps;i++){ const yy=backY+(headY-backY)*i/steps; const xx=curveXAtY(yy); dt+=(i?'L':'M')+xx.toFixed(1)+' '+yy.toFixed(1)+' '; }
+      tailRef.current.setAttribute('d', dt);
+      glowRef.current.setAttribute('d', dt);
+      const g=gradRef.current;
+      g.setAttribute('x1',curveXAtY(backY).toFixed(1)); g.setAttribute('y1',backY.toFixed(1));
+      g.setAttribute('x2',headX.toFixed(1));            g.setAttribute('y2',headY.toFixed(1));
+      // head: soft halo + crisp core
+      haloRef.current.setAttribute('cx',headX.toFixed(1)); haloRef.current.setAttribute('cy',headY.toFixed(1)); haloRef.current.setAttribute('r',(dotR*2.2).toFixed(1));
+      coreRef.current.setAttribute('cx',headX.toFixed(1)); coreRef.current.setAttribute('cy',headY.toFixed(1)); coreRef.current.setAttribute('r',dotR.toFixed(1));
     }
 
     function frame(){
       raf=0;
-      const host=wrap.parentElement; const hb=host.getBoundingClientRect();
-      const viewTopInBox = -hb.top;                    // landing-box y at viewport top
-      const targetY = clamp(viewTopInBox + band*window.innerHeight, startY, endY);
-      const p=atY(targetY);
-      // comet head (i=0) + ghost dots trailing back along the curve, fading.
-      const gap=Math.max(10, dotR*1.6);
-      dotsRef.current.forEach((c,i)=>{
-        if(!c) return;
-        const ll=Math.max(0, p.l - i*gap);
-        const pt=path.getPointAtLength(ll);
-        c.setAttribute('cx', pt.x.toFixed(1));
-        c.setAttribute('cy', pt.y.toFixed(1));
-        c.setAttribute('r',  (dotR*(1 - i*0.16)).toFixed(1));
-        c.style.opacity = (1 - i*0.22).toFixed(2);
-      });
-      if(trail) trail.style.strokeDashoffset = (total - p.l).toFixed(1);
+      hb=host.getBoundingClientRect();
+      const vh=window.innerHeight;
+      const a2=deckAnchor(); if(!a2) return; A2=a2;
+      const band=0.46, lockGap=Math.max(36, dotR*2.4);
+      // transit at a fixed viewport band, then never sink below "just above the
+      // title" — so on arrival the head locks above the (live, sticky) heading.
+      const cometVY=Math.min(band*vh, a2.vTop - lockGap);
+      let headY=clamp(cometVY - hb.top, A0.y, a2.y - lockGap);
+      // Fade the whole comet in over the first slice of scroll, so at the very
+      // top only the name's own dot shows and the two cross-fade on hand-off.
+      wrap.style.opacity = clamp(window.scrollY/64, 0, 1).toFixed(3);
+      place(curveXAtY(headY), headY);
     }
 
     function render(){ if(!raf) raf=requestAnimationFrame(frame); }
-    function relayout(){ if(build()) frame(); }
+    function relayout(){ if(measure()) frame(); }
 
-    // wait a tick for fonts/layout, then build
     const t=setTimeout(()=>{
-      if(!build()) return;
+      if(!measure()) return;
+      const a2=deckAnchor(); if(a2) A2=a2;
       if(reduced){
-        // static: faint full line + comet resting at the deck anchor
-        if(trail) trail.style.strokeDashoffset = 0;
-        const end=samples[samples.length-1];
-        dotsRef.current.forEach((c,i)=>{ if(c){ c.setAttribute('cx',end.x); c.setAttribute('cy',end.y); c.setAttribute('r', i? 0 : dotR); c.style.opacity = i?0:1; } });
+        // static: trail + head resting just above the deck heading
+        wrap.style.opacity = 1;
+        const headY=A2 ? A2.y-Math.max(36,dotR*2.4) : A1.y;
+        place(curveXAtY(clamp(headY,A0.y,headY)), headY);
         return;
       }
       frame();
       window.addEventListener('scroll',render,{passive:true});
       window.addEventListener('resize',relayout);
       window.addEventListener('load',relayout);
-      // Re-measure once webfonts settle (they nudge the name dot a few px).
       if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(wrapRef.current) relayout(); });
     }, 120);
 
     return ()=>{ clearTimeout(t); window.removeEventListener('scroll',render); window.removeEventListener('resize',relayout); window.removeEventListener('load',relayout); if(raf) cancelAnimationFrame(raf); };
   },[]);
 
-  // 5 dots: index 0 = bright head, then fading ghosts.
-  const GHOSTS=[0,1,2,3,4];
   return (
     <svg ref={wrapRef} className="thread-svg" preserveAspectRatio="none" aria-hidden="true">
-      <path ref={trailRef} className="thread-trail" fill="none" />
-      <path ref={pathRef}  className="thread-geom"  fill="none" stroke="none" />
-      {GHOSTS.map(i=>(
-        <circle key={i} ref={el=>dotsRef.current[i]=el} className={'thread-dot'+(i===0?' head':'')} r="0" />
-      ))}
+      <defs>
+        <linearGradient ref={gradRef} id="cometTail" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
+          <stop className="cg0" offset="0"/>
+          <stop className="cg1" offset="0.55"/>
+          <stop className="cg2" offset="1"/>
+        </linearGradient>
+        <filter id="cometGlow" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="7"/>
+        </filter>
+      </defs>
+      <path   ref={trailRef} className="thread-trail" fill="none"/>
+      <path   ref={glowRef}  className="thread-glow"  fill="none" stroke="url(#cometTail)"/>
+      <path   ref={tailRef}  className="thread-tail"  fill="none" stroke="url(#cometTail)"/>
+      <circle ref={haloRef}  className="thread-halo"  r="0"/>
+      <circle ref={coreRef}  className="thread-core"  r="0"/>
     </svg>
   );
 }
@@ -484,7 +510,7 @@ function ManifestoAct({ text }) {
     return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
   },[text]);
   return (
-    <section ref={secRef} className="lp-manifesto" style={{height:'112vh'}}>
+    <section ref={secRef} className="lp-manifesto" style={{height:'168vh'}}>
       <div className="lp-manifesto-sticky">
         <p className="lp-manifesto-text" data-thread="manifesto">
           {words.map((w,i)=>(
@@ -560,18 +586,18 @@ function DeckFan({ cards, go }) {
     const stage = el.querySelector('.lp-deck-stage');
     function layout(p){
       const e=easeInOut(clamp(p,0,1));
-      // Responsive spread: keep the widest fanned card inside the stage so it
-      // never clips on narrower desktops. ~240px card + a little rotation slack.
+      // Bigger amplitude: a tight, slightly-shrunk pile blooms into a wide,
+      // strongly-rotated hand of cards. Responsive spread keeps it on-screen.
       const stageW = stage ? stage.clientWidth : 1120;
-      const spreadX = Math.min(140, Math.max(60, (stageW - 280) / Math.max(1, n-1)));
-      const fanRot  = spreadX < 110 ? 4 : 6;
+      const spreadX = Math.min(178, Math.max(72, (stageW - 300) / Math.max(1, n-1)));
+      const fanRot  = spreadX < 120 ? 7 : 10;
       els.forEach((c,i)=>{
         const off=i-center;
-        // pile (e=0): tight stack with a hair of rotation; fan (e=1): hand of cards
-        const x = off*( 7 + (spreadX-7)*e );
-        const y = Math.abs(off)*( 2 + (16-2)*e );
-        const r = off*( 1.5 + (fanRot-1.5)*e );
-        const s = 0.96 + 0.04*e;
+        // pile (e=0): tight, shrunk stack; fan (e=1): wide, arced hand of cards
+        const x = off*( 6 + (spreadX-6)*e );
+        const y = Math.abs(off)*( 1 + (24-1)*e ) - 14*e;   // arc + a slight overall rise
+        const r = off*( 1.2 + (fanRot-1.2)*e );
+        const s = 0.90 + 0.10*e;
         c.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg) scale(${s.toFixed(3)})`;
         c.style.zIndex = String(100 - Math.round(Math.abs(off)*10));
       });
@@ -586,7 +612,7 @@ function DeckFan({ cards, go }) {
     return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
   },[n]);
   return (
-    <section ref={secRef} className="lp-deck-section" style={{height:'142vh'}}>
+    <section ref={secRef} className="lp-deck-section" style={{height:'160vh'}}>
       <div className="lp-deck-sticky">
         <div className="lp-deck-head" data-thread="deck">
           <div className="eyebrow">Selected work</div>
@@ -599,7 +625,7 @@ function DeckFan({ cards, go }) {
             </div>
           ))}
         </div>
-        <button onClick={()=>go('work')} className="btn-ghost">
+        <button onClick={()=>go('work')} className="btn-primary deck-cta">
           View all projects <Icon.Arrow/>
         </button>
       </div>
@@ -646,7 +672,7 @@ function DeckMobile({ cards, go }) {
           );
         })}
       </div>
-      <button onClick={()=>go('work')} className="btn-ghost"
+      <button onClick={()=>go('work')} className="btn-primary"
               style={{width:'100%',justifyContent:'center',marginTop:24}}>
         View all projects <Icon.Arrow/>
       </button>

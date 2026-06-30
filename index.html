@@ -489,61 +489,65 @@
   }
   @media (prefers-reduced-motion: reduce) { .scroll-cue svg { animation: none; } }
 
-  /* Hero composition — FIRST ● LAST with editorial corner labels, the accent
-     dot as centrepiece. The frame's max-width aligns the labels to the name. */
+  /* Hero composition — FIRST ● LAST with the accent dot as centrepiece, and a
+     right-aligned editorial caption (role / location · time). The dot itself is
+     an invisible spacer: the scroll-thread comet paints the visible dot, so
+     there's never a doubled dot when the name letters animate. */
   .hero-frame {
-    width: 100%; max-width: 1000px;
+    width: 100%; max-width: 1040px;
     display: flex; flex-direction: column; align-items: stretch;
   }
-  .hero-tags {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    gap: 16px; padding: 0 6px 16px;
-  }
-  .hero-sub { display: flex; justify-content: flex-end; padding: 16px 6px 0; }
+  .hero-tags { display: flex; justify-content: flex-end; padding: 0 6px 18px; }
+  .hero-sub  { display: flex; justify-content: flex-end; padding: 18px 6px 0; }
   .hero-tag {
     font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--fg-muted); white-space: nowrap;
   }
-  /* Reuse the polyglot greeting as the top-left editorial label (small now). */
-  .hero-tags .polyglot-hello {
-    font-size: 13px; margin: 0; min-height: 0; color: var(--fg-muted);
-  }
   .hero-name {
     display: flex; align-items: center; justify-content: center;
-    gap: clamp(14px, 2.4vw, 32px); flex-wrap: nowrap;
-    font-size: clamp(42px, 8.6vw, 96px); line-height: 0.94;
-    letter-spacing: -0.035em; font-weight: 500; margin: 0; text-align: center;
+    gap: clamp(16px, 2.6vw, 36px); flex-wrap: nowrap;
+    font-size: clamp(50px, 10vw, 116px); line-height: 0.92;
+    letter-spacing: -0.04em; font-weight: 600; margin: 0; text-align: center;
   }
   .hero-name .vh-word { display: inline-flex; white-space: nowrap; }
+  /* The visible accent dot — rises with the spotlight like the letters, and
+     cross-fades into the comet on scroll. Smooth transition keeps the lift
+     springy rather than jittery. */
   .hero-dot {
     flex: 0 0 auto; border-radius: 50%;
-    width: clamp(16px, 2.4vw, 30px); height: clamp(16px, 2.4vw, 30px);
-    background: var(--blue); box-shadow: 0 0 14px -2px var(--blue);
+    width: clamp(20px, 2.8vw, 34px); height: clamp(20px, 2.8vw, 34px);
+    background: var(--blue); box-shadow: 0 0 22px -2px var(--blue);
+    transition: transform 260ms cubic-bezier(.2,.7,.2,1);
+    will-change: transform;
   }
-  .hero-cta { display: flex; gap: 10px; margin-top: clamp(28px, 5vh, 46px); }
+  .hero-cta { display: flex; gap: 10px; margin-top: clamp(30px, 5.5vh, 52px); }
 
-  /* The scroll thread — accent comet + faint continuity line, spanning the
-     whole landing box. Sits above the (transparent) section backgrounds but is
-     routed through the margins/gaps so it never hides text. */
+  /* The scroll thread — a modern accent comet: a glowing head trailing a long,
+     soft gradient ribbon that fades out behind it, plus a faint continuity
+     line. BEHIND the content (z-index 0) so it never obstructs text; it shows
+     through the name gap, the margins and above the deck title. */
   .thread-svg {
     position: absolute; top: 0; left: 0; width: 100%;
-    z-index: 2; pointer-events: none; overflow: visible;
+    z-index: 0; pointer-events: none; overflow: visible;
   }
-  .thread-trail {
-    stroke: var(--blue); stroke-width: 1.5; opacity: 0.26;
-    stroke-linecap: round;
-  }
-  .thread-dot { fill: var(--blue); }
-  .thread-dot.head { filter: drop-shadow(0 0 7px var(--blue)); }
-  @media (prefers-reduced-motion: reduce) {
-    .thread-trail { opacity: 0.2; }
-  }
+  .thread-trail { stroke: var(--blue); stroke-width: 1.2; opacity: 0.10; stroke-linecap: round; }
+  .thread-tail  { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .thread-glow  { stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; filter: url(#cometGlow); }
+  .thread-svg .cg0 { stop-color: var(--blue); stop-opacity: 0; }
+  .thread-svg .cg1 { stop-color: var(--blue); stop-opacity: 0.45; }
+  .thread-svg .cg2 { stop-color: var(--blue); stop-opacity: 1; }
+  .thread-halo { fill: var(--blue); opacity: 0.30; filter: url(#cometGlow); }
+  .thread-core { fill: var(--blue); }
+  @media (prefers-reduced-motion: reduce) { .thread-trail { opacity: 0.12; } }
 
-  /* Mobile hero — stack the name (dot between), centre the labels. */
+  /* Lift the acts above the thread so the comet weaves behind them. */
+  .lp-hero, .lp-manifesto, .lp-deck-section { position: relative; z-index: 1; }
+
+  /* Mobile hero — stack the name (dot between), right-align stays tidy. */
   @media (max-width: 640px) {
-    .hero-tags { flex-direction: column; align-items: center; gap: 6px; padding-bottom: 18px; }
-    .hero-sub  { justify-content: center; padding-top: 18px; }
-    .hero-name { flex-direction: column; gap: 8px; font-size: clamp(44px, 15vw, 74px); }
+    .hero-tags { justify-content: center; padding-bottom: 16px; }
+    .hero-sub  { justify-content: center; padding-top: 16px; }
+    .hero-name { flex-direction: column; gap: 8px; font-size: clamp(46px, 16vw, 80px); }
   }
 
   /* Act 2 — de-greying manifesto. Tall section = scroll runway; the inner
@@ -572,10 +576,10 @@
   /* The cards are absolutely centred in this stage; its height just reserves
      vertical room (overflow stays visible so the fan + hover lift never clip). */
   .lp-deck-stage {
-    position: relative; width: 100%; max-width: 1120px; height: 300px;
+    position: relative; width: 100%; max-width: 1160px; height: 340px;
   }
   .deck-card {
-    position: absolute; top: 50%; left: 50%; width: 240px;
+    position: absolute; top: 50%; left: 50%; width: 264px;
     will-change: transform;
   }
   .deck-card-inner {
