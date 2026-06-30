@@ -146,7 +146,7 @@ function Tag({ children }) {
 }
 
 // ─── Sliding pill segmented control ─────────────────────────────────────────
-function SlidingPills({ items, value, onChange, getCount, style }) {
+function SlidingPills({ items, value, onChange, getCount, lead, ariaLabel, getAria, className, style }) {
   const groupRef  = useRef(null);
   const sliderRef = useRef(null);
   const btnsRef   = useRef([]);
@@ -167,11 +167,14 @@ function SlidingPills({ items, value, onChange, getCount, style }) {
     return ()=>{ ro.disconnect(); window.removeEventListener('resize',update); };
   },[value,items]);
   return (
-    <div className="pill-group" ref={groupRef} style={style}>
+    <div className={'pill-group'+(className?' '+className:'')} ref={groupRef} style={style} role={ariaLabel?'group':undefined} aria-label={ariaLabel}>
+      {lead && <span className="pill-lead">{lead}</span>}
       <div className="pill-slider idle" ref={sliderRef}/>
       {items.map((it,i)=>(
         <button type="button" key={it} ref={el=>btnsRef.current[i]=el}
           onClick={()=>onChange(it)}
+          aria-pressed={getAria?value===it:undefined}
+          aria-label={getAria?getAria(it):undefined}
           className={'pill '+(value===it?'pill-on':'')}>
           {it}
           {getCount&&<span className="pill-count">{getCount(it)}</span>}
@@ -185,11 +188,16 @@ function SlidingPills({ items, value, onChange, getCount, style }) {
 function Avatar() {
   const P = PROFILE();
   if (P.photo) {
+    // Accent-tinted disc behind the (transparent) photo, like the initials avatar.
     return (
-      <img src={P.photo} alt={P.name}
-        style={{width:72,height:72,borderRadius:'50%',objectFit:'cover',
-          border:'1px solid var(--border)',flexShrink:0,display:'block'}}
-      />
+      <div style={{
+        width:72,height:72,borderRadius:'50%',flexShrink:0,overflow:'hidden',
+        background:'color-mix(in oklab, var(--blue) 35%, var(--bg-elev))',
+        border:'2px solid color-mix(in oklab, var(--blue) 45%, transparent)',
+      }}>
+        <img src={P.photo} alt={P.name}
+          style={{width:'82%',height:'82%',margin:'9% auto 0',objectFit:'contain',display:'block'}}/>
+      </div>
     );
   }
   // Initials fallback
@@ -225,12 +233,6 @@ function CoverImg({ cover, title }) {
   }
   const Comp = Cover[cover] || Cover.Generic;
   return <Comp/>;
-}
-
-// ─── Open project (GitHub) ───────────────────────────────────────────────────
-function openGithub(e, github) {
-  if (!github || github === '#') { e.preventDefault(); return; }
-  // href handles it natively — just let the default run
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -683,6 +685,38 @@ function DeckMobile({ cards, go }) {
 // ═══════════════════════════════════════════════════════════════
 // PROJECTS
 // ═══════════════════════════════════════════════════════════════
+
+// Optional precise completion date. `date` in data.js can be "YYYY-MM-DD" or
+// "YYYY-MM"; we fall back to the looser `year` field when it's absent.
+function parseProjDate(s){
+  if(!s) return null;
+  let str=String(s).trim();
+  if(/^\d{4}-\d{2}$/.test(str)) str+='-01';      // month-only → first of month
+  const t=Date.parse(str);
+  return isNaN(t) ? null : new Date(t);
+}
+// Human label shown on cards/popup: "15 Jun 2026", "Jun 2026", or just the year.
+function projDateLabel(p){
+  const d=parseProjDate(p.date);
+  if(d){
+    const hasDay=/^\d{4}-\d{2}-\d{2}/.test(String(p.date).trim());
+    return d.toLocaleDateString('en-GB',{
+      day: hasDay ? 'numeric' : undefined,
+      month:'short', year:'numeric', timeZone:'UTC',
+    });
+  }
+  return p.year || '';
+}
+// Sort key: exact date when given, else the latest year mentioned (ranges like
+// "2024-2025" rank by when the work ended).
+function projDateKey(p){
+  const d=parseProjDate(p.date);
+  if(d) return d.getTime();
+  const yrs=String(p.year||'').match(/\d{4}/g);
+  const y=yrs ? Math.max(...yrs.map(Number)) : 0;
+  return y ? Date.UTC(y,11,31) : 0;
+}
+
 function Projects() {
   const projects = PROJS();
   // ?? null: only falls back when find() returns undefined (no match).
@@ -693,19 +727,14 @@ function Projects() {
   const cats      = useMemo(()=>['All',...[...new Set(projects.map(p=>p.cat))]], [projects]);
   const [filter, setFilter] = useState('All');
   const [sort, setSort]     = useState('desc');   // 'desc' = newest first
-
-  // Year can be "2025" or a range like "2024-2025" — sort on the latest year
-  // mentioned so ranges rank by when the work ended.
-  const yearKey = (p)=>{
-    const yrs = String(p.year||'').match(/\d{4}/g);
-    return yrs ? Math.max(...yrs.map(Number)) : 0;
-  };
+  const [active, setActive] = useState(null);      // project shown in the detail popup
+  const [cols, setCols]     = useState(2);         // grid density (cards per row)
 
   const rest = useMemo(()=>{
     const list = projects.filter(p=>p.id!==featured?.id);
     const filtered = filter==='All' ? list : list.filter(p=>p.cat===filter);
     return [...filtered].sort((a,b)=>
-      sort==='desc' ? yearKey(b)-yearKey(a) : yearKey(a)-yearKey(b)
+      sort==='desc' ? projDateKey(b)-projDateKey(a) : projDateKey(a)-projDateKey(b)
     );
   },[filter,sort,projects,featured]);
 
@@ -738,31 +767,162 @@ function Projects() {
             <span>Date</span>
             <Icon.ArrowDown className={'sort-arrow'+(sort==='asc'?' asc':'')}/>
           </button>
+          <SlidingPills
+            items={[2,3,4]}
+            value={cols}
+            onChange={setCols}
+            lead={<Icon.Columns/>}
+            ariaLabel="Grid density"
+            getAria={n=>n+' columns'}
+            className="pill-group-cols"
+          />
         </div>
       </div>
 
       {/* Featured card */}
-      {featured && showFeatured && <FeaturedCard p={featured}/>}
+      {featured && showFeatured && <FeaturedCard p={featured} onOpen={setActive}/>}
 
-      {/* Rich list */}
-      <div style={{marginTop:32}}>
-        <div className="eyebrow" style={{marginBottom:12}}>
+      {/* Card grid */}
+      <div style={{marginTop: featured && showFeatured ? 44 : 0}}>
+        <div className="eyebrow" style={{marginBottom:16}}>
           {filter==='All'?'More work':filter} · {rest.length}
         </div>
-        <div style={{borderTop:'1px solid var(--border)'}}>
-          {rest.map(p=><ListRow key={p.id} p={p}/>)}
-          {rest.length===0&&(
+        {rest.length===0
+          ? (
             <div style={{padding:'48px 0',textAlign:'center',color:'var(--fg-muted)',fontSize:14}}>
               Nothing in this bucket yet.
+            </div>
+          )
+          : (
+            <div className="proj-grid" style={{'--cols': cols}}>
+              {rest.map(p=><ProjectCard key={p.id} p={p} onOpen={setActive}/>)}
+            </div>
+          )}
+      </div>
+
+      <ProjectModal p={active} onClose={()=>setActive(null)}/>
+    </div>
+  );
+}
+
+// ─── Project link kind ────────────────────────────────────────────────────────
+// Reads a project's link and works out which logo to show: GitHub, Notion, or a
+// generic arrow. Returns null when there's no public link yet ("#" / empty), so
+// the link button is simply omitted.
+function linkKind(url){
+  if(!url || url==='#') return null;
+  if(/notion\./i.test(url))  return { icon:'Notion', label:'Notion' };
+  if(/github\./i.test(url))  return { icon:'Github', label:'GitHub' };
+  return { icon:'ArrowUR', label:'Link' };
+}
+
+// Small link button (GitHub / Notion). stopPropagation so clicking it opens the
+// repo directly instead of bubbling up to the card's "open details" handler.
+function ProjectLink({ url, label }){
+  const k = linkKind(url);
+  if(!k) return null;
+  const Glyph = Icon[k.icon] || Icon.ArrowUR;
+  const text = label ? label : k.label;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+       className="proj-link" onClick={e=>e.stopPropagation()}
+       title={'Open on '+k.label} aria-label={'Open on '+k.label}>
+      <Glyph/><span>{text}</span>
+    </a>
+  );
+}
+
+// ─── Grid card ────────────────────────────────────────────────────────────────
+// Cover on top, text below. The whole card opens the detail popup; the inner
+// link button jumps straight to GitHub/Notion.
+function ProjectCard({ p, onOpen }){
+  function open(){ onOpen && onOpen(p); }
+  function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } }
+  return (
+    <article className="proj-card" role="button" tabIndex={0}
+             onClick={open} onKeyDown={onKey}
+             aria-label={'View details for '+p.title}>
+      <div className="proj-cover">
+        <CoverImg cover={p.cover} title={p.title}/>
+        <span className="cat-pill">{p.cat}</span>
+      </div>
+      <div className="proj-body">
+        <div className="proj-meta mono">{projDateLabel(p)}</div>
+        <h3 className="proj-title">{p.title}</h3>
+        <p className="proj-sum">{p.summary}</p>
+        <div className="proj-tags">{p.tags.slice(0,4).map(t=><Tag key={t}>{t}</Tag>)}</div>
+        <div className="proj-foot">
+          <span className="proj-details">Details <Icon.Arrow/></span>
+          <ProjectLink url={p.github}/>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// ─── Detail popup ─────────────────────────────────────────────────────────────
+// Rich modal: cover, meta, full description, key-point bullets, skills and the
+// link button. Escape / click-outside close it; body scroll is locked while open.
+function ProjectModal({ p, onClose }){
+  useEffect(()=>{
+    if(!p) return;
+    function onKey(e){ if(e.key==='Escape') onClose(); }
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return ()=>{ window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  },[p, onClose]);
+
+  if(!p) return null;
+  const k = linkKind(p.github);
+  const Glyph = k ? (Icon[k.icon] || Icon.ArrowUR) : null;
+  const points = Array.isArray(p.highlights) ? p.highlights : [];
+
+  // Rendered into <body> via a portal so it escapes .page-enter's transform —
+  // a transformed ancestor would otherwise capture position:fixed and the modal
+  // would scroll with the page instead of staying centred in the viewport.
+  return ReactDOM.createPortal((
+    <div className="pj-back" onMouseDown={onClose}>
+      <div className="pj-modal" role="dialog" aria-modal="true" aria-label={p.title}
+           onMouseDown={e=>e.stopPropagation()}>
+        <div className="pj-cover">
+          <CoverImg cover={p.cover} title={p.title}/>
+          <span className="cat-pill">{p.cat}</span>
+          <button className="pj-close" onClick={onClose} aria-label="Close" type="button">
+            <Icon.Close/>
+          </button>
+        </div>
+        <div className="pj-body">
+          <div className="pj-meta">
+            <span className="mono">{projDateLabel(p)}</span>
+            <span style={{color:'var(--fg-faint)'}}>·</span>
+            <span>{p.cat}</span>
+          </div>
+          <h3 className="pj-title">{p.title}</h3>
+          <p className="pj-long">{p.long || p.summary}</p>
+          {points.length>0 && (
+            <>
+              <div className="pj-h">Key points</div>
+              <ul className="pj-list">
+                {points.map((h,i)=>(<li key={i}><Icon.Check/><span>{h}</span></li>))}
+              </ul>
+            </>
+          )}
+          <div className="pj-tags">{p.tags.map(t=><Tag key={t}>{t}</Tag>)}</div>
+          {k && Glyph && (
+            <div className="pj-actions">
+              <a href={p.github} target="_blank" rel="noopener noreferrer" className="proj-link">
+                <Glyph/><span>View on {k.label}</span>
+              </a>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
-function FeaturedCard({ p }) {
+function FeaturedCard({ p, onOpen }) {
   const ref = useRef(null);
   function handleMove(e) {
     const c=ref.current; if(!c) return;
@@ -773,14 +933,14 @@ function FeaturedCard({ p }) {
     c.style.setProperty('--sy',y+'px');
   }
   function handleLeave() { const c=ref.current; if(c) c.style.transform=''; }
-
-  const href = p.github&&p.github!=='#' ? p.github : undefined;
+  function open(){ onOpen && onOpen(p); }
+  function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } }
 
   return (
-    <a href={href||'#'} ref={ref}
-       target={href?'_blank':undefined} rel={href?'noopener noreferrer':undefined}
-       onClick={e=>openGithub(e,p.github)}
+    <div ref={ref} role="button" tabIndex={0}
+       onClick={open} onKeyDown={onKey}
        onPointerMove={handleMove} onPointerLeave={handleLeave}
+       aria-label={'View details for '+p.title}
        className="featured is-tilting">
       <div className="featured-cover">
         <CoverImg cover={p.cover} title={p.title}/>
@@ -791,7 +951,7 @@ function FeaturedCard({ p }) {
       </div>
       <div className="featured-body">
         <div style={{display:'flex',alignItems:'center',gap:10,color:'var(--fg-muted)',fontSize:13}}>
-          <span className="mono">{p.year}</span>
+          <span className="mono">{projDateLabel(p)}</span>
           <span style={{color:'var(--fg-faint)'}}>·</span>
           <span>{p.cat}</span>
         </div>
@@ -800,9 +960,12 @@ function FeaturedCard({ p }) {
         <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:22}}>
           {p.tags.map(t=><Tag key={t}>{t}</Tag>)}
         </div>
-        <div className="see-more-cta" style={{marginTop:28}}>
-          <span>See more</span>
-          <Icon.ArrowUR/>
+        <div className="featured-actions" style={{marginTop:28}}>
+          <span className="see-more-cta">
+            <span>See details</span>
+            <Icon.ArrowUR/>
+          </span>
+          <ProjectLink url={p.github}/>
         </div>
       </div>
       <div className="featured-sheen"/>
@@ -810,7 +973,7 @@ function FeaturedCard({ p }) {
         .featured{
           display:grid;grid-template-columns:1.15fr 1fr;gap:0;
           border:1px solid var(--border);border-radius:16px;
-          background:var(--bg-elev);overflow:hidden;
+          background:var(--bg-elev);overflow:hidden;cursor:pointer;
           text-decoration:none;color:inherit;
           box-shadow:var(--shadow);
           transition:border-color 240ms ease,box-shadow 240ms ease,transform 240ms cubic-bezier(.2,.7,.2,1);
@@ -820,14 +983,10 @@ function FeaturedCard({ p }) {
           box-shadow:0 24px 60px -24px color-mix(in oklab,var(--blue) 40%,transparent);
           transform:translateY(-2px);
         }
+        .featured:focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
+        .featured-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
         .featured-cover{position:relative;aspect-ratio:16/9;border-right:1px solid var(--border);background:var(--bg-soft);}
-        .featured-body{padding:32px 36px;display:flex;flex-direction:column;justify-content:center;}
-        .cat-pill{
-          position:absolute;top:14px;left:14px;
-          font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
-          background:rgba(255,255,255,0.92);color:#0a0a0a;
-          padding:4px 8px;border-radius:6px;backdrop-filter:blur(8px);
-        }
+        .featured-body{padding:32px 36px 44px;display:flex;flex-direction:column;justify-content:center;}
         .featured-flag{
           position:absolute;top:14px;right:14px;
           display:inline-flex;align-items:center;gap:6px;
@@ -838,7 +997,7 @@ function FeaturedCard({ p }) {
         @media(max-width:780px){
           .featured{grid-template-columns:1fr;}
           .featured-cover{border-right:0;border-bottom:1px solid var(--border);}
-          .featured-body{padding:24px;}
+          .featured-body{padding:24px 24px 32px;}
         }
         /* ── "See more" CTA ──────────────────────────────────────── */
         .see-more-cta{
@@ -863,246 +1022,326 @@ function FeaturedCard({ p }) {
           transition:transform 300ms cubic-bezier(.2,.7,.2,1);
         }
       `}</style>
-    </a>
+    </div>
   );
 }
 
-function ListRow({ p }) {
-  const href = p.github&&p.github!=='#' ? p.github : undefined;
+
+// ═══════════════════════════════════════════════════════════════
+// ABOUT — an immersive, scroll-driven story in five beats
+// ═══════════════════════════════════════════════════════════════
+// Reuses the home's native-scroll engine: every act is a tall section with a
+// sticky inner stage animated by sceneProgress() (0→1 as it crosses the
+// viewport). The CSS describes each element's FINAL (visible) state; the JS
+// paints the hidden→shown animation by writing inline styles each frame. On
+// small screens / reduced-motion the JS bails to the final state immediately
+// and a media query unsticks the sections into a plain scrollable column.
+
+function reduceMotion(){ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+function useMedia(query){
+  const [match,setMatch]=useState(()=>window.matchMedia(query).matches);
+  useEffect(()=>{
+    const mq=window.matchMedia(query);
+    const h=e=>setMatch(e.matches);
+    mq.addEventListener('change',h);
+    return ()=>mq.removeEventListener('change',h);
+  },[query]);
+  return match;
+}
+
+function About({ go }) {
+  const lite = useMedia('(max-width:640px)');
   return (
-    <a href={href||'#'}
-       target={href?'_blank':undefined} rel={href?'noopener noreferrer':undefined}
-       onClick={e=>openGithub(e,p.github)}
-       className="row">
-      <div className="row-meta mono">{p.year}</div>
-      <div className="row-thumb"><CoverImg cover={p.cover} title={p.title}/></div>
-      <div className="row-mid">
-        <div className="row-head">
-          <span className="row-cat">{p.cat}</span>
-          <h4 className="row-title">{p.title}</h4>
-        </div>
-        <p className="row-sum">{p.summary}</p>
-      </div>
-      <div className="row-tags">{p.tags.slice(0,3).map(t=><Tag key={t}>{t}</Tag>)}</div>
-      <div className="row-arrow"><Icon.ArrowUR/></div>
-      <style>{`
-        .row{
-          display:grid;grid-template-columns:64px 120px 1fr auto 28px;
-          gap:20px;align-items:center;
-          padding:18px 4px;border-bottom:1px solid var(--border);
-          text-decoration:none;color:inherit;
-          transition:background 200ms ease,padding 220ms cubic-bezier(.2,.7,.2,1),color 200ms ease;
-        }
-        .row:hover{background:var(--blue-soft);padding-left:14px;padding-right:14px;}
-        html[data-theme="dark"] .row:hover{background:color-mix(in oklab,var(--blue) 12%,var(--bg));}
-        .row:hover h4{color:var(--blue-fg);}
-        .row-meta{font-size:12px;color:var(--fg-muted);}
-        .row-thumb{aspect-ratio:16/9;width:120px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg-soft);}
-        .row-head{display:flex;align-items:center;gap:8px;}
-        .row-title{margin:0;font-size:17px;font-weight:500;letter-spacing:-0.01em;}
-        .row-cat{
-          font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
-          color:var(--fg-muted);padding:2px 7px;border-radius:4px;
-          background:var(--tag-bg);border:1px solid var(--border);
-        }
-        .row-sum{margin:6px 0 0;font-size:14px;color:var(--fg-muted);line-height:1.5;max-width:540px;}
-        .row-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:240px;}
-        .row-arrow{
-          width:28px;height:28px;border-radius:7px;
-          display:flex;align-items:center;justify-content:center;
-          color:var(--fg-faint);
-          transition:background 220ms ease,color 220ms ease,transform 240ms cubic-bezier(.2,.7,.2,1);
-        }
-        .row:hover .row-arrow{background:var(--blue);color:#ffffff;transform:translate(3px,-3px) rotate(-3deg);}
-        .row-arrow svg{width:14px;height:14px;}
-        @media(min-width:641px) and (max-width:880px){
-          .row{grid-template-columns:80px 1fr 28px;}
-          .row-thumb,.row-tags{display:none;}
-        }
-        @media(max-width:640px){
-          /* Top-align so the (short) 16:9 thumb sits level with the title
-             instead of floating in the middle of a tall text block. */
-          .row{
-            grid-template-columns: 88px 1fr 22px;
-            gap: 12px;
-            padding: 14px 2px;
-            align-items: start;
-          }
-          .row-thumb{
-            width: 88px;
-            flex-shrink: 0;
-            margin-top: 2px;
-          }
-          .row-meta{ display: none; }
-          .row-tags{ display: none; }
-          /* Clamp title + summary to keep every row a uniform height. */
-          .row-head{ align-items: flex-start; }
-          .row-title{
-            font-size: 15px; line-height: 1.25;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-          }
-          .row-cat{ margin-top: 1px; }
-          .row-sum{
-            font-size: 12px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            margin-top: 4px;
-          }
-          .row-arrow{ margin-top: 2px; }
-          .row:hover{ padding-left: 8px; padding-right: 8px; }
-          .row-arrow{ width: 22px; height: 22px; }
-          .row-arrow svg{ width: 13px; height: 13px; }
-        }
-      `}</style>
-    </a>
+    <div className="page-enter about-story">
+      <AboutIntro lite={lite} go={go}/>
+      <EducationAct lite={lite}/>
+      <SkillsAct lite={lite}/>
+      <PassionsAct lite={lite} go={go}/>
+    </div>
   );
 }
 
-// ─── About · looping interests band ──────────────────────────────────────────
-// A continuously scrolling row of icon chips ("What I'm into"). Rendered twice
-// and translated -50% for a seamless loop; pauses on hover (pointer devices).
-function InterestsBand() {
-  const interests = PROFILE().interests || [];
-  if (!interests.length) return null;
-  const loop = [...interests, ...interests];
+// ─── Act 1 · Who I am (de-greying lead, like the home manifesto) ──────────────
+function AboutIntro({ lite, go }) {
+  const P = PROFILE();
+  const paras = [P.bio?.[0], P.bio?.[1]].filter(Boolean).map(t=>t.split(/\s+/).filter(Boolean));
+  const offsets = []; { let acc=0; paras.forEach(wa=>{ offsets.push(acc); acc+=wa.length; }); }
+  const total = offsets.length ? offsets[offsets.length-1]+paras[paras.length-1].length : 0;
+  const secRef = useRef(null), wordsRef = useRef([]);
+  useEffect(()=>{
+    const el=secRef.current; if(!el) return;
+    const spans=wordsRef.current.filter(Boolean);
+    if(lite||reduceMotion()){ spans.forEach(s=>s.style.opacity=1); return; }
+    const n=spans.length, spread=3.2;
+    let raf=0;
+    function upd(){ raf=0;
+      // Spread the reveal across the whole runway so it's slower and finishes
+      // right as the act ends (no dead lit-text zone before the timeline).
+      const head=clamp(sceneProgress(el),0,1)*(n+spread);
+      spans.forEach((s,i)=>{ const w=clamp((head-i)/spread,0,1); s.style.opacity=(0.14+0.86*w).toFixed(3); });
+    }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[total,lite]);
   return (
-    <section className="interests">
-      <div className="eyebrow">What I'm into</div>
-      <h3 className="interests-title">Beyond the data<span style={{color:'var(--fg-faint)'}}>.</span></h3>
-      <div className="ib-wrap" aria-label="Interests">
-        <div className="ib-track">
-          {loop.map((it,i)=>{
-            const Glyph = Icon[it.icon] || Icon.Dot;
-            return (
-              <div key={i} className="ib-chip" aria-hidden={i>=interests.length?true:undefined}>
-                <span className="ib-ico"><Glyph/></span>
-                <span className="ib-label">{it.label}</span>
-              </div>
-            );
-          })}
+    <section ref={secRef} className="ab-intro" style={{height:'178vh'}}>
+      <div className="ab-intro-sticky shell">
+        <div className="ab-id">
+          <Avatar/>
+          <div>
+            <div className="eyebrow">About</div>
+            <div className="ab-id-name">{P.name}</div>
+            <div className="ab-id-meta">{P.location} · {P.age}</div>
+          </div>
         </div>
-        <div className="ib-fade ib-fade-l"/>
-        <div className="ib-fade ib-fade-r"/>
+        <div className="ab-lead-group">
+          {paras.map((wa,pi)=>(
+            <p key={pi} className="ab-lead">
+              {wa.map((w,wi)=>{ const idx=offsets[pi]+wi; return (
+                <span key={wi} className="lp-word" ref={el=>wordsRef.current[idx]=el}>{w}{wi<wa.length-1?' ':''}</span>
+              );})}
+            </p>
+          ))}
+        </div>
+        <div className="ab-id-actions">
+          {P.cv && <a href={P.cv} target="_blank" rel="noopener noreferrer" className="btn-ghost-2"><Icon.Download/> Resume</a>}
+          {P.linkedin && <a href={P.linkedin} target="_blank" rel="noopener noreferrer" className="btn-ghost-2"><Icon.Linkedin style={{width:14,height:14}}/> LinkedIn</a>}
+        </div>
+        <LanguagesMini/>
+        <div className="ab-cue" aria-hidden="true">
+          <span>Scroll the story</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M18 12l-6 6-6-6"/></svg>
+        </div>
       </div>
     </section>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ABOUT
-// ═══════════════════════════════════════════════════════════════
-function About({ go }) {
-  const P = PROFILE();
-
+// ─── Act 2 · The path (a timeline you travel through) ─────────────────────────
+// The milestones glide horizontally past the viewport centre as you scroll:
+// whichever one is centred is in focus (scaled, lit), the ones behind stay lit,
+// the ones ahead are faint — so it reads like moving along a route. Mobile /
+// reduced-motion just stacks them, all lit.
+function EducationAct({ lite }) {
+  // Travel oldest → newest, whatever order the data is in.
+  const yearOf = e => { const m=String(e.period||'').match(/\d{4}/); return m?+m[0]:0; };
+  const edu = [...(PROFILE().education || [])].sort((a,b)=>yearOf(a)-yearOf(b));
+  const n = edu.length;
+  const secRef=useRef(null), trackRef=useRef(null), cardRefs=useRef([]);
+  useEffect(()=>{
+    const el=secRef.current, track=trackRef.current; if(!el||!track||!n) return;
+    const cards=cardRefs.current.filter(Boolean);
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    // Gentle smoothstep: still magnetised toward each point, but the transit
+    // between points is spread out so it reads slow and deliberate, not snappy.
+    const smoother=t=>{ t=clamp(t,0,1); return t*t*(3-2*t); };
+    if(lite||reduceMotion()){
+      track.style.transform='none';
+      cards.forEach((c,i)=>{ c.classList.add('lit'); c.classList.toggle('focus', i===0); });
+      return;
+    }
+    function layout(){
+      const r=el.getBoundingClientRect();
+      const pinP=clamp((-r.top)/Math.max(1,(r.height-window.innerHeight)),0,1);
+      const cx=track.parentElement.clientWidth/2;
+      const nodes=cards.map(c=>c.offsetLeft+c.offsetWidth/2);
+      // Magnetised travel: float position 0..n-1, but eased PER SEGMENT with a
+      // smootherstep so the timeline lingers ON each milestone and slides quickly
+      // between them — it feels snapped, not free.
+      const fp=pinP*(n-1);
+      const k=clamp(Math.floor(fp),0,Math.max(0,n-2));
+      const f=smoother(fp-k);
+      const target=n>1 ? lerp(nodes[k],nodes[k+1],f) : nodes[0];
+      track.style.transform=`translateX(${(cx-target).toFixed(1)}px)`;
+      const focusI=Math.round(fp);
+      cards.forEach((c,i)=>{ c.classList.toggle('lit', i<=focusI); c.classList.toggle('focus', i===focusI); });
+    }
+    let raf=0; function upd(){ raf=0; layout(); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[n,lite]);
+  if(!n) return null;
   return (
-    <div className="page-enter shell" style={{paddingTop:64,maxWidth:920}}>
-      <div className="eyebrow">About</div>
-      <h2 className="h2" style={{marginTop:10}}>The short version<span style={{color:'var(--fg-faint)'}}>.</span></h2>
-
-      <div className="about-layout" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:56,marginTop:40}}>
-        {/* Left — bio */}
-        <div className="prose">
-          <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:28}}>
-            <Avatar/>
-            <div>
-              <div style={{fontSize:15,fontWeight:500,letterSpacing:'-0.01em'}}>{P.name}</div>
-              <div style={{fontSize:13,color:'var(--fg-muted)',marginTop:2}}>{P.location} · {P.age}</div>
-            </div>
-          </div>
-
-          {(P.bio||[]).map((para,i)=>(
-            i===2 ? (
-              <p key={i}>
-                {para.split('projects page')[0]}
-                <ULink seed={0} onClick={(e)=>{ e.preventDefault(); go&&go('work'); }}>projects page</ULink>
-                {para.split('projects page')[1]||''}
-              </p>
-            ) : <p key={i}>{para}</p>
-          ))}
-
-          <div style={{display:'flex',gap:10,marginTop:28,flexWrap:'wrap'}}>
-            {P.cv && (
-              <a href={P.cv} target="_blank" rel="noopener noreferrer" className="btn-ghost-2">
-                <Icon.Download/> Resume
-              </a>
-            )}
-            {P.linkedin && (
-              <a href={P.linkedin} target="_blank" rel="noopener noreferrer" className="btn-ghost-2">
-                <Icon.Linkedin style={{width:14,height:14}}/> LinkedIn
-              </a>
-            )}
+    <section ref={secRef} className="ab-edu" style={{height:'175vh'}}>
+      <div className="ab-edu-sticky">
+        <div className="ab-head shell"><div className="eyebrow">The path</div><h3 className="ab-h">Where I've studied<span className="dotted">.</span></h3></div>
+        <div className="ab-edu-viewport">
+          <div className="ab-edu-rail" aria-hidden="true"/>
+          <div className="ab-edu-track" ref={trackRef}>
+            {edu.map((e,i)=>(
+              <div key={i} className="ab-edu-card" ref={el=>cardRefs.current[i]=el}>
+                <span className="ab-edu-node"/>
+                <div className="ab-edu-period mono">{e.period}</div>
+                <div className="ab-edu-degree">{e.degree}</div>
+                <div className="ab-edu-school">{e.school}</div>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Right — sidebar */}
-        <aside style={{display:'flex',flexDirection:'column',gap:32}}>
-          {P.education && (
-            <section>
-              <div className="eyebrow">Education</div>
-              <ul style={{listStyle:'none',padding:0,margin:'14px 0 0',display:'grid',gap:20}}>
-                {P.education.map((e,i)=>(
-                  <li key={i}>
-                    <div style={{fontSize:12,color:'var(--fg-muted)'}} className="mono">{e.period}</div>
-                    <div style={{marginTop:4,fontSize:15,fontWeight:500,letterSpacing:'-0.01em'}}>{e.degree}</div>
-                    <div style={{fontSize:13,color:'var(--fg-muted)'}}>{e.school}</div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {P.tools && (
-            <section>
-              <div className="eyebrow">Toolkit</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:14}}>
-                {P.tools.map(t=><Tag key={t}>{t}</Tag>)}
-              </div>
-            </section>
-          )}
-
-          {P.languages && (
-            <section>
-              <div className="eyebrow">Languages</div>
-              <ul style={{listStyle:'none',padding:0,margin:'14px 0 0',display:'grid',gap:8}}>
-                {P.languages.map(([l,lvl])=>(
-                  <li key={l} style={{display:'flex',justifyContent:'space-between',fontSize:14}}>
-                    <span>{l}</span>
-                    <span style={{color:'var(--fg-muted)'}}>{lvl}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </aside>
       </div>
+    </section>
+  );
+}
 
-      {/* H — What I'm into (looping interest band) */}
-      <InterestsBand />
+// ─── Act 3 · The toolkit (a workbench of skill cards, by category) ────────────
+// Falls back to a single group built from the flat `tools` list if `toolGroups`
+// isn't set in data.js. Tools we already ship a real glyph for render it.
+const SKILL_ICON = { notion:'Notion', git:'Github', github:'Github' };
+function SkillsAct({ lite }) {
+  const P = PROFILE();
+  const groups = (P.toolGroups && P.toolGroups.length)
+    ? P.toolGroups
+    : [{ label:'Toolkit', items:(P.tools||[]).map(t=>[t, t.slice(0,2)]) }];
+  const flat = [];
+  groups.forEach((g,gi)=> (g.items||[]).forEach((it,ii)=> flat.push({gi,ii,name:it[0],mono:it[1]||it[0].slice(0,2)})));
+  const secRef=useRef(null), cardRefs=useRef([]);
+  useEffect(()=>{
+    const el=secRef.current; if(!el||!flat.length) return;
+    const cards=cardRefs.current.filter(Boolean);
+    function setFinal(){ cards.forEach(c=>{ c.style.opacity=1; c.style.transform='none'; }); }
+    if(lite||reduceMotion()){ setFinal(); return; }
+    function layout(p){
+      const e=clamp(p,0,1), n=cards.length, start=0.12, stag=0.55/(n+2);
+      cards.forEach((c,i)=>{
+        const cp=easeInOut(clamp((e-start-i*stag)/0.3,0,1));
+        c.style.opacity=cp.toFixed(3);
+        c.style.transform=`translateY(${((1-cp)*46).toFixed(1)}px) scale(${(0.9+0.1*cp).toFixed(3)})`;
+      });
+    }
+    let raf=0; function upd(){ raf=0; layout(sceneProgress(el)); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[lite,flat.length]);
+  if(!flat.length) return null;
+  return (
+    <section ref={secRef} className="ab-tools">
+      <div className="ab-tools-inner shell">
+        <div className="ab-head"><div className="eyebrow">The toolkit</div><h3 className="ab-h">What I build with<span className="dotted">.</span></h3></div>
+        <div className="ab-skill-groups">
+          {groups.map((g,gi)=>(
+            <div key={gi} className="ab-skill-group">
+              <div className="ab-skill-label mono">{g.label}</div>
+              <div className="ab-skill-cards">
+                {(g.items||[]).map((it,ii)=>{
+                  const fi=flat.findIndex(f=>f.gi===gi&&f.ii===ii);
+                  const logo=it[2];
+                  // Real glyph for tools we already ship an icon for.
+                  const builtin=SKILL_ICON[it[0].toLowerCase()];
+                  const Glyph=builtin ? Icon[builtin] : null;
+                  return (
+                    <div key={ii} className="ab-skill-card" ref={el=>{ cardRefs.current[fi]=el; }}>
+                      <span className={'ab-skill-badge'+(logo||Glyph?' has-logo':' mono')}>
+                        {logo ? <img src={logo} alt={it[0]} loading="lazy"/> : Glyph ? <Glyph/> : (it[1]||it[0].slice(0,2))}
+                      </span>
+                      <span className="ab-skill-name">{it[0]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-      <style>{`
-        .prose p{font-size:16px;line-height:1.7;color:var(--fg);letter-spacing:-0.005em;margin:0 0 16px;}
-        .prose p:last-of-type{margin-bottom:0;}
-        .btn-ghost-2{
-          display:inline-flex;align-items:center;gap:8px;
-          height:36px;padding:0 14px;border-radius:8px;
-          border:1px solid var(--border);background:var(--bg-elev);
-          font-size:13px;color:var(--fg);text-decoration:none;
-          transition:background 200ms ease,border-color 200ms ease,color 200ms ease,transform 140ms ease;
-        }
-        .btn-ghost-2:hover{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-fg);}
-        .btn-ghost-2:hover svg{transform:translate(2px,-2px);}
-        .btn-ghost-2:active{transform:scale(0.97);}
-        .btn-ghost-2 svg{width:14px;height:14px;transition:transform 220ms cubic-bezier(.2,.7,.2,1);}
-        @media(max-width:780px){
-          .page-enter .prose+aside{grid-column:1/-1;}
-        }
-      `}</style>
+// ─── Languages · compact block shown inside the intro (not a full-width act) ──
+function levelRatio(lvl){ const s=String(lvl).toLowerCase();
+  if(s.includes('native')) return 1;
+  if(s.includes('c2')) return 0.95;
+  if(s.includes('c1')||s.includes('fluent')) return 0.82;
+  if(s.includes('b2')) return 0.62;
+  if(s.includes('b1')) return 0.48;
+  return 0.4;
+}
+function LanguagesMini() {
+  const langs = PROFILE().languages || [];
+  const ref = useRef(null);
+  useEffect(()=>{
+    const root=ref.current; if(!root||!langs.length) return;
+    const fills=[...root.querySelectorAll('.ab-lang-fill')];
+    const fill=()=>fills.forEach(f=>{ f.style.width=f.dataset.w+'%'; });
+    if(reduceMotion()){ fill(); return; }
+    // Drive the fill from scroll position so the bars grow as the block travels
+    // up through the viewport; they settle once it's comfortably in view.
+    function upd(){
+      const r=root.getBoundingClientRect(), vh=window.innerHeight;
+      const p=clamp((vh*0.92 - r.top)/(vh*0.5), 0, 1);
+      fills.forEach(f=>{ f.style.width=(p*(+f.dataset.w)).toFixed(1)+'%'; });
+    }
+    let raf=0; const s=()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; upd(); }); };
+    upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[langs.length]);
+  if(!langs.length) return null;
+  return (
+    <div className="ab-langs-mini" ref={ref}>
+      <div className="eyebrow">Languages</div>
+      <div className="ab-langs-row">
+        {langs.map(([l,lvl])=>(
+          <div key={l} className="ab-lang-chip">
+            <div className="ab-lang-chip-top"><span className="ab-lang-name">{l}</span><span className="ab-lang-level mono">{lvl}</span></div>
+            <div className="ab-lang-bar"><span className="ab-lang-fill" data-w={(levelRatio(lvl)*100).toFixed(0)} style={{width:0}}/></div>
+          </div>
+        ))}
+      </div>
     </div>
+  );
+}
+
+// ─── Act 5 · Beyond the data (passions as pinned cards on a wall) ─────────────
+// Each passion is a slightly-tilted card pinned to a board; they drop into place
+// (from above, settling into their resting tilt) as the act scrolls past.
+function PassionsAct({ lite, go }) {
+  const interests = PROFILE().interests || [];
+  const secRef=useRef(null), cardRefs=useRef([]);
+  // Deterministic resting tilt per card so the layout is stable across renders.
+  const tilt = i => ((i*37)%2 ? 1 : -1) * (3 + (i*53)%4);
+  useEffect(()=>{
+    const el=secRef.current; if(!el||!interests.length) return;
+    const cards=cardRefs.current.filter(Boolean);
+    function setFinal(){ cards.forEach((c,i)=>{ c.style.opacity=1; c.style.transform=`rotate(${tilt(i)}deg)`; }); }
+    if(lite||reduceMotion()){ setFinal(); return; }
+    function layout(p){
+      const e=clamp(p,0,1), n=cards.length, start=0.12, stag=0.55/(n+2);
+      cards.forEach((c,i)=>{
+        const cp=easeInOut(clamp((e-start-i*stag)/0.3,0,1));
+        c.style.opacity=cp.toFixed(3);
+        const rot=tilt(i)*cp + (1-cp)*-2;
+        c.style.transform=`translateY(${((1-cp)*-70).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${(0.92+0.08*cp).toFixed(3)})`;
+      });
+    }
+    let raf=0; function upd(){ raf=0; layout(sceneProgress(el)); }
+    function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+  },[interests,lite]);
+  if(!interests.length) return null;
+  return (
+    <section ref={secRef} className="ab-pack">
+      <div className="ab-pack-inner shell">
+        <div className="ab-head"><div className="eyebrow">Beyond the data</div><h3 className="ab-h">What I'm into<span className="dotted">.</span></h3></div>
+        <div className="ab-board">
+          {interests.map((it,i)=>{
+            const Glyph=Icon[it.icon]||Icon.Dot;
+            return (
+              <div key={i} className="ab-pin-card" ref={el=>cardRefs.current[i]=el}>
+                <span className="ab-pin"/>
+                <span className="ab-pin-ico"><Glyph/></span>
+                <span className="ab-pin-label">{it.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="ab-pack-cta">
+          <button onClick={()=>go&&go('contact')} className="btn-primary">Let's talk <Icon.Arrow/></button>
+        </div>
+      </div>
+    </section>
   );
 }
 

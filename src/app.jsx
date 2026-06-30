@@ -257,7 +257,7 @@ function Footer({ route }) {
           </div>
           <div className="foot-col foot-col-right">
             <span className="foot-eyebrow">Currently</span>
-            <span className="foot-meta-val">{isNight?'🌙 ':''}Tournai · {time}</span>
+            <span className="foot-meta-val">Tournai · {time}</span>
           </div>
         </div>
 
