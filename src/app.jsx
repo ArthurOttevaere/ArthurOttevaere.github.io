@@ -220,25 +220,82 @@ function Nav({ route, go, theme, setTheme }) {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ route }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
+
+  // Live local clock for "Currently" — Brussels time, ticks every 30s.
+  const [now, setNow] = useState(()=>new Date());
+  useEffect(()=>{
+    const id = setInterval(()=>setNow(new Date()), 30000);
+    return ()=>clearInterval(id);
+  }, []);
+  const tz = 'Europe/Brussels';
+  const time = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone:tz });
+  const hour = +now.toLocaleString('en-GB', { hour:'2-digit', hour12:false, timeZone:tz });
+  const isNight = hour < 7 || hour >= 20;
+
+  // "Last updated" tracks the page file itself — document.lastModified is the
+  // HTML's modified date, so it refreshes automatically on every deploy.
+  const updated = new Date(document.lastModified)
+    .toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  const hasMail = P.email && P.email!=='#';
+  const socials = [
+    { id:'mail',     icon:'Mail',     label:'Email',
+      href: hasMail ? 'mailto:'+P.email : '#', ext:false },
+    { id:'linkedin', icon:'Linkedin', label:'LinkedIn',
+      href: P.linkedin&&P.linkedin!=='#' ? P.linkedin : '#', ext:true },
+    { id:'github',   icon:'Github',   label:'GitHub',
+      href: P.github&&P.github!=='#' ? P.github : '#', ext:true },
+  ];
+
   return (
     <footer className="foot">
       <div className="shell foot-inner">
-        <span className="foot-brand">
-          <span className="foot-dot"/>
-          Arthur Ottevaere
-        </span>
-        <span className="foot-mid mono">© {new Date().getFullYear()} · Tournai, BE</span>
-        <div className="foot-links">
-          <ULink href={P.linkedin&&P.linkedin!=='#'?P.linkedin:'#'}
-                 target={P.linkedin&&P.linkedin!=='#'?'_blank':undefined}
+        <div className="foot-meta">
+          <div className="foot-col">
+            <span className="foot-eyebrow">Last updated</span>
+            <span className="foot-meta-val">{updated}</span>
+          </div>
+          <div className="foot-col foot-col-right">
+            <span className="foot-eyebrow">Currently</span>
+            <span className="foot-meta-val">{isNight?'🌙 ':''}Tournai · {time}</span>
+          </div>
+        </div>
+
+        <div className="foot-note">
+          <span className="foot-note-label">A note from Arthur</span>
+          <p className="foot-note-text">
+            Thanks for scrolling all the way down. If an idea, a question,
+            or just a hello crossed your mind — {hasMail
+              ? <a href={'mailto:'+P.email}>{P.email}</a>
+              : <span>let's talk</span>}. I'd love to hear from you.
+          </p>
+        </div>
+
+        <div className="foot-socials">
+          {socials.map((s,i)=>{
+            const Ico = Icon[s.icon];
+            const disabled = s.href==='#';
+            return (
+              <a key={s.id}
+                 className="foot-tile"
+                 href={s.href}
+                 aria-label={s.label}
+                 style={{'--i': i}}
+                 target={s.ext && !disabled ? '_blank' : undefined}
                  rel="noopener noreferrer"
-                 onClick={e=>{ if(!P.linkedin||P.linkedin==='#') e.preventDefault(); }}
-                 seed={1}>LinkedIn</ULink>
-          <ULink href={P.github&&P.github!=='#'?P.github:'#'}
-                 target={P.github&&P.github!=='#'?'_blank':undefined}
-                 rel="noopener noreferrer"
-                 onClick={e=>{ if(!P.github||P.github==='#') e.preventDefault(); }}
-                 seed={2}>GitHub</ULink>
+                 onClick={e=>{ if(disabled) e.preventDefault(); }}>
+                <Ico/>
+              </a>
+            );
+          })}
+        </div>
+
+        <div className="foot-base">
+          <span className="foot-brand">
+            <span className="foot-dot"/>
+            Arthur Ottevaere
+          </span>
+          <span className="foot-mid mono">© {new Date().getFullYear()} · Tournai, BE</span>
         </div>
       </div>
     </footer>

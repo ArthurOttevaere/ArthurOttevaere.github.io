@@ -232,27 +232,137 @@
   @media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
 
   /* ── Footer ─────────────────────────────────────────────────────── */
-  /* Compact, single-line. margin-top kept modest so it never floats far
-     below short pages (matches the tighter feel of the work/about pages). */
-  .foot { margin-top: 88px; padding: 14px 0; border-top: 1px solid var(--border); }
+  /* Full-bleed accent panel. Background follows the user-chosen accent
+     (--blue), so it restyles itself when the accent picker changes. Text
+     is forced white since the accent is always a saturated colour. */
+  .foot {
+    margin-top: 96px;
+    background: var(--blue);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: background 320ms ease;
+  }
+  /* Soft top sheen so the panel doesn't read as a flat block */
+  .foot::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 80% at 50% -25%, rgba(255,255,255,.20), transparent 60%);
+  }
   .foot-inner {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px;
-    font-size: 12px; color: var(--fg-muted);
+    position: relative;
+    padding: 40px 0 30px;
+    display: flex; flex-direction: column; align-items: center; gap: 22px;
+  }
+
+  /* Top meta row — last updated / currently */
+  .foot-meta {
+    width: 100%;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  }
+  .foot-col       { display: flex; flex-direction: column; gap: 4px; }
+  .foot-col-right { align-items: flex-end; text-align: right; }
+  .foot-eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,.62);
+  }
+  .foot-meta-val { font-size: 13px; color: #fff; letter-spacing: -0.01em; }
+
+  /* Centre note — framed in a soft frosted card so it reads as a little
+     signed message rather than loose body text. */
+  .foot-note {
+    position: relative;
+    margin: 2px 0 0; max-width: 480px;
+    /* extra bottom padding leaves room for the social tiles to overlap the
+       lower edge of the card without ever touching the text */
+    padding: 18px 22px 50px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.22);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 16px 40px -24px rgba(0,0,0,.55);
+    text-align: left;
+  }
+  .foot-note-label {
+    display: block; margin-bottom: 8px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,.6);
+  }
+  .foot-note-text {
+    margin: 0; font-size: 16px; line-height: 1.55; letter-spacing: -0.01em;
+    color: rgba(255,255,255,.96);
+  }
+  .foot-note-text a {
+    color: #fff; text-decoration: underline; text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: opacity 180ms ease;
+  }
+  .foot-note-text a:hover { opacity: .8; }
+
+  /* Interactive social tiles — large, overlapping, and lifted up so they
+     ride over the bottom edge of the note card (the hero element). */
+  .foot-socials {
+    display: flex; gap: 0;
+    position: relative; z-index: 2;
+    margin-top: -52px;   /* pull the row up to overlap the card's lower edge */
+  }
+  .foot-tile {
+    width: 92px; height: 92px; border-radius: 24px;
+    display: grid; place-items: center;
+    color: #fff; text-decoration: none;
+    border: 2px solid rgba(255,255,255,.6);
+    background: var(--blue);   /* solid so overlapping tiles read as stacked, not see-through */
+    position: relative; z-index: 1;
+    box-shadow: 0 10px 24px -12px rgba(0,0,0,.5);
+    /* gentle resting tilt, alternating around the centre tile */
+    transform: rotate(calc((var(--i) - 1) * 4deg));
+    transition: transform 280ms cubic-bezier(.34,1.56,.64,1),
+                background 220ms ease, color 220ms ease,
+                border-color 220ms ease, box-shadow 280ms ease;
+  }
+  .foot-tile + .foot-tile { margin-left: -20px; }   /* overlap neighbours */
+  .foot-tile svg {
+    width: 40px; height: 40px;
+    transition: transform 280ms cubic-bezier(.34,1.56,.64,1);
+  }
+  .foot-tile:hover {
+    z-index: 5;   /* hovered tile rises above its overlapping neighbours */
+    transform: translateY(-12px) rotate(calc((var(--i) - 1) * 4deg)) scale(1.1);
+    background: #fff; color: var(--blue); border-color: #fff;
+    box-shadow: 0 22px 40px -14px rgba(0,0,0,.5);
+  }
+  .foot-tile:hover svg { transform: scale(1.08); }
+  .foot-tile:active    { transform: translateY(-5px) scale(1.04); }
+
+  /* Base row — brand + copyright */
+  .foot-base {
+    width: 100%; margin-top: 2px; padding-top: 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-top: 1px solid rgba(255,255,255,.18);
   }
   .foot-brand {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg);
+    font-size: 12px; font-weight: 500; letter-spacing: -0.01em; color: #fff;
   }
   .foot-dot {
-    width: 8px; height: 8px; border-radius: 2px; background: var(--blue);
+    width: 8px; height: 8px; border-radius: 2px; background: #fff;
     flex-shrink: 0; transition: transform 240ms cubic-bezier(.2,.7,.2,1);
   }
   .foot-brand:hover .foot-dot { transform: rotate(-12deg) scale(1.15); }
-  .foot-mid { font-size: 11px; color: var(--fg-faint); letter-spacing: 0.01em; }
-  .foot-links { display: flex; align-items: center; gap: 18px; }
+  .foot-mid { font-size: 11px; color: rgba(255,255,255,.62); letter-spacing: 0.01em; }
   @media (max-width: 640px) {
-    .foot-mid { display: none; }   /* keep one tidy line on narrow screens */
+    .foot-inner     { padding: 30px 0 26px; gap: 18px; }
+    .foot-mid       { display: none; }   /* keep one tidy line on narrow screens */
+    .foot-note-text { font-size: 15px; }
+    .foot-socials   { margin-top: -46px; }
+    .foot-tile      { width: 76px; height: 76px; border-radius: 20px; }
+    .foot-tile + .foot-tile { margin-left: -16px; }
+    .foot-tile svg  { width: 34px; height: 34px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .foot-tile, .foot-tile svg { transition: background 220ms ease, color 220ms ease; }
+    .foot-tile:hover { transform: rotate(calc((var(--i) - 1) * 3deg)); }
   }
 
   /* ── Typography utilities ───────────────────────────────────────── */
