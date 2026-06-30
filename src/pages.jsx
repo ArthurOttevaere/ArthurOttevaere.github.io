@@ -365,6 +365,7 @@ function ScrollThread() {
     const host=wrap.parentElement;                       // .hero-spotlight box
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let A0=null, A1=null, A2=null, dotR=13, hb=null, raf=0;
+    let mobile=false, laneX=36;   // on phones the comet runs in a left margin lane
 
     const lerp=(a,b,t)=>a+(b-a)*t;
     const smooth=t=>{ t=clamp(t,0,1); return t*t*(3-2*t); };
@@ -383,7 +384,11 @@ function ScrollThread() {
       dotR=Math.max(8, Math.min(17, s.width/2));
       A0={ x:s.left-hb.left+s.width/2, y:s.top-hb.top+s.height/2 };
       const m=mani.getBoundingClientRect();
-      A1={ x:Math.max(36, W*0.10), y:m.top-hb.top + m.height*0.5 };   // left gutter, runway mid
+      // On phones the manifesto text is indented to the right, so the comet
+      // travels straight down a narrow left lane — beside the text, not behind.
+      mobile = W <= 640;
+      laneX  = mobile ? 19 : Math.max(36, W*0.10);
+      A1={ x:laneX, y:m.top-hb.top + m.height*0.5 };
       return true;
     }
     // A2 (deck heading) is sticky → measured LIVE each frame.
@@ -394,6 +399,14 @@ function ScrollThread() {
     }
     function curveXAtY(y){
       if(y<=A1.y) return lerp(A0.x, A1.x, smooth((y-A0.y)/Math.max(1,A1.y-A0.y)));
+      if(mobile){
+        // Hold the left lane across the manifesto, then swing back to centre so
+        // the comet finishes centred above the deck title (not stuck on the left).
+        const lock = A2.y - Math.max(36, dotR*2.4);
+        const holdEnd = lerp(A1.y, lock, 0.7);
+        if(y<=holdEnd) return A1.x;
+        return lerp(A1.x, A2.x, smooth(clamp((y-holdEnd)/Math.max(1, lock-holdEnd),0,1)));
+      }
       return lerp(A1.x, A2.x, smooth((y-A1.y)/Math.max(1,A2.y-A1.y)));
     }
 
@@ -529,7 +542,7 @@ function ManifestoAct({ text }) {
 // ─── Act 3 · Fanning project deck ─────────────────────────────────────────────
 // Picks the strongest few projects, centres the featured one, then fans them
 // from a neat pile into a hand-of-cards spread as the section scrolls past.
-// Mobile gets a simpler staggered reveal (no fan, no captured scroll).
+// Mobile gets a swipeable wallet-style stack (distinct from Work's list).
 function DeckAct({ go }) {
   const all = PROJS();
   const ordered = [...all].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)).slice(0,6);
@@ -542,7 +555,7 @@ function DeckAct({ go }) {
     return ()=>mq.removeEventListener('change',h);
   },[]);
   if(!cards.length) return null;
-  return mobile ? <DeckMobile cards={cards} go={go}/> : <DeckFan cards={cards} go={go}/>;
+  return mobile ? <DeckMobile cards={ordered} go={go}/> : <DeckFan cards={cards} go={go}/>;
 }
 
 // Re-orders so the first (featured) item lands in the visual centre of the fan,
@@ -635,36 +648,87 @@ function DeckFan({ cards, go }) {
   );
 }
 
+// A wallet-style pile: cards stacked with a peek; flick the top one sideways to
+// send it to the back, tap it to open. Deliberately unlike Work's vertical list.
 function DeckMobile({ cards, go }) {
-  const listRef = useRef(null);
-  useEffect(()=>{
-    const root=listRef.current; if(!root) return;
-    const items=Array.from(root.querySelectorAll('.lp-reveal-card'));
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      items.forEach(i=>i.classList.add('in')); return;
+  const n = cards.length;
+  const [order, setOrder]   = useState(()=>cards.map((_,i)=>i));
+  const [drag, setDrag]     = useState({x:0,active:false});
+  const [flying, setFlying] = useState(null);   // {id,dir} card being flicked off
+  const [pinned, setPinned] = useState(null);   // id reinserted at back (no anim 1 frame)
+  const startRef = useRef(null);
+  const movedRef = useRef(false);
+  const reduce   = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  const frontId = order[0];
+
+  function advance(dir){
+    if(flying || n<2) return;
+    setFlying({ id:frontId, dir });
+    const after = ()=>{
+      const id = frontId;
+      setOrder(o=>[...o.slice(1), o[0]]);
+      setFlying(null);
+      setPinned(id);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>setPinned(p=>p===id?null:p)));
+    };
+    reduce.current ? after() : setTimeout(after, 300);
+  }
+
+  function down(e){ if(flying) return; startRef.current=e.clientX; movedRef.current=false; setDrag({x:0,active:true}); try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
+  function move(e){
+    if(startRef.current==null) return;
+    const dx=e.clientX-startRef.current;
+    if(Math.abs(dx)>6) movedRef.current=true;
+    setDrag({x:dx,active:true});
+  }
+  function up(){
+    if(startRef.current==null) return;
+    const dx=drag.x; startRef.current=null;
+    setDrag({x:0,active:false});
+    if(Math.abs(dx)>72) advance(dx>0?1:-1);
+  }
+
+  function cardStyle(id){
+    if(flying && flying.id===id){
+      return { transform:`translateX(${flying.dir*135}%) translateY(-14px) rotate(${flying.dir*15}deg)`,
+               opacity:0, zIndex:n+1,
+               transition:'transform .32s cubic-bezier(.4,.05,.25,1), opacity .32s ease' };
     }
-    const io=new IntersectionObserver(es=>{
-      es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-    },{ threshold:0.2 });
-    items.forEach(i=>io.observe(i));
-    return ()=>io.disconnect();
-  },[]);
+    const depth = order.indexOf(id);
+    const isFront = depth===0;
+    const dx = isFront && drag.active ? drag.x : 0;
+    const noAnim = pinned===id || (isFront && drag.active);
+    return {
+      transform:`translateX(${dx}px) translateY(${depth*15}px) scale(${(1-depth*0.05).toFixed(3)}) rotate(${(dx*0.035).toFixed(2)}deg)`,
+      opacity: depth>2 ? 0 : 1,
+      zIndex: n - depth,
+      transition: noAnim ? 'none' : 'transform .36s cubic-bezier(.2,.7,.2,1), opacity .3s ease',
+    };
+  }
+
   return (
     <section className="shell" style={{paddingTop:8}}>
       <div className="lp-deck-head" data-thread="deck" style={{textAlign:'left',marginBottom:20}}>
         <div className="eyebrow">Selected work</div>
         <h2 className="h2" style={{marginTop:10}}>Things I've built.</h2>
       </div>
-      <div ref={listRef} className="lp-reveal-list">
+
+      <div className="deck-wallet-stage"
+           onPointerDown={down} onPointerMove={move}
+           onPointerUp={up} onPointerCancel={up}
+           onPointerLeave={()=>{ if(startRef.current!=null) up(); }}>
         {cards.map((p,i)=>{
           const href = p.github&&p.github!=='#' ? p.github : undefined;
           return (
             <a key={i}
+               className="deck-wallet-card"
+               style={cardStyle(i)}
                href={href||'#'}
                target={href?'_blank':undefined}
                rel={href?'noopener noreferrer':undefined}
-               onClick={e=>{ if(!href) e.preventDefault(); }}
-               className="pm-card lp-reveal-card">
+               draggable={false}
+               onClick={e=>{ if(movedRef.current || order.indexOf(i)!==0 || !href) e.preventDefault(); }}>
               <div className="pm-cover"><CoverImg cover={p.cover} title={p.title}/></div>
               <div className="pm-meta">
                 <span className="pm-cat">{p.cat}</span>
@@ -674,8 +738,20 @@ function DeckMobile({ cards, go }) {
           );
         })}
       </div>
+
+      <div className="deck-wallet-foot">
+        <div className="deck-wallet-dots" aria-hidden="true">
+          {cards.map((_,i)=>(
+            <span key={i} className={'deck-wallet-dot'+(order.indexOf(i)===0?' on':'')}/>
+          ))}
+        </div>
+        <button type="button" className="deck-wallet-next" onClick={()=>advance(-1)} aria-label="Next project">
+          Swipe or tap <Icon.Arrow/>
+        </button>
+      </div>
+
       <button onClick={()=>go('work')} className="btn-primary"
-              style={{width:'100%',justifyContent:'center',marginTop:24}}>
+              style={{width:'100%',justifyContent:'center',marginTop:22}}>
         View all projects <Icon.Arrow/>
       </button>
     </section>
@@ -1071,13 +1147,19 @@ function AboutIntro({ lite, go }) {
   useEffect(()=>{
     const el=secRef.current; if(!el) return;
     const spans=wordsRef.current.filter(Boolean);
-    if(lite||reduceMotion()){ spans.forEach(s=>s.style.opacity=1); return; }
-    const n=spans.length, spread=3.2;
+    if(reduceMotion()){ spans.forEach(s=>s.style.opacity=1); return; }
+    const n=spans.length, spread=lite?5.5:3.2;
     let raf=0;
     function upd(){ raf=0;
-      // Spread the reveal across the whole runway so it's slower and finishes
-      // right as the act ends (no dead lit-text zone before the timeline).
-      const head=clamp(sceneProgress(el),0,1)*(n+spread);
+      // On mobile the act flows as a normal block whose natural scroll runway is
+      // tiny (content barely taller than the viewport), so scene-progress reveals
+      // too fast. Drive it by scroll DISTANCE instead — 300px to ink the whole
+      // bio — a brisk-but-gradual de-grey that finishes as it leaves the top.
+      // Desktop keeps the scene-progress mapping.
+      let prog;
+      if(lite){ const r=el.getBoundingClientRect(); prog=clamp(-r.top/300,0,1); }
+      else    { prog=clamp(sceneProgress(el),0,1); }
+      const head=prog*(n+spread);
       spans.forEach((s,i)=>{ const w=clamp((head-i)/spread,0,1); s.style.opacity=(0.14+0.86*w).toFixed(3); });
     }
     function s(){ if(!raf) raf=requestAnimationFrame(upd); }
@@ -1136,10 +1218,29 @@ function EducationAct({ lite }) {
     // Gentle smoothstep: still magnetised toward each point, but the transit
     // between points is spread out so it reads slow and deliberate, not snappy.
     const smoother=t=>{ t=clamp(t,0,1); return t*t*(3-2*t); };
-    if(lite||reduceMotion()){
+    if(reduceMotion()){
       track.style.transform='none';
-      cards.forEach((c,i)=>{ c.classList.add('lit'); c.classList.toggle('focus', i===0); });
+      cards.forEach(c=>{ c.classList.add('lit'); c.style.setProperty('--litpct','100%'); });
       return;
+    }
+    if(lite){
+      // Mobile: vertical thread. Each node lights as a reveal line sweeps past it,
+      // and the connector bar between nodes fills blue with the scroll.
+      track.style.transform='none';
+      const nodeY = c => c.getBoundingClientRect().top + 10;   // node centre offset
+      function upd(){
+        const L = window.innerHeight*0.6;   // reveal line
+        cards.forEach((c,i)=>{
+          c.classList.toggle('lit', nodeY(c) <= L);
+          if(i<cards.length-1){
+            const t = clamp((L - nodeY(c))/Math.max(1, nodeY(cards[i+1]) - nodeY(c)), 0, 1);
+            c.style.setProperty('--litpct', (t*100).toFixed(1)+'%');
+          }
+        });
+      }
+      let raf=0; const s=()=>{ if(!raf) raf=requestAnimationFrame(()=>{raf=0;upd();}); };
+      upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
+      return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
     }
     function layout(){
       const r=el.getBoundingClientRect();
@@ -1196,12 +1297,32 @@ function SkillsAct({ lite }) {
     : [{ label:'Toolkit', items:(P.tools||[]).map(t=>[t, t.slice(0,2)]) }];
   const flat = [];
   groups.forEach((g,gi)=> (g.items||[]).forEach((it,ii)=> flat.push({gi,ii,name:it[0],mono:it[1]||it[0].slice(0,2)})));
-  const secRef=useRef(null), cardRefs=useRef([]);
+  const secRef=useRef(null), cardRefs=useRef([]), cloudRefs=useRef([]);
   useEffect(()=>{
     const el=secRef.current; if(!el||!flat.length) return;
+    if(reduceMotion()){
+      [...cardRefs.current, ...cloudRefs.current].filter(Boolean)
+        .forEach(c=>{ c.style.opacity=1; c.style.transform='none'; });
+      return;
+    }
+    if(lite){
+      // Mobile: stagger the cloud chips in (rise + fade) as they scroll into
+      // view — same gentle entrance as the passion tiles, for a consistent feel.
+      const chips=cloudRefs.current.filter(Boolean);
+      chips.forEach(c=>{ c.style.transition='opacity .5s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1)'; });
+      const io=new IntersectionObserver(es=>{
+        es.forEach(e=>{ if(e.isIntersecting){
+          const i=chips.indexOf(e.target);
+          e.target.style.transitionDelay=(i*55)+'ms';
+          e.target.style.opacity='1';
+          e.target.style.transform='none';
+          io.unobserve(e.target);
+        }});
+      },{ threshold:0.2 });
+      chips.forEach(c=>io.observe(c));
+      return ()=>io.disconnect();
+    }
     const cards=cardRefs.current.filter(Boolean);
-    function setFinal(){ cards.forEach(c=>{ c.style.opacity=1; c.style.transform='none'; }); }
-    if(lite||reduceMotion()){ setFinal(); return; }
     function layout(p){
       const e=clamp(p,0,1), n=cards.length, start=0.12, stag=0.55/(n+2);
       cards.forEach((c,i)=>{
@@ -1224,23 +1345,44 @@ function SkillsAct({ lite }) {
           {groups.map((g,gi)=>(
             <div key={gi} className="ab-skill-group">
               <div className="ab-skill-label mono">{g.label}</div>
-              <div className="ab-skill-cards">
-                {(g.items||[]).map((it,ii)=>{
-                  const fi=flat.findIndex(f=>f.gi===gi&&f.ii===ii);
-                  const logo=it[2];
-                  // Real glyph for tools we already ship an icon for.
-                  const builtin=SKILL_ICON[it[0].toLowerCase()];
-                  const Glyph=builtin ? Icon[builtin] : null;
-                  return (
-                    <div key={ii} className="ab-skill-card" ref={el=>{ cardRefs.current[fi]=el; }}>
-                      <span className={'ab-skill-badge'+(logo||Glyph?' has-logo':' mono')}>
-                        {logo ? <img src={logo} alt={it[0]} loading="lazy"/> : Glyph ? <Glyph/> : (it[1]||it[0].slice(0,2))}
+              {/* Mobile: a light wrapped cloud of icon chips. Desktop: the full
+                  skill cards (scroll-animated). */}
+              {lite ? (
+                <div className="ab-skill-cloud">
+                  {(g.items||[]).map((it,ii)=>{
+                    const fi=flat.findIndex(f=>f.gi===gi&&f.ii===ii);
+                    const logo=it[2];
+                    const builtin=SKILL_ICON[it[0].toLowerCase()];
+                    const Glyph=builtin ? Icon[builtin] : null;
+                    return (
+                      <span key={ii} className="ab-cloud-chip" ref={el=>{ cloudRefs.current[fi]=el; }}>
+                        <span className={'ab-cloud-ico'+(logo||Glyph?' has-logo':'')}>
+                          {logo ? <img src={logo} alt={it[0]} loading="lazy"/> : Glyph ? <Glyph/> : (it[1]||it[0].slice(0,2))}
+                        </span>
+                        <span className="ab-cloud-name">{it[0]}</span>
                       </span>
-                      <span className="ab-skill-name">{it[0]}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="ab-skill-cards">
+                  {(g.items||[]).map((it,ii)=>{
+                    const fi=flat.findIndex(f=>f.gi===gi&&f.ii===ii);
+                    const logo=it[2];
+                    // Real glyph for tools we already ship an icon for.
+                    const builtin=SKILL_ICON[it[0].toLowerCase()];
+                    const Glyph=builtin ? Icon[builtin] : null;
+                    return (
+                      <div key={ii} className="ab-skill-card" ref={el=>{ cardRefs.current[fi]=el; }}>
+                        <span className={'ab-skill-badge'+(logo||Glyph?' has-logo':' mono')}>
+                          {logo ? <img src={logo} alt={it[0]} loading="lazy"/> : Glyph ? <Glyph/> : (it[1]||it[0].slice(0,2))}
+                        </span>
+                        <span className="ab-skill-name">{it[0]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1304,8 +1446,25 @@ function PassionsAct({ lite, go }) {
   useEffect(()=>{
     const el=secRef.current; if(!el||!interests.length) return;
     const cards=cardRefs.current.filter(Boolean);
-    function setFinal(){ cards.forEach((c,i)=>{ c.style.opacity=1; c.style.transform=`rotate(${tilt(i)}deg)`; }); }
-    if(lite||reduceMotion()){ setFinal(); return; }
+    if(reduceMotion()){
+      cards.forEach((c,i)=>{ c.style.opacity=1; c.style.transform = lite ? 'none' : `rotate(${tilt(i)}deg)`; });
+      return;
+    }
+    if(lite){
+      // Mobile compact tiles: stagger a gentle rise + fade as they scroll in.
+      cards.forEach(c=>{ c.style.transition='opacity .55s cubic-bezier(.2,.7,.2,1), transform .55s cubic-bezier(.2,.7,.2,1)'; });
+      const io=new IntersectionObserver(es=>{
+        es.forEach(e=>{ if(e.isIntersecting){
+          const i=cards.indexOf(e.target);
+          e.target.style.transitionDelay=(i*70)+'ms';
+          e.target.style.opacity='1';
+          e.target.style.transform='none';
+          io.unobserve(e.target);
+        }});
+      },{ threshold:0.25 });
+      cards.forEach(c=>io.observe(c));
+      return ()=>io.disconnect();
+    }
     function layout(p){
       const e=clamp(p,0,1), n=cards.length, start=0.12, stag=0.55/(n+2);
       cards.forEach((c,i)=>{

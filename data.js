@@ -84,7 +84,7 @@ window.PORTFOLIO_DATA = {
            When present, the logo is shown instead of the monogram.
        Edit freely; falls back to `tools` if removed. */
     toolGroups: [
-      { label: "Languages",   items: [["Python","Py","/assets/logos/python.png"], ["R","R","/assets/logos/r.png"], ["SQL","SQL","/assets/logos/sql.png"]] },
+      { label: "Code",        items: [["Python","Py","/assets/logos/python.png"], ["R","R","/assets/logos/r.png"], ["SQL","SQL","/assets/logos/sql.png"]] },
       { label: "Data & Viz",  items: [["Excel","XL","/assets/logos/excel.png"], ["PowerBI","BI","/assets/logos/powerbi.svg"]] },
       { label: "Workflow",    items: [["Git","Git"], ["Notion","N"], ["Canva","Ca","/assets/logos/canva.png"]] },
     ],

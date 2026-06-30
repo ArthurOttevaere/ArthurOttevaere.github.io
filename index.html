@@ -102,7 +102,7 @@
 
   /* ── Layout ─────────────────────────────────────────────────────── */
   .shell { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
-  @media (max-width: 640px) { .shell { padding: 0 20px; } }
+  @media (max-width: 640px) { .shell { padding: 0 26px; } }
 
   /* ── Liquid glass nav (01) ──────────────────────────────────────── */
   .nav {
@@ -353,7 +353,9 @@
   .foot-brand:hover .foot-dot { transform: rotate(-12deg) scale(1.15); }
   .foot-mid { font-size: 11px; color: rgba(255,255,255,.62); letter-spacing: 0.01em; }
   @media (max-width: 640px) {
-    .foot-inner     { padding: 28px 0 24px; gap: 18px; }
+    /* The base .foot-inner sets `padding: 34px 0` which zeroes the horizontal
+       gutter and beats .shell — so set an explicit side gutter here. */
+    .foot-inner     { padding: 28px 26px 26px; gap: 18px; }
     .foot-mid       { display: none; }   /* keep one tidy line on narrow screens */
     .foot-note      { padding: 16px 22px 52px; }
     .foot-note-text { font-size: 15px; }
@@ -660,6 +662,9 @@
     .hero-tags { justify-content: center; padding-bottom: 16px; }
     .hero-sub  { justify-content: center; padding-top: 16px; }
     .hero-name { flex-direction: column; gap: 8px; font-size: clamp(46px, 16vw, 80px); }
+    /* Indent the manifesto so the scroll comet runs in the clear left lane
+       beside it (not behind the words). */
+    .lp-manifesto-text { padding-left: 60px; padding-right: 26px; }
   }
 
   /* Act 2 — de-greying manifesto. Tall section = scroll runway; the inner
@@ -716,17 +721,44 @@
   }
   .deck-card .pm-cover { aspect-ratio: 16/10; }
 
-  /* Mobile deck — staggered reveal list (no fan, no captured scroll). */
-  .lp-reveal-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
-  .lp-reveal-card {
-    width: 100% !important; flex: none !important;
-    opacity: 0; transform: translateY(26px);
-    transition: opacity 520ms cubic-bezier(.2,.7,.2,1), transform 520ms cubic-bezier(.2,.7,.2,1);
+  /* Mobile deck — wallet stack: cards piled with a peek; flick the top one to
+     send it to the back, tap to open. A deliberately different interaction from
+     Work's vertical list, so it never reads as a duplicate. */
+  .deck-wallet-stage {
+    position: relative; width: 100%; height: 300px;
+    touch-action: pan-y; user-select: none; -webkit-user-select: none;
   }
-  .lp-reveal-card.in { opacity: 1; transform: none; }
-  @media (prefers-reduced-motion: reduce) {
-    .lp-reveal-card { opacity: 1; transform: none; transition: none; }
+  .deck-wallet-card {
+    position: absolute; top: 0; left: 50%; width: 84%; margin-left: -42%;
+    display: flex; flex-direction: column; will-change: transform;
+    border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit;
+    border: 1px solid var(--border-strong); background: var(--bg-elev);
+    box-shadow: 0 22px 44px -24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18);
+    cursor: grab; -webkit-tap-highlight-color: transparent;
   }
+  html[data-theme="dark"] .deck-wallet-card {
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.78), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .deck-wallet-card:active { cursor: grabbing; }
+  .deck-wallet-card .pm-cover { aspect-ratio: 16/10; }
+  .deck-wallet-card .pm-cover img, .deck-wallet-card .pm-cover svg { pointer-events: none; }
+  .deck-wallet-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 18px; gap: 14px;
+  }
+  .deck-wallet-dots { display: flex; gap: 6px; }
+  .deck-wallet-dot {
+    width: 6px; height: 6px; border-radius: 999px; background: var(--border-strong);
+    transition: width 300ms cubic-bezier(.2,.7,.2,1), background 300ms ease;
+  }
+  .deck-wallet-dot.on { width: 18px; background: var(--blue); }
+  .deck-wallet-next {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: none; border: 0; cursor: pointer; padding: 4px;
+    font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--fg-faint);
+  }
+  .deck-wallet-next svg { width: 13px; height: 13px; }
 
   .pm-card {
     flex: 0 0 auto; width: 300px;
@@ -1176,18 +1208,73 @@
   /* Mobile / small screens — unstick the acts into a plain scrollable column */
   @media (max-width: 640px) {
     .ab-intro, .ab-edu { height: auto !important; }
+    /* keep the .shell side gutter on the blocks that carry it (intro, tools,
+       pack) — set only the vertical padding so nothing sits flush to the edge */
     .ab-intro-sticky, .ab-edu-sticky {
-      position: static; min-height: 0; height: auto; padding: 48px 0;
+      position: static; min-height: 0; height: auto;
+      padding-top: 48px; padding-bottom: 48px;
     }
-    .ab-tools-inner, .ab-pack-inner { padding: 40px 0; }
-    .ab-edu-track { flex-direction: column; align-items: stretch; width: auto; padding: 8px 4px; gap: 24px; transform: none !important; }
+    /* Base .ab-tools-inner / .ab-pack-inner use `padding: X 0` which zeroes the
+       side gutter and beats .shell — restore an explicit gutter here. */
+    .ab-tools-inner, .ab-pack-inner { padding: 40px 26px; }
+    .ab-edu-track { flex-direction: column; align-items: stretch; width: auto; padding: 8px 26px; gap: 26px; transform: none !important; }
     .ab-edu-rail { display: none; }
-    .ab-edu-card { flex: none; width: auto; text-align: left; padding-top: 0; padding-left: 26px; opacity: 1 !important; transform: none !important; }
-    .ab-edu-node { top: 3px; left: 0; transform: none; }
+    .ab-edu-card { flex: none; width: auto; text-align: left; padding-top: 0; padding-left: 30px; opacity: 1 !important; transform: none !important; }
+    .ab-edu-node { top: 3px; left: 0; transform: none; z-index: 1; }
+    /* Vertical thread joining the milestones: each card draws a line from its
+       node down to the next card's node (length = its own height + the gap).
+       The node sits on top (z-index) so the thread reads as point-to-point. */
+    .ab-edu-card:not(:last-child)::before {
+      content: ""; position: absolute; left: 6px; top: 10px; width: 2px;
+      height: calc(100% + 26px); border-radius: 2px;
+      /* Blue fills from the top down to --litpct (driven by scroll); the rest
+         stays a faint dim track until the thread reaches it. */
+      background: linear-gradient(to bottom,
+        var(--blue) var(--litpct, 0%),
+        color-mix(in oklab, var(--blue) 15%, transparent) var(--litpct, 0%));
+    }
     .ab-skill-groups { grid-template-columns: 1fr; gap: 22px; }
     .ab-cue { display: none; }
+    /* Spoken languages — wrapping flex left an orphan half-width card and uneven
+       heights; stack them into one tidy full-width column on a phone. */
+    .ab-langs-row { gap: 10px; }
+    .ab-lang-chip { flex: 1 1 100%; max-width: none; min-width: 0; }
+    /* Passions · compact on a phone — the big pinned cards are too imposing, so
+       they become small horizontal tiles (icon + label) in a tidy 2-up grid. */
+    .ab-board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: none; }
+    .ab-pin-card {
+      flex-direction: row; width: auto; height: auto; gap: 10px;
+      padding: 12px 14px; border-radius: 12px; justify-content: flex-start;
+      /* Hidden initial state — JS staggers them in (rise + fade) as they scroll
+         into view. */
+      opacity: 0; transform: translateY(14px);
+    }
+    .ab-pin { display: none; }
+    .ab-pin-ico svg { width: 22px; height: 22px; }
+    .ab-pin-label { font-size: 13px; }
   }
   @media (prefers-reduced-motion: reduce) { .ab-cue svg { animation: none; } }
+
+  /* Skills · mobile "cloud" — the full-width card list is too heavy on a phone,
+     so on small screens each group becomes a wrapped flow of compact icon chips:
+     lighter, more digestible, and the logos still carry the meaning. */
+  .ab-skill-cloud { display: flex; flex-wrap: wrap; gap: 9px; }
+  .ab-cloud-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 13px 6px 7px; border-radius: 999px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    /* Hidden initial state — JS staggers the chips in (rise + fade) on scroll. */
+    opacity: 0; transform: translateY(12px); will-change: opacity, transform;
+  }
+  .ab-cloud-ico {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px;
+    display: grid; place-items: center; overflow: hidden;
+    font-size: 10px; font-weight: 600; color: var(--blue-fg); background: var(--blue-soft);
+  }
+  .ab-cloud-ico.has-logo { background: var(--bg-soft); color: var(--fg); padding: 4px; }
+  .ab-cloud-ico img, .ab-cloud-ico svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .ab-cloud-name { font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
 
   /* ── Responsive nav ─────────────────────────────────────────────── */
   @media (max-width: 640px) {
