@@ -1198,11 +1198,13 @@
     background: var(--bg-elev); border: 1px solid var(--border);
     box-shadow: 0 14px 30px -18px rgba(0,0,0,.45);
     will-change: transform, opacity;
+    transition: box-shadow .3s ease, border-color .3s ease;
   }
   /* pin = a stick (::before, behind) with the ball (::after) drawn ON TOP */
   .ab-pin { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 12px; height: 22px; }
   .ab-pin::before { content: ""; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 2px; height: 13px; background: color-mix(in oklab, var(--blue) 55%, #000); border-radius: 1px; }
   .ab-pin::after { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.55); }
+  .ab-pin-body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ab-pin-ico { display: inline-flex; color: var(--blue); }
   .ab-pin-ico svg { width: 30px; height: 30px; }
   .ab-pin-label { font-size: 14px; font-weight: 500; text-align: center; letter-spacing: -0.01em; }
@@ -1260,6 +1262,7 @@
          into view. */
       opacity: 0; transform: translateY(14px);
     }
+    .ab-pin-body { flex-direction: row; gap: 10px; }
     .ab-pin { display: none; }
     .ab-pin-ico svg { width: 22px; height: 22px; }
     .ab-pin-label { font-size: 13px; }

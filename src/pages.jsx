@@ -1466,19 +1466,46 @@ function PassionsAct({ lite, go }) {
       cards.forEach(c=>io.observe(c));
       return ()=>io.disconnect();
     }
+    const hovered=new Set();
+    let raf=0;
     function layout(p){
       const e=clamp(p,0,1), n=cards.length, start=0.12, stag=0.55/(n+2);
       cards.forEach((c,i)=>{
+        if(hovered.has(i)) return;
         const cp=easeInOut(clamp((e-start-i*stag)/0.3,0,1));
         c.style.opacity=cp.toFixed(3);
         const rot=tilt(i)*cp + (1-cp)*-2;
         c.style.transform=`translateY(${((1-cp)*-70).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${(0.92+0.08*cp).toFixed(3)})`;
       });
     }
-    let raf=0; function upd(){ raf=0; layout(sceneProgress(el)); }
+    function upd(){ raf=0; layout(sceneProgress(el)); }
     function s(){ if(!raf) raf=requestAnimationFrame(upd); }
+    const listeners=cards.map((c,i)=>{
+      const r=tilt(i);
+      let leaveTimer=0;
+      function enter(){
+        clearTimeout(leaveTimer);
+        hovered.add(i);
+        c.style.transition='transform .38s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease, border-color .3s ease';
+        c.style.transform=`translateY(-16px) rotate(${(r*.4).toFixed(1)}deg) scale(1.09)`;
+        c.style.boxShadow='0 28px 56px -14px rgba(0,0,0,.6)';
+        c.style.borderColor='color-mix(in oklab,var(--blue) 55%,var(--border))';
+        c.style.zIndex='10';
+      }
+      function leave(){
+        c.style.transition='transform .5s cubic-bezier(.22,1,.36,1), box-shadow .4s ease, border-color .4s ease';
+        c.style.transform=`translateY(0px) rotate(${r.toFixed(1)}deg) scale(1)`;
+        c.style.boxShadow='';
+        c.style.borderColor='';
+        c.style.zIndex='';
+        leaveTimer=setTimeout(()=>{ hovered.delete(i); c.style.transition=''; s(); },520);
+      }
+      c.addEventListener('mouseenter',enter);
+      c.addEventListener('mouseleave',leave);
+      return ()=>{ c.removeEventListener('mouseenter',enter); c.removeEventListener('mouseleave',leave); clearTimeout(leaveTimer); };
+    });
     upd(); window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s);
-    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); };
+    return ()=>{ window.removeEventListener('scroll',s); window.removeEventListener('resize',s); if(raf) cancelAnimationFrame(raf); listeners.forEach(fn=>fn()); };
   },[interests,lite]);
   if(!interests.length) return null;
   return (
@@ -1491,8 +1518,10 @@ function PassionsAct({ lite, go }) {
             return (
               <div key={i} className="ab-pin-card" ref={el=>cardRefs.current[i]=el}>
                 <span className="ab-pin"/>
-                <span className="ab-pin-ico"><Glyph/></span>
-                <span className="ab-pin-label">{it.label}</span>
+                <span className="ab-pin-body">
+                  <span className="ab-pin-ico"><Glyph/></span>
+                  <span className="ab-pin-label">{it.label}</span>
+                </span>
               </div>
             );
           })}
