@@ -105,22 +105,18 @@ const Icon = {
     </svg>
   ),
   Football: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <circle cx="12" cy="12" r="9"/>
-      <path d="M12 8.2l3.3 2.4-1.25 3.9H9.95L8.7 10.6z"/>
-      <path d="M12 8.2V3.4M15.3 10.6l4.2-1.5M14.05 14.5l2.7 3.5M9.95 14.5l-2.7 3.5M8.7 10.6 4.5 9.1"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">football</title>
+    <path fill="currentColor" d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10s10-4.49 10-10S17.51 2 12 2m6.23 15H16l-1.25 2.5c-.86.32-1.78.5-2.75.5s-1.89-.18-2.75-.5L8 17H5.77a8 8 0 0 1-1.63-3.53L6 10.99L4.78 8.56a8.02 8.02 0 0 1 4.79-4.19L12 5.99l2.43-1.62c2.11.68 3.84 2.21 4.79 4.19L18 11l1.86 2.48A8.1 8.1 0 0 1 18.24 17Z"/><path fill="currentColor" d="m8.5 11l1.5 4h4l1.5-4L12 8.5z"/>
     </svg>
   ),
   Stock: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <path d="M3 17l6-6 4 4 8-8"/>
-      <path d="M16 7h5v5"/>
+    <svg viewBox="0 0 1024 1024" fill="currentColor" {...p}>
+      <path d="M904 747H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8M165.7 621.8l39.7 39.5c3.1 3.1 8.2 3.1 11.3 0l234.7-233.9l97.6 97.3a32.11 32.11 0 0 0 45.2 0l264.2-263.2c3.1-3.1 3.1-8.2 0-11.3l-39.7-39.6a8.03 8.03 0 0 0-11.3 0l-235.7 235l-97.7-97.3a32.11 32.11 0 0 0-45.2 0L165.7 610.5a7.94 7.94 0 0 0 0 11.3"/>
     </svg>
   ),
   Chip: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <rect x="7" y="7" width="10" height="10" rx="1.5"/>
-      <path d="M10 2.5v3M14 2.5v3M10 18.5v3M14 18.5v3M2.5 10h3M2.5 14h3M18.5 10h3M18.5 14h3"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">technology</title>
+    <path fill="currentColor" d="M17.504 7.501H7.5v10.003h10.003z"/><path fill="currentColor" d="M21.505 5.5v-2h-2v-2h-2.001v2h-2v-2h-2.001v2h-2v-2H9.501v2h-2v-2H5.5v2h-2v2h-2v2.001h2v2h-2v2.001h2v2h-2v2.001h2v2h-2v2.001h2v2h2v2.001h2.001v-2h2v2h2.001v-2h2v2h2.001v-2h2v2h2.001v-2h2v-2h2.001v-2.001h-2v-2h2v-2.001h-2v-2h2V9.501h-2v-2h2V5.5zm-2 14.004H5.5V5.501h14.003z"/>
     </svg>
   ),
   Flag: (p) => (
@@ -132,10 +128,8 @@ const Icon = {
   ),
   // Formula 1 — stylised "F1" wordmark with speed lines (monochrome).
   F1: (p) => (
-    <svg viewBox="0 0 56 24" fill="currentColor" {...p}>
-      <path d="M11 3H33L31.3 6.6H15.8L15 9.9H28L26.3 13.4H13.3L10.8 21H5.5L11 3Z"/>
-      <path d="M41 3H47.5L43 21H37.7L41.2 7.4L37.4 8.3L38.2 4.9L41 3Z"/>
-      <path d="M48.5 8.5H55L53.6 11H47.1L48.5 8.5ZM47.2 13H53.7L52.3 15.5H45.8L47.2 13Z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">f1</title>
+    <path fill="currentColor" d="M9.6 11.24h7.91L19.75 9H9.39c-2.85 0-3.62.34-5.17 1.81C2.71 12.3 0 15 0 15h3.38c.77-.75 2.2-2.13 2.85-2.75c.92-.87 1.37-1.01 3.37-1.01M20.39 9l-6 6H18l6-6zm-3.25 2.61H9.88c-2.22 0-2.6.12-3.55 1.07C5.44 13.57 4 15 4 15h3.15l.75-.75c.49-.49.75-.55 1.78-.55h5.37z"/>
     </svg>
   ),
   Apple: (p) => (
@@ -144,16 +138,33 @@ const Icon = {
     </svg>
   ),
   Plane: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <path d="M21 16.5 14 12V5.5a2 2 0 0 0-4 0V12l-7 4.5V18l7-2v3l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-3l8 2v-1.5Z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">plane</title>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9.5V5.782c0-.821.326-1.608.906-2.188a1.547 1.547 0 0 1 2.188 0c.58.58.906 1.367.906 2.188V9.5l6.496 3.712a1 1 0 0 1 .504.868v1.42l-7-2v4l1.055.703a1 1 0 0 1 .445.832V21l-3.225-.922a1 1 0 0 0-.55 0L8.5 21v-1.965a1 1 0 0 1 .445-.832L10 17.5v-4l-7 2v-1.42a1 1 0 0 1 .504-.868z"/>
     </svg>
   ),
   Planet: (p) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <circle cx="12" cy="12" r="6"/>
-      <ellipse cx="12" cy="12" rx="11" ry="4" transform="rotate(-22 12 12)"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">astronomy-planet-saturn-1</title>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 0 0-17 0M.75 23.25L23.25.75M9.48 20.12L20.12 9.48M3.799 14.24L14.24 3.8"/>
     </svg>
   ),
+
+  /* ══════════════════════════════════════════════════════════════════
+     PASTE NEW ICONS HERE
+     ------------------------------------------------------------------
+     1. On the icon site, copy the "SVG" code (must use fill="currentColor"
+        or stroke="currentColor" — that's what makes it follow the site's
+        color automatically).
+     2. Copy the block below, paste it just above this comment, and swap
+        PASTE_SVG_HERE for the code you copied.
+     3. Add  {...p}  right after the last attribute on the <svg> tag,
+        e.g.  ...viewBox="0 0 24 24" {...p}>
+     4. Rename "NewIcon" to whatever you like (e.g. "Guitar", "Camera").
+     5. Use that exact name as the `icon` value for the interest in data.js.
+
+     NewIcon: (p) => (
+       PASTE_SVG_HERE
+     ),
+     ══════════════════════════════════════════════════════════════════ */
 };
 
 window.Icon = Icon;
