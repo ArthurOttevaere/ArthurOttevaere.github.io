@@ -1253,10 +1253,21 @@ function formatPeriodPart(s){
 function formatPeriod(period){
   return String(period||'').split(/\s*—\s*/).map(formatPeriodPart).join(' — ');
 }
+// Sort key for a period's start (the part before " — "): resolves to a real
+// timestamp when it's a date ("2025-01" / "2025-01-15"), else just the year
+// found in free text ("Fall 2026"). Comparing by month (not just year) means
+// same-year entries — e.g. a Jan–Feb internship vs. a Sept degree — land in
+// the right order automatically, with no manual reordering in data.js.
+function periodStartKey(period){
+  const first=String(period||'').split(/\s*—\s*/)[0].trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(first)) return Date.parse(first+'T00:00:00Z');
+  if(/^\d{4}-\d{2}$/.test(first))       return Date.parse(first+'-01T00:00:00Z');
+  const m=first.match(/\d{4}/);
+  return m ? Date.UTC(+m[0],0,1) : 0;
+}
 function EducationAct({ lite }) {
   // Travel oldest → newest, whatever order the data is in.
-  const yearOf = e => { const m=String(e.period||'').match(/\d{4}/); return m?+m[0]:0; };
-  const edu = [...(PROFILE().education || [])].sort((a,b)=>yearOf(a)-yearOf(b));
+  const edu = [...(PROFILE().timeline || [])].sort((a,b)=>periodStartKey(a.period)-periodStartKey(b.period));
   const n = edu.length;
   const secRef=useRef(null), trackRef=useRef(null), cardRefs=useRef([]), railFillRef=useRef(null);
   useEffect(()=>{
@@ -1266,6 +1277,17 @@ function EducationAct({ lite }) {
     // Gentle smoothstep: still magnetised toward each point, but the transit
     // between points is spread out so it reads slow and deliberate, not snappy.
     const smoother=t=>{ t=clamp(t,0,1); return t*t*(3-2*t); };
+    // Per-segment dwell: the float position sits still at the milestone for
+    // the first/last HOLD/2 of the segment's scroll range, and only transits
+    // during the middle stretch — a real stop with zero velocity for a beat,
+    // not just an instantaneous inflection point.
+    const HOLD=0.46;
+    const segEase=f=>{
+      const h=HOLD/2;
+      if(f<=h) return 0;
+      if(f>=1-h) return 1;
+      return smoother((f-h)/(1-HOLD));
+    };
     if(reduceMotion()){
       track.style.transform='none';
       cards.forEach(c=>{ c.classList.add('lit'); c.style.setProperty('--litpct','100%'); });
@@ -1301,7 +1323,7 @@ function EducationAct({ lite }) {
       // between them — it feels snapped, not free.
       const fp=pinP*(n-1);
       const k=clamp(Math.floor(fp),0,Math.max(0,n-2));
-      const f=smoother(fp-k);
+      const f=segEase(fp-k);
       const target=n>1 ? lerp(nodes[k],nodes[k+1],f) : nodes[0];
       track.style.transform=`translateX(${(cx-target).toFixed(1)}px)`;
       // The fill lives INSIDE the track (moves with it), so its right edge —
@@ -1322,7 +1344,7 @@ function EducationAct({ lite }) {
   },[n,lite]);
   if(!n) return null;
   return (
-    <section ref={secRef} className="ab-edu" style={{height:'175vh'}}>
+    <section ref={secRef} className="ab-edu" style={{height:(100+Math.max(1,n-1)*70)+'vh'}}>
       <div className="ab-edu-sticky">
         <div className="ab-head shell"><div className="eyebrow">The path</div><h3 className="ab-h">Where I've been<span className="dotted">.</span></h3></div>
         <div className="ab-edu-viewport">
@@ -1334,8 +1356,8 @@ function EducationAct({ lite }) {
                 <span className="ab-edu-node"/>
                 {e.type && <div className="ab-edu-type mono">{e.type}</div>}
                 <div className="ab-edu-period mono">{formatPeriod(e.period)}</div>
-                <div className="ab-edu-degree">{e.degree}</div>
-                <div className="ab-edu-school">{e.school}</div>
+                <div className="ab-edu-degree">{e.title}</div>
+                <div className="ab-edu-school">{e.place}</div>
               </div>
             ))}
           </div>

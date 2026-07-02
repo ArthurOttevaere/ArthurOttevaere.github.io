@@ -72,14 +72,21 @@ window.PORTFOLIO_DATA = {
        "https://formspree.io/f/abcdwxyz". Leave "" to keep the form in demo mode. */
     formspree: "https://formspree.io/f/mdarnynw",
 
-    /* About — education timeline.
-       `period` sides can be plain text ("Present", "Fall 2026") or dates:
-       "2025" stays "2025", "2025-06" → "Jun 2025", "2025-06-15" → "15 Jun 2025".
-       Separate a range with " — ", e.g. "2022-09 — 2025-06". */
-    education: [
-      { period: "2025-09 — Present", degree: "Master in Business Engineering - Business Analytics track",  school: "UCLouvain FUCaM Mons · Louvain School of Management" },
-      {period: "2026-09 — 2026-12", degree: "Erasmus Semester", school: "Erasmus Universiteit Rotterdam · Rotterdam School of Management"},
-      { period: "2022-09 — 2025-06", degree: "Bachelor in Business Engineering",  school: "UCLouvain FUCaM Mons · Louvain School of Management" },
+    /* About — timeline (studies, internships, jobs — anything that belongs
+       on your path). `period` sides can be plain text ("Present", "Fall
+       2026") or dates: "2025" stays "2025", "2025-06" → "Jun 2025",
+       "2025-06-15" → "15 Jun 2025". Separate a range with " — ",
+       e.g. "2022-09 — 2025-06".
+       `title` = degree name / internship or job title.
+       `place` = school, university, or company.
+       `type`  = small label shown above the title (e.g. "Education",
+                 "Internship", "Job") — optional, omit to show nothing. */
+    timeline: [
+      { period: "2025-09 — Present", title: "Master in Business Engineering - Business Analytics track",  place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education"},
+      {period: "2026-09 — 2026-12", title: "Erasmus Semester", place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education"},
+      { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",  place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education" },
+      {period: "2025-01 — 2025-02", title: "Business Internship", place: "Global Net Belgium", type: "Internship"},
+      {period: "2027-02 —2027-05", title: "Data Consultant Internship", place: "EASI", type: "UPCOMING Internship"},
     ],
 
     /* About — skill tags (flat list, kept for the command palette etc.) */

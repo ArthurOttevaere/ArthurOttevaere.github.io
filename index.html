@@ -1132,14 +1132,15 @@
   .btn-ghost-2 svg { width: 14px; height: 14px; transition: transform 220ms cubic-bezier(.2,.7,.2,1); }
 
   /* Act 1 — who I am */
-  /* top: 76px (not 0) matches the sticky nav's own height exactly. Since this
-     is the first thing on the page, its natural resting position at scrollY 0
-     is already right below the nav — so it's stuck from the very first pixel
-     of scroll instead of needing to visibly climb ~76px to "catch up" to a
-     top:0 offset first. min-height is trimmed by the same amount so it still
-     ends flush with the viewport bottom. */
+  /* top: 108px = the sticky nav's own height (76px) + 32px breathing room, so
+     the avatar isn't flush against the nav. Since this is the first thing on
+     the page, its natural resting position at scrollY 0 is already below
+     that line — so it's stuck there from the very first pixel of scroll
+     instead of needing to visibly climb into place first. min-height is
+     trimmed by the same amount so it still ends flush with the viewport
+     bottom. */
   .ab-intro-sticky {
-    position: sticky; top: 76px; min-height: calc(100vh - 76px);
+    position: sticky; top: 108px; min-height: calc(100vh - 108px);
     display: flex; flex-direction: column; justify-content: center; gap: 28px;
   }
   .ab-id { display: flex; align-items: center; gap: 16px; }
@@ -1331,15 +1332,15 @@
        avatar + bio together while it de-greys, instead of letting the avatar
        scroll away on its own before the text even starts revealing. */
     .ab-lead-scene { display: block; min-height: 148vh; }
-    /* top: 76px matches the sticky nav's height exactly — same reasoning as
-       .ab-intro-sticky above: this is the first thing on the page, so at
-       scrollY 0 it's already sitting right under the nav, meaning it's stuck
+    /* top: 108px = nav height (76px) + 32px breathing room — same reasoning
+       as .ab-intro-sticky above: this is the first thing on the page, so at
+       scrollY 0 it's already sitting below that line, meaning it's stuck
        from the first pixel of scroll instead of visibly climbing into place
-       first. height is trimmed by the same 76px so it still ends flush with
-       the viewport bottom. */
+       first. height is trimmed by the same amount so it still ends flush
+       with the viewport bottom. */
     .ab-lead-sticky {
       display: flex; flex-direction: column; justify-content: center; gap: 22px;
-      position: sticky; top: 76px; height: calc(100vh - 76px);
+      position: sticky; top: 108px; height: calc(100vh - 108px);
     }
     /* Base .ab-tools-inner / .ab-pack-inner use `padding: X 0` which zeroes the
        side gutter and beats .shell — restore an explicit gutter here. */
