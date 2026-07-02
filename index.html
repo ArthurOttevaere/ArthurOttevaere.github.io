@@ -804,6 +804,8 @@
     max-height: 0; opacity: 0; overflow: hidden;
     font-size: 12.5px; line-height: 1.5; color: var(--fg-muted);
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    /* Also include the standard property for broader compatibility */
+    line-clamp: 2;
     transition: max-height 260ms cubic-bezier(.2,.7,.2,1), opacity 200ms ease, padding-bottom 260ms ease;
   }
   @media (hover: hover) and (pointer: fine) {
@@ -981,6 +983,7 @@
        overflow-clip path — without it, the rounded corners can briefly
        show square edges the instant a 3D `rotateX/rotateY` is applied. */
     -webkit-mask-image:-webkit-radial-gradient(white, white);
+    mask-image:radial-gradient(white, white);
     transition:border-color 240ms ease, box-shadow 240ms ease, transform 240ms cubic-bezier(.2,.7,.2,1);
   }
   .proj-card:hover {
