@@ -1,6 +1,12 @@
 // Icon set — single-stroke, currentColor
 
 const Icon = {
+  // Paper plane — used for the contact form's send-launch animation.
+  Send: (p) => (
+    <svg viewBox="0 0 21 21" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="m1.5 9l16-6.535L14.7 17zm16-6.5l-11 10m0 0v5l3-3"/>
+    </svg>
+  ),
   Sun: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <circle cx="12" cy="12" r="4" />
@@ -139,12 +145,12 @@ const Icon = {
   ),
   Plane: (p) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">plane</title>
-    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9.5V5.782c0-.821.326-1.608.906-2.188a1.547 1.547 0 0 1 2.188 0c.58.58.906 1.367.906 2.188V9.5l6.496 3.712a1 1 0 0 1 .504.868v1.42l-7-2v4l1.055.703a1 1 0 0 1 .445.832V21l-3.225-.922a1 1 0 0 0-.55 0L8.5 21v-1.965a1 1 0 0 1 .445-.832L10 17.5v-4l-7 2v-1.42a1 1 0 0 1 .504-.868z"/>
+    <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9.5V5.782c0-.821.326-1.608.906-2.188a1.547 1.547 0 0 1 2.188 0c.58.58.906 1.367.906 2.188V9.5l6.496 3.712a1 1 0 0 1 .504.868v1.42l-7-2v4l1.055.703a1 1 0 0 1 .445.832V21l-3.225-.922a1 1 0 0 0-.55 0L8.5 21v-1.965a1 1 0 0 1 .445-.832L10 17.5v-4l-7 2v-1.42a1 1 0 0 1 .504-.868z"/>
     </svg>
   ),
   Planet: (p) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title xmlns="">astronomy-planet-saturn-1</title>
-    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 0 0-17 0M.75 23.25L23.25.75M9.48 20.12L20.12 9.48M3.799 14.24L14.24 3.8"/>
+    <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 0 0-17 0M.75 23.25L23.25.75M9.48 20.12L20.12 9.48M3.799 14.24L14.24 3.8"/>
     </svg>
   ),
 

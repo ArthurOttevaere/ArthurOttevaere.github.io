@@ -118,7 +118,8 @@ window.PORTFOLIO_DATA = {
       id:       "f1",
       title:    "F1 Championship Tracker",
       cat:      "Personal",
-      year:     "2025-2026",
+      year:     "2025",
+      date:     "2025-11",
       summary:  "Pulls every Grand Prix result, computes the maximum points each driver can still score, and surfaces who is mathematically alive in the championship after each round.",
       long:     "Pulls every Grand Prix result, computes the maximum points each driver can still score, and surfaces who is mathematically alive in the championship after each round.",
       highlights: [
@@ -135,7 +136,8 @@ window.PORTFOLIO_DATA = {
       id:       "dash",
       title:    "Business Data Cleaning & Dashboard",
       cat:      "Academic",
-      year:     "2025-2026",
+      year:     "2025",
+      date:     "2025-11",
       summary:  "Cleaned a raw fictitious company dataset and built a dashboard surfacing actionable business insights for the analytics course.",
       long:     "As part of a data analytics course, this collaborative project involved processing a raw, fictitious company dataset to generate actionable business insights through a dashboard interface.",
       highlights: [
@@ -152,7 +154,8 @@ window.PORTFOLIO_DATA = {
       id:       "netflix",
       title:    "Web Mining: Cinema Reviews Analysis",
       cat:      "Academic",
-      year:     "2025-2026",
+      year:     "2022",
+      date:     "2022-12",
       summary:  "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews.",
       long:     "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews. Using NLP (TF-IDF, SVD) and Network Science, we transformed raw text into a graph to identify influential hubs and semantic bridges between genres.",
       highlights: [
@@ -169,7 +172,8 @@ window.PORTFOLIO_DATA = {
       id:       "layoffs",
       title:    "HR Predictive Analytics",
       cat:      "Academic",
-      year:     "2025-2026",
+      year:     "2025",
+      date:     "2025-12",
       summary:  "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
       long:     "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
       highlights: [
@@ -186,7 +190,8 @@ window.PORTFOLIO_DATA = {
       id:       "coding_project",
       title:    "Student Registration Management System",
       cat:      "Academic",
-      year:     "2024-2025",
+      year:     "2024",
+      date:     "2024-12",
       summary:  "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
       long:     "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
       highlights: [
@@ -221,7 +226,7 @@ window.PORTFOLIO_DATA = {
       title:    "Recommender System",
       cat:      "Academic",
       year:     "2026",
-      date:     "2026-01-15",   // ⚠️ example precise date — set the real finalisation day
+      date:     "2026-06",   // ⚠️ example precise date — set the real finalisation day
 
       summary:  "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
       long:     "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
@@ -240,6 +245,7 @@ window.PORTFOLIO_DATA = {
       title:    "Multi-commodity Logistics Network",
       cat:      "Academic",
       year:     "2026",
+      date:     "2026-06",
       summary:  "Designed and optimized a resilient multi-commodity logistics network using Mixed-Integer Programming, analyzing network robustness under geopolitical disruptions across three products.",
       long:     "Designed and optimized a resilient multi-commodity logistics network using Mixed-Integer Programming, analyzing network robustness under geopolitical disruptions across three products.",
       highlights: [
@@ -257,6 +263,7 @@ window.PORTFOLIO_DATA = {
       title:    "AI Gesture Recognition",
       cat:      "Academic",
       year:     "2026",
+      date:     "2026-06",
       summary:  "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
       long:     "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
       highlights: [

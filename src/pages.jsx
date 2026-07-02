@@ -135,12 +135,10 @@ function ULink({ href='#', children, onClick, style, seed=0, ...rest }) {
 // ─── Tech tag pill ────────────────────────────────────────────────────────────
 function Tag({ children }) {
   return (
-    <span style={{
+    <span className="tag-pill" style={{
       display:'inline-flex',alignItems:'center',
       height:24,padding:'0 10px',borderRadius:6,
-      background:'var(--tag-bg)',border:'1px solid var(--border)',
       fontFamily:'Geist Mono,monospace',fontSize:11,letterSpacing:'0.01em',
-      color:'var(--fg)',
     }}>{children}</span>
   );
 }
@@ -912,11 +910,22 @@ function ProjectLink({ url, label }){
 // Cover on top, text below. The whole card opens the detail popup; the inner
 // link button jumps straight to GitHub/Notion.
 function ProjectCard({ p, onOpen }){
+  const ref = useRef(null);
   function open(){ onOpen && onOpen(p); }
   function onKey(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } }
+  function handleMove(e){
+    const c=ref.current; if(!c || reduceMotion()) return;
+    const r=c.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    c.style.transform=`perspective(900px) rotateX(${(((y/r.height)-0.5)*-3.5).toFixed(2)}deg) rotateY(${(((x/r.width)-0.5)*4.5).toFixed(2)}deg) translateY(-3px)`;
+    c.style.setProperty('--sx',x+'px');
+    c.style.setProperty('--sy',y+'px');
+  }
+  function handleLeave(){ const c=ref.current; if(c) c.style.transform=''; }
   return (
-    <article className="proj-card" role="button" tabIndex={0}
+    <article ref={ref} className="proj-card is-tilting" role="button" tabIndex={0}
              onClick={open} onKeyDown={onKey}
+             onPointerMove={handleMove} onPointerLeave={handleLeave}
              aria-label={'View details for '+p.title}>
       <div className="proj-cover">
         <CoverImg cover={p.cover} title={p.title}/>
@@ -932,6 +941,7 @@ function ProjectCard({ p, onOpen }){
           <ProjectLink url={p.github}/>
         </div>
       </div>
+      <div className="proj-card-sheen"/>
     </article>
   );
 }
@@ -1052,6 +1062,8 @@ function FeaturedCard({ p, onOpen }) {
           background:var(--bg-elev);overflow:hidden;cursor:pointer;
           text-decoration:none;color:inherit;
           box-shadow:var(--shadow);
+          will-change:transform;backface-visibility:hidden;
+          -webkit-mask-image:-webkit-radial-gradient(white, black);
           transition:border-color 240ms ease,box-shadow 240ms ease,transform 240ms cubic-bezier(.2,.7,.2,1);
         }
         .featured:hover{
@@ -1545,6 +1557,7 @@ function Contact() {
   const [sent, setSent]       = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError]     = useState(false);
+  const [launching, setLaunching] = useState(false);
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canSend    = validEmail && msg.trim().length>6;
@@ -1552,8 +1565,16 @@ function Contact() {
 
   async function send(e) {
     e.preventDefault();
-    if (!canSend || sending) return;
+    if (!canSend || sending || launching) return;
     setError(false);
+
+    // Let the paper plane fly off before the button switches to its
+    // "Sending…" state — a beat of feedback for the tap, not a delay tactic.
+    if (!reduceMotion()) {
+      setLaunching(true);
+      await new Promise(r=>setTimeout(r, 650));
+      setLaunching(false);
+    }
 
     // No Formspree endpoint configured → keep the optimistic demo behaviour.
     if (!endpoint) {
@@ -1619,12 +1640,13 @@ function Contact() {
             className="input" style={{resize:'vertical',minHeight:140}}/>
         </label>
 
-        <button type="submit" disabled={!canSend||sent||sending} className="send">
+        <button type="submit" disabled={!canSend||sent||sending||launching}
+                className={'send'+(launching?' is-launching':'')}>
           {sent
             ? <><Icon.Check/> Sent — talk soon</>
             : sending
               ? <>Sending…</>
-              : <>Send <Icon.Arrow/></>}
+              : <><span className="send-label">Send</span> <Icon.Send className="send-plane"/></>}
         </button>
         {error && (
           <p className="mono" style={{margin:'2px 0 0',fontSize:12,color:'#dc2626',textAlign:'center'}}>
@@ -1674,10 +1696,19 @@ function Contact() {
           transition:transform 140ms ease,background 240ms ease,border-color 240ms ease,box-shadow 240ms ease;
         }
         .send:disabled{opacity:0.35;cursor:not-allowed;}
+        .send.is-launching:disabled{opacity:1;}
         .send:not(:disabled):hover{background:var(--blue);border-color:var(--blue);box-shadow:0 10px 30px -10px var(--blue);}
         .send:not(:disabled):hover svg{transform:translateX(4px);}
         .send:not(:disabled):active{transform:scale(0.985);}
         .send svg{width:14px;height:14px;transition:transform 220ms cubic-bezier(.2,.7,.2,1);}
+        .send-label{transition:opacity 200ms ease,transform 200ms ease;}
+        .send.is-launching .send-label{opacity:0;transform:translateX(-4px);transition-duration:160ms;}
+        .send.is-launching .send-plane{animation:planeLaunch 650ms cubic-bezier(.3,.7,.3,1) forwards;}
+        @keyframes planeLaunch{
+          0%   {transform:translate(0,0) rotate(0deg) scale(1);opacity:1;}
+          22%  {transform:translate(1px,1px) rotate(-6deg) scale(1.04);opacity:1;}
+          100% {transform:translate(48px,-34px) rotate(38deg) scale(.35);opacity:0;}
+        }
         .social{
           display:inline-flex;align-items:center;gap:8px;
           padding:8px 14px;border-radius:999px;
