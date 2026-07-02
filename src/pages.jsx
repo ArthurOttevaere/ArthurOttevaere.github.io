@@ -543,7 +543,12 @@ function ManifestoAct({ text }) {
 // Mobile gets a swipeable wallet-style stack (distinct from Work's list).
 function DeckAct({ go }) {
   const all = PROJS();
-  const ordered = [...all].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)).slice(0,6);
+  // Explicit pick from data.js (`homeDeck: ["id1","id2",...]`) wins when set;
+  // otherwise fall back to the automatic pick (featured project first).
+  const picks = DATA().homeDeck;
+  const ordered = (Array.isArray(picks) && picks.length)
+    ? picks.map(id=>all.find(p=>p.id===id)).filter(Boolean).slice(0,6)
+    : [...all].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)).slice(0,6);
   const cards = centerFirst(ordered);
   const [mobile, setMobile] = useState(()=>window.matchMedia('(max-width:640px)').matches);
   useEffect(()=>{
@@ -584,6 +589,7 @@ function DeckCardInner({ p }){
         <span className="pm-cat">{p.cat}</span>
         <span className="pm-title">{p.title}</span>
       </div>
+      {p.summary && <p className="pm-summary">{p.summary}</p>}
     </a>
   );
 }
@@ -1150,6 +1156,7 @@ function About({ go }) {
 }
 
 // ─── Act 1 · Who I am (de-greying lead, like the home manifesto) ──────────────
+// Only the first two bio paragraphs show here — bio[2]/bio[3] are unused.
 function AboutIntro({ lite, go }) {
   const P = PROFILE();
   const paras = [P.bio?.[0], P.bio?.[1]].filter(Boolean).map(t=>t.split(/\s+/).filter(Boolean));
@@ -1178,16 +1185,28 @@ function AboutIntro({ lite, go }) {
   return (
     <section ref={secRef} className="ab-intro" style={{height:'178vh'}}>
       <div className="ab-intro-sticky shell">
-        <div className="ab-id">
-          <Avatar/>
-          <div>
-            <div className="eyebrow">About</div>
-            <div className="ab-id-name">{P.name}</div>
-            <div className="ab-id-meta">{P.location} · {P.age}</div>
-          </div>
-        </div>
+        {/* Avatar lives INSIDE the pinned scene (with the lead paragraphs),
+            not before it — on mobile the scene is its own separate sticky
+            hold, and if the avatar sat outside it, it'd scroll away on its
+            own before the text-reveal even starts (rise, then vanish, then
+            unrelated text freezes into place). Keeping them in one wrapper
+            means they rise together once and hold together the whole time. */}
         <div className="ab-lead-scene" ref={leadSceneRef}>
           <div className="ab-lead-sticky">
+            <div className="ab-id">
+              <Avatar/>
+              <div>
+                <div className="eyebrow">About</div>
+                <div className="ab-id-name">{P.name}</div>
+                <div className="ab-id-meta">{P.location} · {P.age}</div>
+                {P.status && (
+                  <div className="ab-status mono">
+                    <span className="ab-status-dot" aria-hidden="true"/>
+                    {P.status}
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="ab-lead-group">
               {paras.map((wa,pi)=>(
                 <p key={pi} className="ab-lead">
@@ -1218,12 +1237,28 @@ function AboutIntro({ lite, go }) {
 // whichever one is centred is in focus (scaled, lit), the ones behind stay lit,
 // the ones ahead are faint — so it reads like moving along a route. Mobile /
 // reduced-motion just stacks them, all lit.
+// `period` parts can be plain text ("Present", "Fall 2026") or dates
+// ("2025", "2025-06", "2025-06-15") — dated parts render as "Jun 2025" /
+// "15 Jun 2025", everything else passes through unchanged.
+function formatPeriodPart(s){
+  s=String(s).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){
+    return new Date(s+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+  }
+  if(/^\d{4}-\d{2}$/.test(s)){
+    return new Date(s+'-01T00:00:00Z').toLocaleDateString('en-GB',{month:'short',year:'numeric',timeZone:'UTC'});
+  }
+  return s;
+}
+function formatPeriod(period){
+  return String(period||'').split(/\s*—\s*/).map(formatPeriodPart).join(' — ');
+}
 function EducationAct({ lite }) {
   // Travel oldest → newest, whatever order the data is in.
   const yearOf = e => { const m=String(e.period||'').match(/\d{4}/); return m?+m[0]:0; };
   const edu = [...(PROFILE().education || [])].sort((a,b)=>yearOf(a)-yearOf(b));
   const n = edu.length;
-  const secRef=useRef(null), trackRef=useRef(null), cardRefs=useRef([]);
+  const secRef=useRef(null), trackRef=useRef(null), cardRefs=useRef([]), railFillRef=useRef(null);
   useEffect(()=>{
     const el=secRef.current, track=trackRef.current; if(!el||!track||!n) return;
     const cards=cardRefs.current.filter(Boolean);
@@ -1234,6 +1269,7 @@ function EducationAct({ lite }) {
     if(reduceMotion()){
       track.style.transform='none';
       cards.forEach(c=>{ c.classList.add('lit'); c.style.setProperty('--litpct','100%'); });
+      if(railFillRef.current) railFillRef.current.style.width='100%';
       return;
     }
     if(lite){
@@ -1268,8 +1304,16 @@ function EducationAct({ lite }) {
       const f=smoother(fp-k);
       const target=n>1 ? lerp(nodes[k],nodes[k+1],f) : nodes[0];
       track.style.transform=`translateX(${(cx-target).toFixed(1)}px)`;
+      // The fill lives INSIDE the track (moves with it), so its right edge —
+      // sized to the same track-local x as `target` — always lands exactly
+      // under the centred milestone once translateX is applied, same way the
+      // node itself does. Reads as the colour travelling up to the point.
+      if(railFillRef.current) railFillRef.current.style.width=Math.max(0,target).toFixed(1)+'px';
       const focusI=Math.round(fp);
-      cards.forEach((c,i)=>{ c.classList.toggle('lit', i<=focusI); c.classList.toggle('focus', i===focusI); });
+      // A node turns blue exactly when the fill (continuous) reaches its
+      // position — not a step earlier via rounding — so the dot lighting up
+      // and the colour arriving under it always happen in the same instant.
+      cards.forEach((c,i)=>{ c.classList.toggle('lit', nodes[i]<=target+0.5); c.classList.toggle('focus', i===focusI); });
     }
     let raf=0; function upd(){ raf=0; layout(); }
     function s(){ if(!raf) raf=requestAnimationFrame(upd); }
@@ -1280,14 +1324,16 @@ function EducationAct({ lite }) {
   return (
     <section ref={secRef} className="ab-edu" style={{height:'175vh'}}>
       <div className="ab-edu-sticky">
-        <div className="ab-head shell"><div className="eyebrow">The path</div><h3 className="ab-h">Where I've studied<span className="dotted">.</span></h3></div>
+        <div className="ab-head shell"><div className="eyebrow">The path</div><h3 className="ab-h">Where I've been<span className="dotted">.</span></h3></div>
         <div className="ab-edu-viewport">
           <div className="ab-edu-rail" aria-hidden="true"/>
           <div className="ab-edu-track" ref={trackRef}>
+            <div className="ab-edu-rail-fill" ref={railFillRef} aria-hidden="true"/>
             {edu.map((e,i)=>(
               <div key={i} className="ab-edu-card" ref={el=>cardRefs.current[i]=el}>
                 <span className="ab-edu-node"/>
-                <div className="ab-edu-period mono">{e.period}</div>
+                {e.type && <div className="ab-edu-type mono">{e.type}</div>}
+                <div className="ab-edu-period mono">{formatPeriod(e.period)}</div>
                 <div className="ab-edu-degree">{e.degree}</div>
                 <div className="ab-edu-school">{e.school}</div>
               </div>

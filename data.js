@@ -43,18 +43,23 @@ window.PORTFOLIO_DATA = {
   profile: {
     name:           "Arthur Ottevaere",
     location:       "Tournai, BE",
-    age:            "21",
+    age:            "22",
+
+    /* About — small status line under your name/location. Leave "" to hide
+       it entirely; only fill it in while it's actually true, e.g.
+       "Looking for a Fall 2026 internship" or "Open to freelance work". */
+    status: "Currently studying in Rotterdam",
 
     /* Bio paragraphs — each string becomes a <p> in the About page */
     bio: [
-      "I'm a 21-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use — dashboards, short reports, an occasional model.",
-      "What draws me to analytics is the full arc from raw, unstructured data to a clear recommendation someone can act on. The interesting work isn't the model — it's deciding what question to ask, what to drop, and how to frame the output so a decision-maker instantly sees the point.",
-      "On the side I build small data projects for fun — usually around Formula 1 and daily issues I want to solve. Some of them live on the projects page.",
+      "I'm a 22-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use — dashboards, short reports, an occasional model.",
+      "What draws me to analytics is the full arc from raw, unstructured data to a clear recommendation someone can act on. The interesting work isn't the model itself, it's deciding what question to ask, what to drop, and how to frame the output so a decision-maker instantly sees the point.",
+      "On the side I build small data projects for fun, usually around passions like Formula 1 and daily issues I want to solve. Some of them live on the projects page.",
       "I'm going on a semester abroad in Rotterdam in Fall '26, excited to meet new people and get a fresh perspective on things!",
     ],
 
     /* Short description shown under your name on the home page */
-    tagline:  "Master's student in Business Engineering. I turn messy data into things you can act on — dashboards, models, the occasional weekend project about Formula 1.",
+    tagline:  "Master's student in Business Engineering. I love turning messy data into things you can act on — dashboards, models, the occasional weekend project about Formula 1.",
 
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
     cv:       "https://drive.google.com/file/d/1xCqm6u082XO01JhhAJr_xfb5VM61vLXj/view?usp=sharing",     // Link to your CV PDF
@@ -67,11 +72,14 @@ window.PORTFOLIO_DATA = {
        "https://formspree.io/f/abcdwxyz". Leave "" to keep the form in demo mode. */
     formspree: "https://formspree.io/f/mdarnynw",
 
-    /* About — education timeline */
+    /* About — education timeline.
+       `period` sides can be plain text ("Present", "Fall 2026") or dates:
+       "2025" stays "2025", "2025-06" → "Jun 2025", "2025-06-15" → "15 Jun 2025".
+       Separate a range with " — ", e.g. "2022-09 — 2025-06". */
     education: [
-      { period: "2025 — Present", degree: "M. Business Engineering",  school: "Business Analytics track · (UCL-LSM)" },
-      {period: "Fall 2026", degree: "Erasmus Semester", school: "RSM - Erasmus University Rotterdam"},
-      { period: "2022 — 2025", degree: "B. Business Engineering",  school: "UCLouvain FUCaM Mons (UCL-LSM)" },
+      { period: "2025-09 — Present", degree: "Master in Business Engineering - Business Analytics track",  school: "UCLouvain FUCaM Mons · Louvain School of Management" },
+      {period: "2026-09 — 2026-12", degree: "Erasmus Semester", school: "Erasmus Universiteit Rotterdam · Rotterdam School of Management"},
+      { period: "2022-09 — 2025-06", degree: "Bachelor in Business Engineering",  school: "UCLouvain FUCaM Mons · Louvain School of Management" },
     ],
 
     /* About — skill tags (flat list, kept for the command palette etc.) */
@@ -154,8 +162,8 @@ window.PORTFOLIO_DATA = {
       id:       "netflix",
       title:    "Web Mining: Cinema Reviews Analysis",
       cat:      "Academic",
-      year:     "2022",
-      date:     "2022-12",
+      year:     "2025",
+      date:     "2025-12",
       summary:  "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews.",
       long:     "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews. Using NLP (TF-IDF, SVD) and Network Science, we transformed raw text into a graph to identify influential hubs and semantic bridges between genres.",
       highlights: [
@@ -209,6 +217,7 @@ window.PORTFOLIO_DATA = {
       title:    "VAT Number Verification System",
       cat:      "Personal",
       year:     "2025",
+      date:     "2025-02",
       summary:  "A Python-based system for verifying VAT numbers using the Peppol API. Compares VAT numbers from an Excel file with Peppol's database and returns a validation report including company names and status.",
       long:     "A Python-based system for verifying VAT numbers using the Peppol API. Compares VAT numbers from an Excel file with Peppol's database and returns a validation report including company names and status.",
       highlights: [
@@ -276,5 +285,32 @@ window.PORTFOLIO_DATA = {
       github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",     // 🔗 https://github.com/arthurottevaere/...
       featured: false,
     },
+    {
+      id:       "chwapi",
+      title:    "Surgical Scheduling Optimization",
+      cat:      "Academic",
+      year:     "2026",
+      date:     "2026-06",
+      summary:  "A mathematical optimization model that rebuilds a hospital's surgical scheduling grid from scratch, taking into account patient flows and various operational constraints.",
+      long:     "A mathematical optimization model that rebuilds a hospital's surgical scheduling grid from scratch, taking into account patient flows and various operational constraints.",
+      highlights: [
+        "Schedules 57 surgeons across 17 operating rooms.",
+        "Optimises patient flow smoothing across a 54-bed day hospital.",
+        "Stress-tests the grid against room failures and new surgeon arrivals.",
+      ],
+      tags:     ["XPress Mosel", "Python", "Optimization"],
+      cover:    "https://www.umass.edu/sites/default/files/2026-06/NEWS-Operating%20Room%20Surgery%20viaAdobeStock.jpeg",
+      github:   "https://github.com/ArthurOttevaere/surgical-scheduling-optimization",     // 🔗 https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00
+      featured: false,
+    }
   ],
+
+  /* ── Home page "fanning deck" ───────────────────────────────────
+     Pick exactly which project cards appear in the fanned deck on the
+     home page, and in what order, by listing their `id`s below.
+     The FIRST id lands centred/on top of the fan; the rest fan out
+     alternating right, left, right, left... around it.
+     Leave the array empty ([]) to fall back to the automatic pick
+     (featured project first, then the first few others). */
+  homeDeck: ["recommender_system", "chwapi", "f1", "quantitative_decision_making", "ai_gesture_recognition", "dash"],
 };

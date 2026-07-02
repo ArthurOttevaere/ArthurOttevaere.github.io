@@ -797,6 +797,18 @@
     font-size: 14px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* Home deck only (.deck-card-inner) — collapsed by default, unfolds on
+     hover so the fan stays clean at rest and only gets denser on request. */
+  .pm-summary {
+    margin: 0; padding: 0 14px;
+    max-height: 0; opacity: 0; overflow: hidden;
+    font-size: 12.5px; line-height: 1.5; color: var(--fg-muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    transition: max-height 260ms cubic-bezier(.2,.7,.2,1), opacity 200ms ease, padding-bottom 260ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .deck-card-inner:hover .pm-summary { max-height: 52px; opacity: 1; padding-bottom: 14px; }
+  }
   @media (max-width: 640px) {
     .pm-card { width: 230px; }
   }
@@ -968,7 +980,7 @@
     /* Forces Safari/Chrome onto the masking paint path instead of the
        overflow-clip path — without it, the rounded corners can briefly
        show square edges the instant a 3D `rotateX/rotateY` is applied. */
-    -webkit-mask-image:-webkit-radial-gradient(white, black);
+    -webkit-mask-image:-webkit-radial-gradient(white, white);
     transition:border-color 240ms ease, box-shadow 240ms ease, transform 240ms cubic-bezier(.2,.7,.2,1);
   }
   .proj-card:hover {
@@ -1120,8 +1132,14 @@
   .btn-ghost-2 svg { width: 14px; height: 14px; transition: transform 220ms cubic-bezier(.2,.7,.2,1); }
 
   /* Act 1 — who I am */
+  /* top: 76px (not 0) matches the sticky nav's own height exactly. Since this
+     is the first thing on the page, its natural resting position at scrollY 0
+     is already right below the nav — so it's stuck from the very first pixel
+     of scroll instead of needing to visibly climb ~76px to "catch up" to a
+     top:0 offset first. min-height is trimmed by the same amount so it still
+     ends flush with the viewport bottom. */
   .ab-intro-sticky {
-    position: sticky; top: 0; min-height: 100vh;
+    position: sticky; top: 76px; min-height: calc(100vh - 76px);
     display: flex; flex-direction: column; justify-content: center; gap: 28px;
   }
   .ab-id { display: flex; align-items: center; gap: 16px; }
@@ -1136,6 +1154,27 @@
     font-size: clamp(20px, 2.5vw, 32px); line-height: 1.34;
     letter-spacing: -0.02em; font-weight: 500; color: var(--fg);
   }
+  /* Status line — empty by default (profile.status in data.js), shown only
+     while actively filled in (e.g. "Looking for a Fall 2026 internship").
+     No pill/badge chrome — reads as a third identity line, same small mono
+     register as .eyebrow/.hero-tag elsewhere, just tinted with --available
+     so it still registers as a live signal at a glance. */
+  .ab-status {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 7px;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--available);
+  }
+  .ab-status-dot {
+    flex: 0 0 auto; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--available);
+    animation: abStatusPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes abStatusPulse {
+    0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--available) 45%, transparent); }
+    50%     { box-shadow: 0 0 0 4px color-mix(in oklab, var(--available) 0%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) { .ab-status-dot { animation: none; } }
   .ab-id-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .ab-cue {
     display: flex; align-items: center; gap: 8px;
@@ -1153,6 +1192,16 @@
   }
   .ab-edu-viewport { position: relative; width: 100%; overflow: hidden; }
   .ab-edu-rail { position: absolute; left: 0; right: 0; top: 75px; height: 2px; background: var(--border); z-index: 0; }
+  /* Lives INSIDE the track (not the viewport, like .ab-edu-rail above) so it
+     slides with it — its width is driven from JS each frame to match exactly
+     how far the track has travelled, so the blue always reaches precisely up
+     to whichever milestone is currently centred, like the colour is
+     travelling the rail as you scroll. */
+  .ab-edu-rail-fill {
+    position: absolute; left: 0; top: 75px; height: 2px; width: 0;
+    background: var(--blue); z-index: 0; pointer-events: none;
+    transition: background 320ms ease;
+  }
   .ab-edu-track {
     display: flex; align-items: flex-start; gap: 130px;
     width: max-content; padding: 60px 50% 24px; position: relative; z-index: 2; will-change: transform;
@@ -1160,6 +1209,11 @@
   .ab-edu-card {
     position: relative; flex: 0 0 300px; width: 300px; padding-top: 34px; text-align: center;
     opacity: 0.3; transform: scale(0.9);
+    /* Pivot the scale on the node's own centre (9px top + half its 14px
+       height), not the card's default centre — otherwise shrinking/growing
+       the whole card (period + degree + school included) drags the node off
+       the rail instead of leaving it sitting still on the line. */
+    transform-origin: 50% 16px;
     transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.7,.2,1);
   }
   .ab-edu-card.lit { opacity: 0.6; }
@@ -1170,8 +1224,18 @@
     background: var(--bg-elev); border: 2px solid var(--border-strong);
     transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
   }
-  .ab-edu-card.lit .ab-edu-node, .ab-edu-card.focus .ab-edu-node { background: var(--blue); border-color: var(--blue); }
+  /* Dot colour is driven by .lit alone (in sync with the rail fill reaching
+     it) — .focus (the nearest/biggest card right now) only adds the halo, so
+     a card can't look "already lit" before the colour has actually arrived. */
+  .ab-edu-card.lit .ab-edu-node { background: var(--blue); border-color: var(--blue); }
   .ab-edu-card.focus .ab-edu-node { box-shadow: 0 0 0 5px var(--blue-soft); }
+  /* Optional `type` (e.g. "Internship", "Job") — a small tag so a mixed
+     studies/internships/jobs timeline still reads at a glance. Omit the
+     field on an entry and this line simply doesn't render. */
+  .ab-edu-type {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--blue-fg); margin-bottom: 3px;
+  }
   .ab-edu-period { font-size: 12px; color: var(--fg-muted); }
   .ab-edu-degree { margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
   .ab-edu-school { margin-top: 3px; font-size: 13px; color: var(--fg-muted); }
@@ -1256,15 +1320,26 @@
        pack) — set only the vertical padding so nothing sits flush to the edge */
     .ab-intro-sticky, .ab-edu-sticky {
       position: static; min-height: 0; height: auto;
-      padding-top: 48px; padding-bottom: 48px;
+      padding-bottom: 48px;
     }
+    /* .ab-edu-sticky keeps its top breathing room; .ab-intro-sticky doesn't —
+       its first child (.ab-lead-scene) is pinned and needs to be flush with
+       the nav for zero pre-roll (see .ab-lead-sticky below). */
+    .ab-edu-sticky { padding-top: 48px; }
     /* Mobile bio = a pinned reveal scene (like the home manifesto): the scene
-       gives the scroll runway, the inner sticks centre-screen and holds the bio
-       still while it de-greys, instead of letting the text scroll up the page. */
-    .ab-lead-scene { display: block; min-height: 138vh; }
+       gives the scroll runway, the inner sticks centre-screen and holds the
+       avatar + bio together while it de-greys, instead of letting the avatar
+       scroll away on its own before the text even starts revealing. */
+    .ab-lead-scene { display: block; min-height: 148vh; }
+    /* top: 76px matches the sticky nav's height exactly — same reasoning as
+       .ab-intro-sticky above: this is the first thing on the page, so at
+       scrollY 0 it's already sitting right under the nav, meaning it's stuck
+       from the first pixel of scroll instead of visibly climbing into place
+       first. height is trimmed by the same 76px so it still ends flush with
+       the viewport bottom. */
     .ab-lead-sticky {
-      display: flex; align-items: center;
-      position: sticky; top: 0; height: 100vh;
+      display: flex; flex-direction: column; justify-content: center; gap: 22px;
+      position: sticky; top: 76px; height: calc(100vh - 76px);
     }
     /* Base .ab-tools-inner / .ab-pack-inner use `padding: X 0` which zeroes the
        side gutter and beats .shell — restore an explicit gutter here. */
