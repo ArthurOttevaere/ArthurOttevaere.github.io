@@ -25,6 +25,7 @@ const ACCENTS = [
 // matches the user's device and updates live when the system flips. The toggle
 // button still allows a manual override for the current session.
 const THEME_OVERRIDE_KEY = 'ao-theme-override';
+const SCROLL_RESTORE_KEY = 'ao-scroll-restore';
 
 function useTheme() {
   const systemTheme = () =>
@@ -66,6 +67,10 @@ function ThemeToggle({ theme, setTheme }) {
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
     if (isMobile) {
       sessionStorage.setItem(THEME_OVERRIDE_KEY, next);
+      // Remember the scroll position and hand off restoration to our own code
+      // instead of the browser's native (and here, unreliable) auto-restore.
+      sessionStorage.setItem(SCROLL_RESTORE_KEY, String(window.scrollY));
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
       window.location.reload();
       return;
     }
@@ -375,6 +380,32 @@ function App() {
     }, wait);
     return ()=>{ clearTimeout(t1); clearTimeout(t2); };
   }, []);
+
+  // Restore the scroll position saved by the mobile theme-toggle reload (see
+  // ThemeToggle). Applied immediately while the boot splash still covers the
+  // page — so the jump is invisible — then reasserted once the splash lifts
+  // (revealed) to correct for any late layout shift (images/fonts), before
+  // handing scroll control back to native restoration for ordinary refreshes.
+  useEffect(()=>{
+    const saved = sessionStorage.getItem(SCROLL_RESTORE_KEY);
+    if (saved == null) return;
+    const y = parseInt(saved, 10);
+    window.scrollTo({top:y, behavior:'instant'});
+  }, []);
+  useEffect(()=>{
+    if (!revealed) return;
+    const saved = sessionStorage.getItem(SCROLL_RESTORE_KEY);
+    if (saved == null) return;
+    sessionStorage.removeItem(SCROLL_RESTORE_KEY);
+    const y = parseInt(saved, 10);
+    const restore = ()=> window.scrollTo({top:y, behavior:'instant'});
+    restore();
+    const raf = requestAnimationFrame(()=>{
+      restore();
+      if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+    });
+    return ()=> cancelAnimationFrame(raf);
+  }, [revealed]);
 
   let Page;
   switch(route) {
