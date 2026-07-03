@@ -52,8 +52,8 @@ window.PORTFOLIO_DATA = {
 
     /* Bio paragraphs — each string becomes a <p> in the About page */
     bio: [
-      "I'm a 22-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use — dashboards, short reports, an occasional model.",
-      "What draws me to analytics is the full arc from raw, unstructured data to a clear recommendation someone can act on. The interesting work isn't the model itself, it's deciding what question to ask, what to drop, and how to frame the output so a decision-maker instantly sees the point.",
+      "I'm a 22-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use like dashboards, short reports, or occasional model.",
+      "What I love most is building side projects end to end, just to test an idea or solve a daily issue.",
       "On the side I build small data projects for fun, usually around passions like Formula 1 and daily issues I want to solve. Some of them live on the projects page.",
       "I'm going on a semester abroad in Rotterdam in Fall '26, excited to meet new people and get a fresh perspective on things!",
     ],

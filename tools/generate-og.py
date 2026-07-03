@@ -41,7 +41,7 @@ from PIL import Image, ImageDraw, ImageFont
 BRAND   = "Arthur Ottevaere"                                  # small label, top-left
 HEADLINE = "Arthur Ottevaere"                                 # the big title
 TAGLINE = "Business Engineering · Business Analytics"         # line under the title
-FOOTER  = "Dashboards · Data projects · Formula 1 · Tournai, BE"  # small mono line at bottom
+FOOTER  = "Dashboards · Data projects · Tournai, BE"  # small mono line at bottom
 
 # Colours (hex)
 BG_COLOR     = "#fafaf9"   # background
