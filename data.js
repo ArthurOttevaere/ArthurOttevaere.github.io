@@ -59,7 +59,7 @@ window.PORTFOLIO_DATA = {
     ],
 
     /* Short description shown under your name on the home page */
-    tagline:  "Master's student in Business Engineering. I love turning messy data into things you can act on — dashboards, models, the occasional weekend project about Formula 1.",
+    tagline:  "Master's student in Business Engineering. I love turning messy data into things you can act on like dashboards, models, the occasional weekend project about Formula 1.",
 
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
     cv:       "https://drive.google.com/file/d/1xCqm6u082XO01JhhAJr_xfb5VM61vLXj/view?usp=sharing",     // Link to your CV PDF
