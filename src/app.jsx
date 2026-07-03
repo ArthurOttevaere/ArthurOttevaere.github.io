@@ -24,11 +24,20 @@ const ACCENTS = [
 // Follows the OS appearance (prefers-color-scheme): the site's day/night mode
 // matches the user's device and updates live when the system flips. The toggle
 // button still allows a manual override for the current session.
+const THEME_OVERRIDE_KEY = 'ao-theme-override';
+
 function useTheme() {
   const systemTheme = () =>
     (typeof window!=='undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
       ? 'dark' : 'light';
-  const [theme, setTheme] = useState(systemTheme);
+  // A mobile manual toggle persists its choice (see ThemeToggle) and reloads the
+  // page to work around an iOS rendering glitch above the Dynamic Island; on
+  // load we honor that stored override instead of the raw system theme.
+  const initialTheme = () => {
+    const stored = typeof window!=='undefined' && sessionStorage.getItem(THEME_OVERRIDE_KEY);
+    return stored || systemTheme();
+  };
+  const [theme, setTheme] = useState(initialTheme);
 
   useEffect(()=>{
     document.documentElement.setAttribute('data-theme', theme);
@@ -50,9 +59,21 @@ function useTheme() {
 // ─── Theme toggle button ──────────────────────────────────────────────────────
 function ThemeToggle({ theme, setTheme }) {
   const next = theme==='light'?'dark':'light';
+  const handleClick = () => {
+    // On mobile, Safari sometimes leaves the section above the Dynamic Island
+    // stuck in the old theme after a live re-render. Force a full reload there;
+    // desktop keeps the instant in-place toggle.
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    if (isMobile) {
+      sessionStorage.setItem(THEME_OVERRIDE_KEY, next);
+      window.location.reload();
+      return;
+    }
+    setTheme(next);
+  };
   return (
     <button className="icon-btn" title={`Switch to ${next} mode`} aria-label={`Switch to ${next} mode`}
-      onClick={()=>setTheme(next)}>
+      onClick={handleClick}>
       <span style={{
         display:'inline-flex',alignItems:'center',justifyContent:'center',
         transition:'transform 320ms ease,opacity 200ms ease',
