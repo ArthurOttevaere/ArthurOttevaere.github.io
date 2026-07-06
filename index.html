@@ -339,6 +339,32 @@
                 border-color 220ms ease, box-shadow 280ms ease;
   }
   .foot-tile + .foot-tile { margin-left: -24px; }   /* overlap neighbours */
+  .foot-tile { cursor: pointer; }
+  /* Mail tile confirms the copy: a floating pill rises above it, and the tile
+     briefly flips to the accent-on-white "success" look. */
+  .foot-tile.copied {
+    background: #fff; color: var(--blue); border-color: #fff;
+  }
+  .foot-tile-toast {
+    position: absolute; left: 50%; top: -6px;
+    transform: translate(-50%, 0);
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .01em;
+    background: #fff; color: var(--blue);
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,.5);
+    white-space: nowrap; pointer-events: none;
+    opacity: 0; z-index: 6;
+    animation: foot-toast 1500ms ease both;
+  }
+  @keyframes foot-toast {
+    0%   { opacity: 0; transform: translate(-50%, 6px) scale(.9); }
+    15%  { opacity: 1; transform: translate(-50%, -14px) scale(1); }
+    80%  { opacity: 1; transform: translate(-50%, -16px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -22px) scale(.96); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .foot-tile-toast { animation: none; opacity: 1; transform: translate(-50%, -16px); }
+  }
   .foot-tile svg {
     width: 48px; height: 48px;
     transition: transform 280ms cubic-bezier(.34,1.56,.64,1);

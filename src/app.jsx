@@ -294,6 +294,30 @@ function Footer({ route }) {
     .toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
   const hasMail = P.email && P.email!=='#';
+
+  // Mail tile copies the address to the clipboard with a little confirmation,
+  // instead of forcing open a mail client. Falls back to mailto if the
+  // clipboard API is unavailable (older/insecure contexts).
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef(null);
+  const copyMail = useCallback((e)=>{
+    if (!hasMail) return;
+    e.preventDefault();
+    const done = ()=>{
+      setCopied(true);
+      clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(()=>setCopied(false), 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(P.email).then(done).catch(()=>{
+        window.location.href = 'mailto:'+P.email;
+      });
+    } else {
+      window.location.href = 'mailto:'+P.email;
+    }
+  }, [hasMail, P.email]);
+  useEffect(()=>()=>clearTimeout(copyTimer.current), []);
+
   const socials = [
     { id:'mail',     icon:'Mail',     label:'Email',
       href: hasMail ? 'mailto:'+P.email : '#', ext:false },
@@ -331,16 +355,23 @@ function Footer({ route }) {
           {socials.map((s,i)=>{
             const Ico = Icon[s.icon];
             const disabled = s.href==='#';
+            const isMail = s.id==='mail' && !disabled;
             return (
               <a key={s.id}
-                 className="foot-tile"
+                 className={'foot-tile'+(isMail && copied ? ' copied' : '')}
                  href={s.href}
-                 aria-label={s.label}
+                 aria-label={isMail ? 'Copy email address' : s.label}
                  style={{'--i': i}}
                  target={s.ext && !disabled ? '_blank' : undefined}
                  rel="noopener noreferrer"
-                 onClick={e=>{ if(disabled) e.preventDefault(); }}>
-                <Ico/>
+                 onClick={e=>{
+                   if (disabled) { e.preventDefault(); return; }
+                   if (isMail) copyMail(e);
+                 }}>
+                {isMail && copied
+                  ? <Icon.Check/>
+                  : <Ico/>}
+                {isMail && copied && <span className="foot-tile-toast">Copié ✓</span>}
               </a>
             );
           })}
