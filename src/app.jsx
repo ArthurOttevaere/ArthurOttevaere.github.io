@@ -9,6 +9,15 @@ const ROUTES = [
   { id:'contact', label:'contact' },
 ];
 
+// Map the URL hash (#/work, #/about, …) to a known route id; unknown/empty → home.
+// This makes every page shareable, refresh-safe, and wired to browser back/forward.
+function routeFromHash() {
+  const raw = (typeof window!=='undefined' ? window.location.hash : '').slice(1); // "/work"
+  const id  = raw.replace(/^\//,'').split(/[/?#]/)[0].toLowerCase();
+  return ROUTES.some(r=>r.id===id) ? id : 'home';
+}
+function hashForRoute(r){ return r==='home' ? '/' : '/'+r; }
+
 // Accent colour options. 'auto' = time-of-day palette (existing behaviour).
 const ACCENTS = [
   { id:'auto',    label:'Auto',    swatch:null,      cls:'accent-swatch-auto' },
@@ -463,17 +472,37 @@ function MobileNav({ route, go }) {
 // ─── App root ─────────────────────────────────────────────────────────────────
 function App() {
   const [theme, setTheme] = useTheme();
-  const [route, setRoute] = useState('home');
+  // The URL hash is the source of truth for the route, so a shared/refreshed
+  // link opens the right page and browser back/forward work.
+  const [route, setRoute] = useState(routeFromHash);
   // Count navigations: the first paint (0) is revealed by the boot splash fade,
   // so we skip the page-enter animation then and only animate once the user
   // actually navigates. Keeps the boot→home reveal clean (no double motion).
   const [navCount, setNavCount] = useState(0);
 
-  const go = useCallback(r=>{
+  // Apply a route to the view: swap page, re-enable the enter animation, top-scroll.
+  const applyRoute = useCallback(r=>{
     setRoute(r);
-    setNavCount(c=>c+1);   // any user navigation re-enables the page-enter anim
+    setNavCount(c=>c+1);   // any navigation re-enables the page-enter anim
     window.scrollTo({top:0,behavior:'instant'});
   }, []);
+
+  // Navigation writes the hash; the hashchange listener below turns that into an
+  // applyRoute. Clicking the current page (no hash change) still re-scrolls to top.
+  const go = useCallback(r=>{
+    const target = hashForRoute(r);
+    if (window.location.hash.slice(1) !== target) {
+      window.location.hash = target;
+    } else {
+      applyRoute(r);
+    }
+  }, [applyRoute]);
+
+  useEffect(()=>{
+    const onHash = ()=> applyRoute(routeFromHash());
+    window.addEventListener('hashchange', onHash);
+    return ()=> window.removeEventListener('hashchange', onHash);
+  }, [applyRoute]);
 
   // Expose for in-prose links
   useEffect(()=>{ window.__go = go; }, [go]);
