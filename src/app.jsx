@@ -211,6 +211,30 @@ function ReadingProgress() {
   return <div className="read-progress at-top" ref={ref} aria-hidden="true"/>;
 }
 
+// ─── Back-to-top button ───────────────────────────────────────────────────────
+// Appears once the reader is past the first screen; glides back to the top.
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(()=>{
+    let raf = 0;
+    const update = ()=>{ raf = 0; setShow(window.scrollY > window.innerHeight * 0.9); };
+    const onScroll = ()=>{ if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive:true });
+    return ()=>{ window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+  const toTop = ()=>{
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top:0, behavior: smooth ? 'smooth' : 'instant' });
+  };
+  return (
+    <button className={'to-top'+(show?' show':'')} onClick={toTop}
+      aria-label="Back to top" title="Back to top" tabIndex={show?0:-1}>
+      <Icon.ArrowDown/>
+    </button>
+  );
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function Nav({ route, go, theme, setTheme }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
@@ -488,6 +512,7 @@ function App() {
       <Footer route={route}/>
       <CommandPalette go={go} theme={theme} setTheme={setTheme}/>
       <MobileNav route={route} go={go}/>
+      <BackToTop/>
     </div>
   );
 }
