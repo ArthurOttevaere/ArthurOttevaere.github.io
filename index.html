@@ -1816,6 +1816,32 @@
   @media (prefers-reduced-motion: reduce) {
     .boot-hello { transition: none !important; }
   }
+
+  /* ── Keyboard focus ─────────────────────────────────────────────────
+     One consistent accent ring for keyboard users across every interactive
+     control. Mouse/touch focus stays clean (:focus-visible only). Placed last
+     so it wins the source-order tie against the few `outline:0` resets, and the
+     ring follows each element's own border-radius. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 3px;
+  }
+  /* Round controls read better with a hugging ring than a far offset. */
+  .icon-btn:focus-visible,
+  .accent-btn:focus-visible,
+  .accent-swatch:focus-visible,
+  .brand-dot:focus-visible,
+  .to-top:focus-visible {
+    outline-offset: 2px;
+  }
+  /* The cmdk search field: ring the whole field edge instead of the text. */
+  .cmdk-mod-input:focus-visible { outline-offset: -2px; }
 </style>
 
 <!-- ── Time-of-day accent (14) + nav scroll detector ────────────────── -->
