@@ -241,6 +241,18 @@ function Nav({ route, go, theme, setTheme }) {
   const linksRef = useRef(null);
   const [ind, setInd] = useState({ x: 0, w: 0, ready: false });
 
+  // Condense the pill once the reader leaves the very top: it tightens and its
+  // glass grows a touch more opaque, so it reads as "settled" over content.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(()=>{
+    let raf = 0;
+    const update = ()=>{ raf = 0; setScrolled(window.scrollY > 12); };
+    const onScroll = ()=>{ if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive:true });
+    return ()=>{ window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+
   // Sliding indicator
   useEffect(()=>{
     function measure() {
@@ -258,7 +270,7 @@ function Nav({ route, go, theme, setTheme }) {
   }, [route]);
 
   return (
-    <header className="nav">
+    <header className={'nav'+(scrolled?' scrolled':'')}>
       <div className="shell nav-inner">
         <button className="brand" onClick={()=>go('home')} aria-label="Home">
           <span className="brand-dot"/>

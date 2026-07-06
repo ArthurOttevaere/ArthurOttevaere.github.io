@@ -184,7 +184,8 @@
       0 14px 40px -20px rgba(0,0,0,0.18),
       inset 0 1px 0 rgba(255,255,255,0.45),
       inset 0 -1px 0 rgba(0,0,0,0.04);
-    transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+    transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease,
+                max-width 260ms cubic-bezier(.2,.7,.2,1);
   }
   html[data-theme="dark"] .nav-inner {
     background: color-mix(in oklab, var(--bg-elev) 24%, transparent);
@@ -193,14 +194,26 @@
       inset 0 1px 0 rgba(255,255,255,0.08),
       inset 0 -1px 0 rgba(0,0,0,0.2);
   }
-  /* Once scrolled, firm up slightly for legibility over busy content — but
-     stay translucent so it still reads as glass. */
+  /* Once scrolled, the pill draws in from the sides: its max width shrinks so it
+     narrows toward the centre, and its glass firms up for legibility over busy
+     content — but stays translucent so it still reads as glass. */
   .nav.scrolled .nav-inner {
+    max-width: 860px;
     background: color-mix(in oklab, var(--bg-elev) 40%, transparent);
+    box-shadow:
+      0 16px 44px -20px rgba(0,0,0,0.24),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
   }
   html[data-theme="dark"] .nav.scrolled .nav-inner {
     background: color-mix(in oklab, var(--bg-elev) 44%, transparent);
+    box-shadow:
+      0 16px 44px -20px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.2);
   }
+  /* Full-width phones: keep the pill edge-to-edge (no side narrowing). */
+  @media (max-width: 640px) { .nav.scrolled .nav-inner { max-width: none; } }
 
   /* Brand */
   .brand {
