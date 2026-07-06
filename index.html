@@ -273,6 +273,44 @@
   .icon-btn:active { transform: scale(0.94) rotate(-10deg); }
   .icon-btn svg { width: 16px; height: 16px; }
 
+  /* Morphing sun ↔ moon toggle icon. Sun (light): full disc + splayed rays.
+     Moon (dark, .is-dark): a mask "bite" slides in to carve a crescent and the
+     rays retract to the centre. transform-box:view-box keeps translations in
+     the 0–24 SVG coordinate space across browsers. */
+  .theme-icon { width: 18px; height: 18px; overflow: visible; }
+  .theme-icon .ti-bite,
+  .theme-icon .ti-rays,
+  .theme-icon .ti-core {
+    transform-box: view-box;
+    transform-origin: 12px 12px;
+  }
+  /* The moon reads bigger than the sun: the disc grows once the crescent forms. */
+  .theme-icon .ti-core {
+    transform: scale(1);
+    transition: transform 480ms cubic-bezier(.5,0,.15,1);
+  }
+  .theme-icon.is-dark .ti-core { transform: scale(1.45); }
+  .theme-icon .ti-bite {
+    /* parked far up-right → no overlap → full sun disc */
+    transform: translate(9px, -9px);
+    transition: transform 520ms cubic-bezier(.5,0,.15,1);
+  }
+  .theme-icon .ti-rays {
+    opacity: 1; transform: scale(1) rotate(0deg);
+    transition: opacity 300ms ease, transform 480ms cubic-bezier(.34,1.4,.5,1);
+  }
+  .theme-icon .ti-rays path {
+    transition: stroke-width 300ms ease;
+  }
+  /* Dark: bite slides over the disc to bite out a crescent; rays collapse. */
+  .theme-icon.is-dark .ti-bite  { transform: translate(2.5px, -3.5px); }
+  .theme-icon.is-dark .ti-rays  { opacity: 0; transform: scale(.35) rotate(-45deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .theme-icon .ti-bite, .theme-icon .ti-rays, .theme-icon .ti-rays path {
+      transition-duration: 1ms;
+    }
+  }
+
   /* CV button — pill-shaped so its corner matches the rounded nav edge */
   .cv-btn {
     display: inline-flex; align-items: center; gap: 8px;

@@ -57,6 +57,31 @@ function useTheme() {
   return [theme, setTheme];
 }
 
+// ─── Morphing sun ↔ moon icon ─────────────────────────────────────────────────
+// One filled disc. In dark mode an offset "bite" circle (via mask) slides in
+// from the upper-right to carve a crescent, while the eight sun rays retract to
+// nothing. All motion is CSS-driven off the `.is-dark` class (see index.html).
+function ThemeIcon({ dark }) {
+  const rays = [
+    'M12 1.6V4', 'M12 20v2.4', 'M1.6 12H4', 'M20 12h2.4',
+    'M4.6 4.6 6.3 6.3', 'M17.7 17.7 19.4 19.4', 'M4.6 19.4 6.3 17.7', 'M17.7 6.3 19.4 4.6',
+  ];
+  return (
+    <svg className={'theme-icon'+(dark?' is-dark':'')} viewBox="0 0 24 24"
+         width="18" height="18" aria-hidden="true">
+      <mask id="theme-moon-mask">
+        <rect x="0" y="0" width="24" height="24" fill="#fff"/>
+        <circle className="ti-bite" cx="12" cy="12" r="6" fill="#000"/>
+      </mask>
+      <circle className="ti-core" cx="12" cy="12" r="5"
+              fill="currentColor" mask="url(#theme-moon-mask)"/>
+      <g className="ti-rays" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+        {rays.map((d,i)=><path key={i} d={d}/>)}
+      </g>
+    </svg>
+  );
+}
+
 // ─── Theme toggle button ──────────────────────────────────────────────────────
 function ThemeToggle({ theme, setTheme }) {
   const next = theme==='light'?'dark':'light';
@@ -79,13 +104,7 @@ function ThemeToggle({ theme, setTheme }) {
   return (
     <button className="icon-btn" title={`Switch to ${next} mode`} aria-label={`Switch to ${next} mode`}
       onClick={handleClick}>
-      <span style={{
-        display:'inline-flex',alignItems:'center',justifyContent:'center',
-        transition:'transform 320ms ease,opacity 200ms ease',
-        transform:theme==='light'?'rotate(0deg)':'rotate(-40deg)',
-      }}>
-        {theme==='light' ? <Icon.Sun/> : <Icon.Moon/>}
-      </span>
+      <ThemeIcon dark={theme!=='light'}/>
     </button>
   );
 }
