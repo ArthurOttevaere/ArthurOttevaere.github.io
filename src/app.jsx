@@ -181,6 +181,36 @@ function AccentPicker() {
   );
 }
 
+// ─── Reading progress bar ─────────────────────────────────────────────────────
+// A hairline accent bar pinned to the top edge, filled by scroll depth. Uses a
+// scaleX transform (compositor-only) updated inside rAF so scrolling stays smooth.
+function ReadingProgress() {
+  const ref = useRef(null);
+  useEffect(()=>{
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      el.style.setProperty('--p', p.toFixed(4));
+      el.classList.toggle('at-top', window.scrollY < 8);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive:true });
+    window.addEventListener('resize', onScroll);
+    return ()=>{
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return <div className="read-progress at-top" ref={ref} aria-hidden="true"/>;
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function Nav({ route, go, theme, setTheme }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
@@ -419,6 +449,7 @@ function App() {
     <div className={navCount===0 ? 'app-no-enter' : ''}
          style={{ opacity: revealed ? 1 : 0,
                   transition: 'opacity 560ms cubic-bezier(.4,0,.2,1)' }}>
+      <ReadingProgress key={route}/>
       <Nav route={route} go={go} theme={theme} setTheme={setTheme}/>
       <main key={route} style={{minHeight:'calc(100vh - 64px - 96px)'}}>
         {Page}
