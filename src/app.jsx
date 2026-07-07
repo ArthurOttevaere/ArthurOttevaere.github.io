@@ -435,7 +435,7 @@ function Footer({ route }) {
                 {isMail && copied
                   ? <Icon.Check/>
                   : <Ico/>}
-                {isMail && copied && <span className="foot-tile-toast">Copié ✓</span>}
+                {isMail && copied && <span className="foot-tile-toast">Copied ✓</span>}
               </a>
             );
           })}
