@@ -660,17 +660,20 @@ function DeckMobile({ cards, go }) {
   const [drag, setDrag]     = useState({x:0,active:false});
   const [flying, setFlying] = useState(null);   // {id,dir} card being flicked off
   const [pinned, setPinned] = useState(null);   // id reinserted at back (no anim 1 frame)
-  const startRef = useRef(null);
-  const movedRef = useRef(false);
   const reduce   = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  const frontId = order[0];
+  // Live mirrors so the window-level gesture handlers (bound once) always see
+  // fresh values without re-binding.
+  const orderRef  = useRef(order);  orderRef.current  = order;
+  const flyingRef = useRef(flying); flyingRef.current = flying;
+  const gesture   = useRef(null);   // {sx,sy,dx,dir} while a finger is down
+  const movedRef  = useRef(false);  // did this gesture move enough to suppress the tap→link?
 
   function advance(dir){
-    if(flying || n<2) return;
-    setFlying({ id:frontId, dir });
+    if(flyingRef.current || n<2) return;
+    const id = orderRef.current[0];
+    setFlying({ id, dir });
     const after = ()=>{
-      const id = frontId;
       setOrder(o=>[...o.slice(1), o[0]]);
       setFlying(null);
       setPinned(id);
@@ -678,19 +681,49 @@ function DeckMobile({ cards, go }) {
     };
     reduce.current ? after() : setTimeout(after, 300);
   }
+  const advanceRef = useRef(advance); advanceRef.current = advance;
 
-  function down(e){ if(flying) return; startRef.current=e.clientX; movedRef.current=false; setDrag({x:0,active:true}); try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
-  function move(e){
-    if(startRef.current==null) return;
-    const dx=e.clientX-startRef.current;
-    if(Math.abs(dx)>6) movedRef.current=true;
-    setDrag({x:dx,active:true});
-  }
-  function up(){
-    if(startRef.current==null) return;
-    const dx=drag.x; startRef.current=null;
-    setDrag({x:0,active:false});
-    if(Math.abs(dx)>72) advance(dx>0?1:-1);
+  // Swipe on the cards themselves. We track the gesture on `window` and rely on
+  // the touch pointer's implicit capture (rather than setPointerCapture, which is
+  // unreliable on iOS Safari and can swallow pointermove or fire an early
+  // pointercancel mid-swipe). We lock to an axis on the first move: a horizontal
+  // drag flicks the deck, a vertical one is handed back to the browser so the
+  // page still scrolls normally when a swipe starts on a card.
+  useEffect(()=>{
+    function move(e){
+      const g = gesture.current; if(!g) return;
+      const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+      if(!g.dir){
+        if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
+          g.dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+          if(g.dir === 'v'){ end(); return; }   // vertical → let the page scroll
+        } else return;
+      }
+      if(g.dir !== 'h') return;
+      g.dx = dx;
+      if(Math.abs(dx) > 6) movedRef.current = true;
+      setDrag({x:dx, active:true});
+    }
+    function end(){
+      const g = gesture.current; if(!g) return;
+      gesture.current = null;
+      setDrag({x:0, active:false});
+      if(g.dir === 'h' && Math.abs(g.dx) > 52) advanceRef.current(g.dx > 0 ? 1 : -1);
+    }
+    window.addEventListener('pointermove', move, {passive:true});
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return ()=>{
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  },[]);
+
+  function down(e){
+    if(flyingRef.current) return;
+    movedRef.current = false;
+    gesture.current = { sx:e.clientX, sy:e.clientY, dx:0, dir:null };
   }
 
   function cardStyle(id){
@@ -718,10 +751,7 @@ function DeckMobile({ cards, go }) {
         <h2 className="h2" style={{marginTop:10}}>Things I've built.</h2>
       </div>
 
-      <div className="deck-wallet-stage"
-           onPointerDown={down} onPointerMove={move}
-           onPointerUp={up} onPointerCancel={up}
-           onPointerLeave={()=>{ if(startRef.current!=null) up(); }}>
+      <div className="deck-wallet-stage" onPointerDown={down}>
         {cards.map((p,i)=>{
           const href = p.github&&p.github!=='#' ? p.github : undefined;
           return (
@@ -1390,16 +1420,29 @@ function SkillsAct({ lite }) {
       // Mobile: stagger the cloud chips in (rise + fade) as they scroll into
       // view — same gentle entrance as the passion tiles, for a consistent feel.
       const chips=cloudRefs.current.filter(Boolean);
-      chips.forEach(c=>{ c.style.transition='opacity .5s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1)'; });
+      // Springy pop-in (scale + rise with a little overshoot) so the toolkit
+      // feels like it snaps to life, not a timid fade. Replays every time the
+      // chips scroll into view (and resets when they leave) rather than firing
+      // just once, so scrolling up and back down re-triggers it.
+      const HIDDEN='translateY(24px) scale(.8)';
+      chips.forEach(c=>{
+        c.style.transition='transform .6s cubic-bezier(.34,1.56,.64,1), opacity .4s ease';
+        c.style.transform=HIDDEN;
+      });
       const io=new IntersectionObserver(es=>{
-        es.forEach(e=>{ if(e.isIntersecting){
+        es.forEach(e=>{
           const i=chips.indexOf(e.target);
-          e.target.style.transitionDelay=(i*55)+'ms';
-          e.target.style.opacity='1';
-          e.target.style.transform='none';
-          io.unobserve(e.target);
-        }});
-      },{ threshold:0.2 });
+          if(e.isIntersecting){
+            e.target.style.transitionDelay=(i*60)+'ms';
+            e.target.style.opacity='1';
+            e.target.style.transform='none';
+          } else {
+            e.target.style.transitionDelay='0ms';
+            e.target.style.opacity='0';
+            e.target.style.transform=HIDDEN;
+          }
+        });
+      },{ threshold:0.15 });
       chips.forEach(c=>io.observe(c));
       return ()=>io.disconnect();
     }
@@ -1532,17 +1575,30 @@ function PassionsAct({ lite, go }) {
       return;
     }
     if(lite){
-      // Mobile compact tiles: stagger a gentle rise + fade as they scroll in.
-      cards.forEach(c=>{ c.style.transition='opacity .55s cubic-bezier(.2,.7,.2,1), transform .55s cubic-bezier(.2,.7,.2,1)'; });
+      // Mobile compact tiles: each pops in with a springy overshoot, rising from
+      // a small alternating tilt that settles straight — reads as playful and
+      // alive rather than a barely-there fade. Replays every time the tiles
+      // scroll into view (and resets when they leave), so scrolling up and back
+      // down re-triggers it instead of firing only once.
+      const hiddenFor = i => `translateY(28px) scale(.82) rotate(${i%2?4.5:-4.5}deg)`;
+      cards.forEach((c,i)=>{
+        c.style.transition='transform .66s cubic-bezier(.34,1.56,.64,1), opacity .42s ease';
+        c.style.transform=hiddenFor(i);
+      });
       const io=new IntersectionObserver(es=>{
-        es.forEach(e=>{ if(e.isIntersecting){
+        es.forEach(e=>{
           const i=cards.indexOf(e.target);
-          e.target.style.transitionDelay=(i*70)+'ms';
-          e.target.style.opacity='1';
-          e.target.style.transform='none';
-          io.unobserve(e.target);
-        }});
-      },{ threshold:0.25 });
+          if(e.isIntersecting){
+            e.target.style.transitionDelay=(i*85)+'ms';
+            e.target.style.opacity='1';
+            e.target.style.transform='none';
+          } else {
+            e.target.style.transitionDelay='0ms';
+            e.target.style.opacity='0';
+            e.target.style.transform=hiddenFor(i);
+          }
+        });
+      },{ threshold:0.2 });
       cards.forEach(c=>io.observe(c));
       return ()=>io.disconnect();
     }

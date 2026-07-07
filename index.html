@@ -879,6 +879,7 @@
     border: 1px solid var(--border-strong); background: var(--bg-elev);
     box-shadow: 0 22px 44px -24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18);
     cursor: grab; -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
   }
   html[data-theme="dark"] .deck-wallet-card {
     box-shadow: 0 24px 50px -24px rgba(0,0,0,0.78), inset 0 1px 0 rgba(255,255,255,0.05);
@@ -1520,9 +1521,9 @@
     .ab-pin-card {
       flex-direction: row; width: auto; height: auto; gap: 10px;
       padding: 12px 14px; border-radius: 12px; justify-content: flex-start;
-      /* Hidden initial state — JS staggers them in (rise + fade) as they scroll
-         into view. */
-      opacity: 0; transform: translateY(14px);
+      /* Hidden initial state — JS pops them in (springy rise + scale + tilt) as
+         they scroll into view. */
+      opacity: 0; transform: translateY(28px) scale(.82);
     }
     .ab-pin-body { flex-direction: row; gap: 10px; }
     .ab-pin { display: none; }
@@ -1540,8 +1541,8 @@
     padding: 6px 13px 6px 7px; border-radius: 999px;
     background: var(--bg-elev); border: 1px solid var(--border);
     box-shadow: var(--shadow);
-    /* Hidden initial state — JS staggers the chips in (rise + fade) on scroll. */
-    opacity: 0; transform: translateY(12px); will-change: opacity, transform;
+    /* Hidden initial state — JS pops the chips in (springy rise + scale) on scroll. */
+    opacity: 0; transform: translateY(24px) scale(.8); will-change: opacity, transform;
   }
   .ab-cloud-ico {
     flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px;
