@@ -3,7 +3,7 @@
 // =============================================================================
 //
 //  Writes real icon FILES (not an inline data-URI) because Safari renders and
-//  caches data-URI SVG favicons unreliably. Outputs:
+//  caches data-URI SVG favicons unreliably. Outputs into assets/icons/:
 //      favicon.svg            — modern SVG favicon (rounded blue "a." tile)
 //      favicon-32.png         — 32×32 raster fallback (older browsers)
 //      apple-touch-icon.png   — 180×180 full-bleed (iOS home screen / Safari)
@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.join(here, '..');
+const outDir = path.join(here, '..', 'assets', 'icons');
 const ACCENT = '#2563eb';
 
 // The "a." monogram in white, placed + scaled to sit centred on a 100×100 tile.
@@ -41,7 +41,7 @@ const tile = (rx) =>
 const browser = await chromium.launch();
 try {
   // Modern SVG favicon — a real file, referenced with type="image/svg+xml".
-  await writeFile(path.join(root, 'favicon.svg'), tile(22) + '\n');
+  await writeFile(path.join(outDir, 'favicon.svg'), tile(22) + '\n');
 
   // Raster the PNG variants (render big, downscale for crisp edges).
   async function png(svg, size, file) {
@@ -64,7 +64,7 @@ try {
       return c.toDataURL('image/png');
     }, { b64: hi.toString('base64'), s: size });
     await shot.close();
-    await writeFile(path.join(root, file), Buffer.from(dataUrl.split(',')[1], 'base64'));
+    await writeFile(path.join(outDir, file), Buffer.from(dataUrl.split(',')[1], 'base64'));
     console.log('✓ Wrote', file, `(${size}×${size})`);
   }
 
