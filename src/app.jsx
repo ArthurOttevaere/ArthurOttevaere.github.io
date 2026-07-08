@@ -301,8 +301,7 @@ function Nav({ route, go, theme, setTheme }) {
     <header className={'nav'+(scrolled?' scrolled':'')}>
       <div className="shell nav-inner">
         <button className="brand" onClick={()=>go('home')} aria-label="Home">
-          <span className="brand-dot"/>
-          <span>Arthur O.</span>
+          <Icon.Logo className="brand-mark"/>
         </button>
 
         <nav className="nav-links" ref={linksRef} aria-label="Primary">
@@ -443,7 +442,7 @@ function Footer({ route }) {
 
         <div className="foot-base">
           <span className="foot-brand">
-            <span className="foot-dot"/>
+            <Icon.Logo className="foot-mark"/>
             Arthur Ottevaere
           </span>
           <span className="foot-mid mono">© {new Date().getFullYear()} · Tournai, BE</span>
