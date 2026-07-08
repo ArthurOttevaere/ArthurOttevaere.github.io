@@ -1,0 +1,14 @@
+{
+  "name": "arthurottevaere-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal portfolio site. Static — served straight from this folder by GitHub Pages. The scripts below only (re)build the social OG image and the favicons.",
+  "scripts": {
+    "og": "node tools/generate-og.mjs",
+    "icons": "node tools/generate-icons.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}
