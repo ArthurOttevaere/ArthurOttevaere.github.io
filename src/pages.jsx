@@ -1152,7 +1152,7 @@ function FeaturedCard({ p, onOpen }) {
 
 
 // ═══════════════════════════════════════════════════════════════
-// ABOUT — an immersive, scroll-driven story in five beats
+// ABOUT — an immersive, scroll-driven story in four beats
 // ═══════════════════════════════════════════════════════════════
 // Reuses the home's native-scroll engine: every act is a tall section with a
 // sticky inner stage animated by sceneProgress() (0→1 as it crosses the
@@ -1559,7 +1559,7 @@ function LanguagesMini() {
   );
 }
 
-// ─── Act 5 · Beyond the data (passions as pinned cards on a wall) ─────────────
+// ─── Act 4 · Beyond the data (passions as pinned cards on a wall) ─────────────
 // Each passion is a slightly-tilted card pinned to a board; they drop into place
 // (from above, settling into their resting tilt) as the act scrolls past.
 function PassionsAct({ lite, go }) {
