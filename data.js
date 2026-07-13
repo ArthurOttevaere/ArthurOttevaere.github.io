@@ -31,7 +31,7 @@
      // DOMAIN:         "Finance" "HR" "Marketing" "Network" "Supply" "Climate"
      // MISC:           "F1" "Netflix" "Layoffs" "Report" "Survey" "Startup" "Map" "Academia" "Generic"
      // IMAGE URL:      "https://…"  or  "/assets/cover.jpg"  (any image path also works)
-     github:   "#",                  // 🔗 GitHub repo URL — leave "#" if not public yet
+     github:   "#",
      featured: false,                // true for exactly ONE project to pin at top
    },
 
@@ -64,7 +64,7 @@ window.PORTFOLIO_DATA = {
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
     cv:       "https://drive.google.com/file/d/1xCqm6u082XO01JhhAJr_xfb5VM61vLXj/view?usp=sharing",     // Link to your CV PDF
     linkedin: "https://www.linkedin.com/in/arthur-ottevaere/",     // e.g. "https://linkedin.com/in/arthur-ottevaere"
-    github:   "https://github.com/ArthurOttevaere",     // e.g. "https://github.com/arthurottevaere"
+    github:   "https://github.com/ArthurOttevaere",
     email:    "arthurottevaere7@gmail.com",
 
     /* Contact form — paste your Formspree endpoint here to receive messages.
@@ -144,7 +144,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "API", "Pandas"],
       cover:    "https://media.formula1.com/image/upload/t_16by9South/c_lfill,w_3392/q_auto/v1740000001/trackside-images/2023/F1_Grand_Prix_of_Abu_Dhabi/1814820481.webp",
-      github:   "https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00",     // 🔗 https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00 
+      github:   "https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00",
       featured: false,
     },
     {
@@ -162,7 +162,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Excel", "PowerBI", "Canva"],
       cover:    "https://assets.everspringpartners.com/ca/3b/d9e41e954f32a1a103cfbdd7efee/business-analytics.jpg",
-      github:   "https://arthuros.notion.site/Business-Data-Cleaning-and-Dashboard-Analysis-2a82a3f21be480b7b378f89e750e333a",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://arthuros.notion.site/Business-Data-Cleaning-and-Dashboard-Analysis-2a82a3f21be480b7b378f89e750e333a",
       featured: false,
     },
     {
@@ -180,7 +180,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["SQL", "Python", "Pandas"],
       cover:    "https://www.numerama.com/content/uploads/2017/05/netflix.jpeg",
-      github:   "https://github.com/ArthurOttevaere/WebMining-Cinema-Reviews",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/WebMining-Cinema-Reviews",
       featured: false,
     },
     {
@@ -198,7 +198,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["R", "Python", "Orange Data Mining"],
       cover:    "https://future-code.dev/wp-content/uploads/2023/08/Employee-Turnover-1.png",
-      github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",
       featured: false,
     },
     {
@@ -216,7 +216,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "Pandas", "Excel"],
       cover:    "https://leseng.rosselcdn.net/sites/default/files/dpistyles_v2/ena_16_9_extra_big/2025/10/25/node_707101/32922101/public/2025/10/25/52593243.jpeg?itok=-DeTC7yM1761374705",
-      github:   "https://arthuros.notion.site/Student-Registration-Management-System-26c2a3f21be48010922dc56b9c351f81?source=copy_link",     // ⚠️ TODO: paste the correct link for THIS project (was wrongly pointing to the HR Predictive Analytics page)
+      github:   "https://arthuros.notion.site/Student-Registration-Management-System-26c2a3f21be48010922dc56b9c351f81?source=copy_link",
       featured: false,
     },
     {
@@ -234,7 +234,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "API", "Peppol"],
       cover:    "https://comptaperspectives.be/wp-content/uploads/2025/06/e-invoice-Wallonie-scaled.jpg",
-      github:   "https://github.com/ArthurOttevaere/vat_number_check",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/vat_number_check",
       featured: false,
     },
     {
@@ -253,7 +253,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
       cover:    "/assets/images/movix.jpg",
-      github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",
       featured: true,
     },
     {
@@ -271,7 +271,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "Optimization", "HTML Dashboard"],
       cover:    "https://c0.wallpaperflare.com/preview/631/640/43/boat-sea-ocean-tanker.jpg",
-      github:   "https://github.com/ArthurOttevaere/QDM_GlobalFlow",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/QDM_GlobalFlow",
       featured: false,
     },
     {
@@ -289,7 +289,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "Gesture Recognition", "Machine Learning"],
       cover:    "https://bluewhaleapps.com/wp-content/uploads/2019/08/Guesture-recognition-technology-blog-feature-image.jpg",
-      github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",
       featured: false,
     },
     {
@@ -307,7 +307,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["XPress Mosel", "Python", "Optimization"],
       cover:    "https://www.umass.edu/sites/default/files/2026-06/NEWS-Operating%20Room%20Surgery%20viaAdobeStock.jpeg",
-      github:   "https://github.com/ArthurOttevaere/surgical-scheduling-optimization",     // 🔗 https://arthuros.notion.site/F1-Championship-Tracker-26b2a3f21be4801e92fdce907d898b00
+      github:   "https://github.com/ArthurOttevaere/surgical-scheduling-optimization",
       featured: false,
     }
   ],
