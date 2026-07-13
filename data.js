@@ -234,7 +234,7 @@ window.PORTFOLIO_DATA = {
       ],
       tags:     ["Python", "API", "Peppol"],
       cover:    "https://comptaperspectives.be/wp-content/uploads/2025/06/e-invoice-Wallonie-scaled.jpg",
-      github:   "https://arthuros.notion.site/Automated-VAT-Validation-using-the-Peppol-API-2a62a3f21be48037af2bf93345e05339",     // 🔗 https://github.com/arthurottevaere/...
+      github:   "https://github.com/ArthurOttevaere/vat_number_check",     // 🔗 https://github.com/arthurottevaere/...
       featured: false,
     },
     {
