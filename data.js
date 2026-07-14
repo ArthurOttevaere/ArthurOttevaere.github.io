@@ -133,8 +133,8 @@ window.PORTFOLIO_DATA = {
       id:       "f1",
       title:    "F1 Championship Tracker",
       cat:      "Personal",
-      year:     "2025",
-      date:     "2025-11",
+      year:     "2026",
+      date:     "2026-07",
       summary:  "Machine-learning app that predicts full F1 race and qualifying finishing orders from eight seasons of historical data, then explains each result with per-driver key factors, win/podium probabilities, live weather, and championship standings.",
       long:     "Machine-learning app that predicts full F1 race and qualifying finishing orders from eight seasons of historical data, then explains each result with per-driver key factors, win/podium probabilities, live weather, and championship standings.",
       highlights: [
