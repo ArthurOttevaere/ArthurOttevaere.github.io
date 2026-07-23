@@ -357,20 +357,59 @@
      (--blue), so it restyles itself when the accent picker changes. Text
      is forced white since the accent is always a saturated colour. */
   .foot {
-    margin-top: 80px;
+    width: min(1240px, calc(100% - 48px));
+    margin: 112px auto 0;
+    padding: 0 clamp(18px, 3vw, 40px);
+    border-radius: 30px 30px 0 0;
     background: var(--blue);
     color: #fff;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     transition: background 320ms ease;
   }
-  /* Soft top sheen so the panel doesn't read as a flat block */
-  .foot::before {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
+
+  /* Fir forest on the top edge + the sheen. The sheen (z-index 3) paints above
+     the firs (z-index 2), so a trunk that dips onto the slab takes the same
+     sheen and blends in seamlessly; foliage above the edge stays vivid. */
+  .foot-sheen {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    border-radius: inherit;
     background: radial-gradient(120% 80% at 50% -25%, rgba(255,255,255,.20), transparent 60%);
   }
+  .foot-forest {
+    position: absolute; left: 0; right: 0; top: -112px; height: 134px;
+    z-index: 2; overflow: hidden; pointer-events: none; color: var(--blue);
+  }
+  .foot-forest-row {
+    position: absolute; left: 50%; bottom: 20px;
+    transform: translateX(-50%); transform-origin: bottom center;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .fir {
+    position: relative; margin-left: -10px; cursor: pointer;
+    pointer-events: auto; transform-origin: 50% 100%;
+    animation: fir-sway 6s ease-in-out infinite;
+  }
+  .fir:first-child     { margin-left: 0; }
+  .fir:nth-child(2n)   { animation-duration: 7.2s; animation-delay: -1.3s; }
+  .fir:nth-child(3n)   { animation-duration: 5.4s; animation-delay: -0.7s; }
+  .fir:nth-child(4n)   { animation-duration: 6.6s; animation-delay: -2.1s; }
+  .fir-front { z-index: 2; }
+  .fir-back  { z-index: 0; }
+  .fir-tree, .fir-twig { display: block; transform-origin: 50% 100%; }
+  .foot-forest svg     { display: block; }   /* kill the inline-SVG baseline gap */
+  .fir-back .fir-tree  { transform: scale(0.8); opacity: 0.5; }
+  .fir-twig            { transition: transform 0.8s ease-out; }
+  .fir:hover           { z-index: 6; }
+  .fir:hover .fir-twig { animation: fir-gust 2.4s ease-in-out infinite; }
+  @keyframes fir-sway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+  @keyframes fir-gust { 0%, 100% { transform: rotate(-4.5deg); } 50% { transform: rotate(4.5deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .fir, .fir:hover .fir-twig { animation: none; }
+    .fir-twig { transition: none; }
+  }
   .foot-inner {
-    position: relative;
+    position: relative; z-index: 4;
     padding: 34px 0 26px;
     display: flex; flex-direction: column; align-items: center; gap: 20px;
   }
@@ -504,6 +543,8 @@
     /* The base .foot-inner sets `padding: 34px 0` which zeroes the horizontal
        gutter and beats .shell — so set an explicit side gutter here. */
     .foot-inner     { padding: 28px 26px 26px; gap: 18px; }
+    .foot-forest    { top: -76px; height: 98px; }
+    .foot-forest-row{ transform: translateX(-50%) scale(0.62); }
     .foot-mid       { display: none; }   /* keep one tidy line on narrow screens */
     .foot-note      { padding: 16px 22px 52px; }
     .foot-note-text { font-size: 15px; }
@@ -1716,7 +1757,7 @@
 
     /* ── Prevent content from going under the bottom nav ──────────── */
     main  { padding-bottom: 68px !important; }
-    .foot { margin-top: 40px !important; padding-bottom: 72px; }
+    .foot { margin-top: 64px !important; padding-bottom: 72px; }
 
     /* ── Typography scale-down ────────────────────────────────────── */
     .h2   { font-size: 30px; }

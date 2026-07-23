@@ -336,6 +336,30 @@ function Nav({ route, go, theme, setTheme }) {
   );
 }
 
+// ─── Fir forest (footer decor) ──────────────────────────────────────────────
+// Built once, deterministically, so it renders identically every load. Firs are
+// drawn in currentColor (the footer accent) and layered front/back for depth.
+function firSVG(seed, spruce) {
+  const rnd = (s => () => (s = (s * 9301 + 49297) % 233280) / 233280)(seed);
+  const h = (spruce ? 66 : 52) + Math.round(rnd() * 34);
+  const w = Math.round(h * (spruce ? 0.5 : 0.62)), cx = w / 2;
+  const trunk = Math.max(6, Math.round(h * 0.1)), body = h - trunk;
+  const tiers = spruce ? 5 : 4, rise = body * (spruce ? 0.2 : 0.24);
+  const tier = (apexY, botY, half) =>
+    `<path d="M${cx} ${apexY.toFixed(1)} L${(cx - half).toFixed(1)} ${botY.toFixed(1)} Q${cx} ${(botY + 3).toFixed(1)} ${(cx + half).toFixed(1)} ${botY.toFixed(1)} Z"/>`;
+  let paths = `<rect x="${(cx - trunk * 0.32).toFixed(1)}" y="${(h - trunk).toFixed(1)}" width="${(trunk * 0.64).toFixed(1)}" height="${trunk}"/>`;
+  for (let i = 0; i < tiers; i++) {
+    const botY = (h - trunk) - i * rise;
+    const half = w * 0.5 * (1 - i * (0.66 / (tiers - 1)));
+    paths += tier(i === tiers - 1 ? 2 : botY - body * 0.4, botY, half);
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="currentColor">${paths}</svg>`;
+}
+const FOOT_FOREST = Array.from({ length: 22 }, (_, i) =>
+  `<span class="fir ${i % 2 ? 'fir-front' : 'fir-back'}">` +
+  `<span class="fir-tree"><span class="fir-twig">${firSVG(i * 47 + 5, i % 3 === 0)}</span></span></span>`
+).join('');
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ route }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
@@ -392,6 +416,9 @@ function Footer({ route }) {
 
   return (
     <footer className="foot">
+      <div className="foot-forest" aria-hidden="true"
+           dangerouslySetInnerHTML={{ __html: `<div class="foot-forest-row">${FOOT_FOREST}</div>` }}/>
+      <div className="foot-sheen" aria-hidden="true"/>
       <div className="shell foot-inner">
         <div className="foot-meta">
           <div className="foot-col">
