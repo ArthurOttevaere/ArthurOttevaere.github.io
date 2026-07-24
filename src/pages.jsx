@@ -299,6 +299,10 @@ function Landing({ go }) {
       {/* Fixed cursor-glow layer — kept OUTSIDE .page-enter so its transform
           doesn't turn position:fixed into a clipped containing block. */}
       <div ref={spotRef} className="spotlight-layer" aria-hidden="true"/>
+      {/* The sky runs the length of the page and fades into the footer forest.
+          Fixed-position, so it lives out here for the same reason the spotlight
+          does: .page-enter's transform would trap it. Dark theme only. */}
+      <NightSky />
       <div className="page-enter hero-spotlight">
         {/* The thread: an accent comet that descends a curve linking the 3 acts.
             Sits behind the content; anchors are queried from the DOM by id. */}
@@ -309,6 +313,147 @@ function Landing({ go }) {
       </div>
     </>
   );
+}
+
+
+// ─── The night sky ───────────────────────────────────────────────────────────
+// The top half of the site's arc: sky here, the fir forest in the footer as
+// ground. It spans the whole landing and thins out as the footer comes up, so
+// the sky hands over to the trees instead of stopping at the first screen.
+// Stars wire themselves together in the accent wherever the cursor goes.
+//
+// DARK ONLY. A day version was built and dropped: on a cream background an ink
+// cloud can only ever be haze, and the light hero is better bare. Light mode
+// draws nothing at all.
+//
+// NOTHING ANIMATES ON ITS OWN. The stars are fixed to their sky; the only
+// things that move them are your scroll (parallax) and your cursor (the links).
+// An earlier version gave each star a slow drift, and the result was a
+// background visibly crawling at all times — the one thing a sky must never do.
+// So there is no rAF loop: frames are scheduled by events and stop when you do.
+//
+// FIXED, not absolute: the sky spans the whole page, and a canvas that tall
+// would cost a fortune in memory at DPR 2. One viewport-sized canvas plus a
+// scroll offset gives an endless sky for a fixed budget. Being fixed, it must
+// live OUTSIDE .page-enter — that animation's transform would otherwise turn it
+// into a clipped containing block (the same reason .spotlight-layer sits where
+// it does). Styles are in index.html under "Landing · the night sky".
+function NightSky() {
+  const ref = useRef(null);
+  useEffect(()=>{
+    const cv=ref.current; if(!cv) return;
+    const ctx=cv.getContext('2d'); if(!ctx) return;
+    const hover = window.matchMedia('(hover: hover)').matches;
+    const LINK=118, REACH=210;   // px: max link length · cursor influence radius
+    // Scroll is the only thing that moves this sky, so it may as well move it
+    // properly. The depth is NOT one shared speed: every star carries its own,
+    // and a star's speed, size and brightness all come from the same `depth`
+    // roll. Near stars are bigger, brighter and slide fast; far ones are faint
+    // specks that barely budge. That spread is what reads as space — a field
+    // moving at a single speed is a sheet of paper sliding past, however fast
+    // you push it.
+    const PARALLAX=0.55;         // the nearest stars; the farthest get ~0.16
+    let w=0,h=0,raf=0,mx=-9999,my=-9999,stars=[];
+    let night=true, fg='#fafafa', accent='#2563eb', fade=1, sy=0;
+
+    const wrap=(v,max)=>((v%max)+max)%max;
+
+    function readTheme(){
+      const cs=getComputedStyle(document.documentElement);
+      fg     =(cs.getPropertyValue('--fg')  ||'#ffffff').trim();
+      accent =(cs.getPropertyValue('--blue')||'#2563eb').trim();
+      night  = document.documentElement.getAttribute('data-theme')==='dark';
+    }
+    function populate(){
+      if(!w||!h) return;
+      // Density follows area, so a phone gets a sparse sky and not a swarm.
+      const n=Math.round(Math.max(34, Math.min(105, (w*h)/17000)));
+      stars=Array.from({length:n},()=>{
+        const depth=Math.random();          // one roll drives size, light, speed
+        return {
+          x:Math.random()*w, y:Math.random()*h,
+          r:0.5+depth*1.3,
+          a:0.13+depth*0.34,
+          p:PARALLAX*(0.3+0.7*depth),
+        };
+      });
+    }
+    function resize(){
+      const dpr=Math.min(window.devicePixelRatio||1, 2);
+      w=cv.clientWidth; h=cv.clientHeight;
+      if(!w||!h) return;
+      cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      populate();
+    }
+    // How much sky is left. Full until the footer is one viewport away, gone by
+    // the time it reaches the top edge — the sky hands over to the trees.
+    function skyFade(){
+      const foot=document.querySelector('.foot');
+      if(!foot) return 1;
+      return clamp(foot.getBoundingClientRect().top / window.innerHeight, 0, 1);
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      if(!night || fade<=0.001) return;
+      // Each star's on-screen position depends on its own depth, so resolve the
+      // whole field once here and let both passes below read from it.
+      const pts=stars.map(s=>({ x:s.x, y:wrap(s.y - sy*s.p, h), r:s.r, a:s.a }));
+      // Links first so the dots sit on top of their own threads. Only stars
+      // within REACH of the cursor are considered, which keeps the O(n²) pass
+      // over a handful of points instead of the whole field.
+      if(hover && mx>-9998){
+        const near=pts.filter(p=>Math.hypot(p.x-mx, p.y-my)<REACH);
+        ctx.strokeStyle=accent; ctx.lineWidth=0.7;
+        for(let i=0;i<near.length;i++){
+          for(let j=i+1;j<near.length;j++){
+            const a=near[i], b=near[j];
+            const d=Math.hypot(a.x-b.x, a.y-b.y);
+            if(d>LINK) continue;
+            // Fade on both counts: long links are fainter, and so are links
+            // whose midpoint sits far from the cursor.
+            const mid=Math.hypot((a.x+b.x)/2-mx, (a.y+b.y)/2-my);
+            ctx.globalAlpha=(1-d/LINK)*(1-mid/REACH)*0.5*fade;
+            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+          }
+        }
+      }
+      for(const p of pts){
+        const k=hover ? Math.max(0, 1-Math.hypot(p.x-mx, p.y-my)/REACH) : 0;
+        ctx.globalAlpha=Math.min(1, p.a + k*0.42)*fade;
+        ctx.fillStyle  = k>0.45 ? accent : fg;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r + k*0.5, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    // One frame per event at most, and none at all while you sit still.
+    function render(){ raf=0; sy=window.scrollY; fade=skyFade(); draw(); }
+    function schedule(){ if(!raf) raf=requestAnimationFrame(render); }
+
+    function onMove(e){ mx=e.clientX; my=e.clientY; schedule(); }
+    function onLeave(){ mx=my=-9999; schedule(); }
+    function onResize(){ resize(); schedule(); }
+    function onTheme(){ readTheme(); schedule(); }
+
+    readTheme(); resize(); render();
+    const themeObs=new MutationObserver(onTheme);
+    themeObs.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','style']});
+    window.addEventListener('pointermove',onMove,{passive:true});
+    window.addEventListener('pointerleave',onLeave);
+    window.addEventListener('resize',onResize);
+    window.addEventListener('scroll',schedule,{passive:true});
+    return ()=>{
+      themeObs.disconnect();
+      window.removeEventListener('pointermove',onMove);
+      window.removeEventListener('pointerleave',onLeave);
+      window.removeEventListener('resize',onResize);
+      window.removeEventListener('scroll',schedule);
+      if(raf) cancelAnimationFrame(raf);
+    };
+  },[]);
+  return <canvas ref={ref} className="sky-layer" aria-hidden="true"/>;
 }
 
 // ─── Act 1 · Hero (FIRST ● LAST, editorial corner labels) ─────────────────────
