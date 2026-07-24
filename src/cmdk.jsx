@@ -24,7 +24,7 @@ function CommandPalette({ go, theme, setTheme }) {
       icon:'◐', group:'Actions',
       run:()=>setTheme(theme==='dark'?'light':'dark'),
     },
-    { id:'act-cv',    label:'Download CV',    icon:'↓', group:'Actions', run:()=>{ if(PROFILE.cv&&PROFILE.cv!=='#') window.open(PROFILE.cv,'_blank'); } },
+    { id:'act-cv',    label:'Download CV',    icon:'↓', group:'Actions', run:()=>{ const href = window.cvPrimary ? window.cvPrimary(PROFILE) : null; if(href) window.open(href,'_blank','noopener,noreferrer'); } },
     { id:'act-email', label:'Send an email',  icon:'@', group:'Actions', run:()=>go('contact') },
     ...PROJS.map(p=>({
       id:'proj-'+p.id,

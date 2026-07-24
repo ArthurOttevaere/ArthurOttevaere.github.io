@@ -1,12 +1,42 @@
 // Pages — Landing, Projects, About, Contact
 // Data is pulled from window.PORTFOLIO_DATA (set by data.js).
 
-const { useState, useEffect, useMemo, useRef } = React;
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
 // ─── Data helpers ────────────────────────────────────────────────────────────
 const DATA    = () => window.PORTFOLIO_DATA || {};
 const PROFILE = () => DATA().profile   || {};
 const PROJS   = () => DATA().projects  || [];
+
+// Live age from an ISO date of birth ("YYYY-MM-DD"). Falls back to a static
+// `age` field if `birth` is missing/invalid, so old data still renders.
+function computeAge(birth){
+  const d = new Date(birth);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let a = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+  return a;
+}
+
+// CV links. `profile.cv` may be a single string OR an object keyed by language
+// ({ en, fr, nl }); the first available entry is the primary one.
+const CV_LANGS = [['en','English'],['fr','Français'],['nl','Nederlands']];
+function cvLinks(P){
+  const cv = (P||{}).cv;
+  if (!cv) return [];
+  if (typeof cv === 'string') return (cv && cv!=='#') ? [{ lang:'en', label:'CV', href:cv }] : [];
+  return CV_LANGS.map(([lang,label]) => (cv[lang] && cv[lang]!=='#') ? { lang, label, href:cv[lang] } : null).filter(Boolean);
+}
+function cvPrimary(P){ const l = cvLinks(P); return l.length ? l[0].href : null; }
+
+// Deep-link helper: the project id in "#/work/:id" (empty when on plain #/work).
+function workSubFromHash(){
+  const raw = (typeof window!=='undefined' ? window.location.hash : '').slice(1); // "/work/f1"
+  const parts = raw.replace(/^\//,'').split(/[/?#]/);
+  return (parts[0]||'').toLowerCase()==='work' ? (parts[1]||'').toLowerCase() : '';
+}
 
 // ─── Scroll-scene helpers ────────────────────────────────────────────────────
 // Native scroll only — no hijacking. sceneProgress() returns 0→1 for how far a
@@ -837,8 +867,28 @@ function Projects() {
   const cats      = useMemo(()=>['All',...[...new Set(projects.map(p=>p.cat))]], [projects]);
   const [filter, setFilter] = useState('All');
   const [sort, setSort]     = useState('desc');   // 'desc' = newest first
-  const [active, setActive] = useState(null);      // project shown in the detail popup
   const [cols, setCols]     = useState(2);         // grid density (cards per row)
+
+  // The open project is driven by the URL hash (#/work/:id) so a project is
+  // shareable, refresh-safe, and closes on the browser Back button.
+  const projById = useCallback(id => projects.find(p=>p.id===id) || null, [projects]);
+  const [active, setActive] = useState(()=>projById(workSubFromHash()));
+  const openProject  = useCallback(p=>{
+    if (!p) return;
+    setActive(p);   // optimistic — the hashchange below re-affirms it
+    if (window.location.hash.slice(1) !== '/work/'+p.id) window.location.hash = '/work/'+p.id;
+  }, []);
+  const closeProject = useCallback(()=>{
+    // Rewind the deep link so Back/close both land on the plain grid; the
+    // hashchange listener then clears `active`. (Direct set when already plain.)
+    if (workSubFromHash()) window.location.hash = '/work';
+    else setActive(null);
+  }, []);
+  useEffect(()=>{
+    const onHash = ()=>{ const id = workSubFromHash(); setActive(id ? projById(id) : null); };
+    window.addEventListener('hashchange', onHash);
+    return ()=> window.removeEventListener('hashchange', onHash);
+  }, [projById]);
 
   const rest = useMemo(()=>{
     const list = projects.filter(p=>p.id!==featured?.id);
@@ -890,7 +940,7 @@ function Projects() {
       </div>
 
       {/* Featured card */}
-      {featured && showFeatured && <FeaturedCard p={featured} onOpen={setActive}/>}
+      {featured && showFeatured && <FeaturedCard p={featured} onOpen={openProject}/>}
 
       {/* Card grid */}
       <div style={{marginTop: featured && showFeatured ? 44 : 0}}>
@@ -905,12 +955,12 @@ function Projects() {
           )
           : (
             <div className="proj-grid" style={{'--cols': cols}}>
-              {rest.map(p=><ProjectCard key={p.id} p={p} onOpen={setActive}/>)}
+              {rest.map(p=><ProjectCard key={p.id} p={p} onOpen={openProject}/>)}
             </div>
           )}
       </div>
 
-      <ProjectModal p={active} onClose={()=>setActive(null)}/>
+      <ProjectModal p={active} onClose={closeProject}/>
     </div>
   );
 }
@@ -968,7 +1018,7 @@ function ProjectCard({ p, onOpen }){
         <span className="cat-pill">{p.cat}</span>
       </div>
       <div className="proj-body">
-        <div className="proj-meta mono">{projDateLabel(p)}</div>
+        <div className="proj-meta mono">{projDateLabel(p)}{p.role?' · '+p.role:''}</div>
         <h3 className="proj-title">{p.title}</h3>
         <p className="proj-sum">{p.summary}</p>
         <div className="proj-tags">{p.tags.slice(0,4).map(t=><Tag key={t}>{t}</Tag>)}</div>
@@ -1019,6 +1069,7 @@ function ProjectModal({ p, onClose }){
             <span className="mono">{projDateLabel(p)}</span>
             <span style={{color:'var(--fg-faint)'}}>·</span>
             <span>{p.cat}</span>
+            {p.role && <><span style={{color:'var(--fg-faint)'}}>·</span><span>{p.role}</span></>}
           </div>
           <h3 className="pj-title">{p.title}</h3>
           <p className="pj-long">{p.long || p.summary}</p>
@@ -1076,6 +1127,7 @@ function FeaturedCard({ p, onOpen }) {
           <span className="mono">{projDateLabel(p)}</span>
           <span style={{color:'var(--fg-faint)'}}>·</span>
           <span>{p.cat}</span>
+          {p.role && <><span style={{color:'var(--fg-faint)'}}>·</span><span>{p.role}</span></>}
         </div>
         <h3 style={{margin:'10px 0 12px',fontSize:30,lineHeight:1.1,letterSpacing:'-0.02em',fontWeight:500}}>{p.title}</h3>
         <p className="sub" style={{margin:0,maxWidth:560}}>{p.long}</p>
@@ -1228,7 +1280,7 @@ function AboutIntro({ lite, go }) {
               <div>
                 <div className="eyebrow">About</div>
                 <div className="ab-id-name">{P.name}</div>
-                <div className="ab-id-meta">{P.location} · {P.age}</div>
+                <div className="ab-id-meta">{P.location}{(computeAge(P.birth) ?? P.age) ? ` · ${computeAge(P.birth) ?? P.age}` : ''}</div>
                 {P.status && (
                   <div className="ab-status mono">
                     <span className="ab-status-dot" aria-hidden="true"/>
@@ -1249,7 +1301,11 @@ function AboutIntro({ lite, go }) {
           </div>
         </div>
         <div className="ab-id-actions">
-          {P.cv && <a href={P.cv} target="_blank" rel="noopener noreferrer" className="btn-ghost-2"><Icon.Download/> Resume</a>}
+          {(()=>{ const links=cvLinks(P); const multi=links.length>1; return links.map(c=>(
+            <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer" className="btn-ghost-2">
+              <Icon.Download/> Resume{multi ? ' · '+c.lang.toUpperCase() : ''}
+            </a>
+          )); })()}
           {P.linkedin && <a href={P.linkedin} target="_blank" rel="noopener noreferrer" className="btn-ghost-2"><Icon.Linkedin style={{width:14,height:14}}/> LinkedIn</a>}
         </div>
         <LanguagesMini/>
@@ -1381,15 +1437,22 @@ function EducationAct({ lite }) {
           <div className="ab-edu-rail" aria-hidden="true"/>
           <div className="ab-edu-track" ref={trackRef}>
             <div className="ab-edu-rail-fill" ref={railFillRef} aria-hidden="true"/>
-            {edu.map((e,i)=>(
-              <div key={i} className="ab-edu-card" ref={el=>cardRefs.current[i]=el}>
+            {edu.map((e,i)=>{
+              const upcoming = periodStartKey(e.period) > Date.now();
+              return (
+              <div key={i} className={'ab-edu-card'+(upcoming?' is-upcoming':'')} ref={el=>cardRefs.current[i]=el}>
                 <span className="ab-edu-node"/>
-                {e.type && <div className="ab-edu-type mono">{e.type}</div>}
+                {(e.type || upcoming) && (
+                  <div className="ab-edu-type mono">
+                    {e.type}{upcoming && <span className="ab-edu-upcoming">Upcoming</span>}
+                  </div>
+                )}
                 <div className="ab-edu-period mono">{formatPeriod(e.period)}</div>
                 <div className="ab-edu-degree">{e.title}</div>
                 <div className="ab-edu-school">{e.place}</div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -1846,4 +1909,4 @@ function Contact() {
   );
 }
 
-Object.assign(window, { Landing, Projects, About, Contact, ULink });
+Object.assign(window, { Landing, Projects, About, Contact, ULink, cvLinks, cvPrimary });

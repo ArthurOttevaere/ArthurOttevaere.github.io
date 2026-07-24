@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Personal portfolio site. Static — served straight from this folder by GitHub Pages. The scripts below only (re)build the social OG image and the favicons.",
+  "description": "Personal portfolio site. Static — served by GitHub Pages. `npm run build` compiles src/*.jsx into dist/app.js (commit it). data.js is loaded directly and needs no build.",
   "scripts": {
+    "build": "node tools/build.mjs",
+    "watch": "node --watch-path=src tools/build.mjs",
     "og": "node tools/generate-og.mjs",
     "icons": "node tools/generate-icons.mjs"
   },
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "playwright": "^1.61.1"
   }
 }

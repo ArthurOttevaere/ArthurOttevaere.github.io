@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://arthurottevaere.github.io/sitemap.xml

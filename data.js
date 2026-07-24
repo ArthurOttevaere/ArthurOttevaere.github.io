@@ -25,6 +25,7 @@
        "Second key point.",
      ],
      tags:     ["Python", "SQL"],    // Tech stack — 3 to 5 items
+     role:     "Solo",              // OPTIONAL — "Solo" or "Team" (shown as a meta chip)
      cover:    "Generic",
      // DATA/ANALYTICS: "Dashboard" "Scatter" "TimeSeries" "Heatmap" "Clustering" "Regression"
      // TOOLS/TECH:     "Python" "SQL" "API" "Excel" "PowerBI" "ML"
@@ -43,7 +44,7 @@ window.PORTFOLIO_DATA = {
   profile: {
     name:           "Arthur Ottevaere",
     location:       "Tournai, BE",
-    age:            "22",
+    birth:          "2004-06-24",   // ISO date of birth — age is computed live from this
 
     /* About — small status line under your name/location. Leave "" to hide
        it entirely; only fill it in while it's actually true, e.g.
@@ -52,7 +53,7 @@ window.PORTFOLIO_DATA = {
 
     /* Bio paragraphs — each string becomes a <p> in the About page */
     bio: [
-      "I'm a 22-year-old Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use like dashboards, short reports, or occasional model.",
+      "I'm a Business Engineering student in Tournai, finishing my Master's in Business Analytics. I love turning real datasets into things people can actually use like dashboards, short reports, or the occasional model.",
       "What I love most is building side projects end to end, just to test an idea or solve a daily issue.",
       "On the side I build small data projects for fun, usually around passions like Formula 1 and daily issues I want to solve. Some of them live on the projects page.",
       "I'm going on a semester abroad in Rotterdam in Fall '26, excited to meet new people and get a fresh perspective on things!",
@@ -62,7 +63,15 @@ window.PORTFOLIO_DATA = {
     tagline:  "Master's student in Business Engineering. I love turning messy data into things you can act on like dashboards, models, the occasional weekend project about Formula 1.",
 
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
-    cv:       "https://drive.google.com/file/d/1xCqm6u082XO01JhhAJr_xfb5VM61vLXj/view?usp=sharing",     // Link to your CV PDF
+
+    /* CV — one PDF per language, hosted in /assets/cv. The first entry is the
+       primary one (opened by the nav "CV" button and the command palette).
+       A single string still works too (cv: "https://…") if you only have one. */
+    cv: {
+      en: "/assets/cv/arthur-ottevaere-cv-en.pdf",   // English (primary)
+      fr: "/assets/cv/arthur-ottevaere-cv-fr.pdf",   // Français
+      nl: "/assets/cv/arthur-ottevaere-cv-nl.pdf",   // Nederlands
+    },
     linkedin: "https://www.linkedin.com/in/arthur-ottevaere/",     // e.g. "https://linkedin.com/in/arthur-ottevaere"
     github:   "https://github.com/ArthurOttevaere",
     email:    "arthurottevaere7@gmail.com",
@@ -86,7 +95,7 @@ window.PORTFOLIO_DATA = {
       {period: "2026-09 — 2026-12", title: "Erasmus Semester", place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education"},
       { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",  place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education" },
       {period: "2025-01 — 2025-02", title: "Business Internship", place: "Global Net Belgium", type: "Internship"},
-      {period: "2027-02 —2027-05", title: "Data Consultant Internship", place: "EASI", type: "UPCOMING Internship"},
+      {period: "2027-02 — 2027-05", title: "Data Consultant Internship", place: "EASI", type: "Internship"},
     ],
 
     /* About — skill tags (flat list, kept for the command palette etc.) */
@@ -143,7 +152,8 @@ window.PORTFOLIO_DATA = {
         "Computes live weather and championship standings.",
       ],
       tags:     ["Python", "FASTF1 API", "ML", "Pandas"],
-      cover:    "https://media.formula1.com/image/upload/t_16by9South/c_lfill,w_3392/q_auto/v1740000001/trackside-images/2023/F1_Grand_Prix_of_Abu_Dhabi/1814820481.webp",
+      role:     "Solo",
+      cover:    "/assets/images/f1-tracker.jpeg",
       github:   "https://github.com/ArthurOttevaere/f1_race_predictor",
       featured: false,
     },
@@ -161,7 +171,8 @@ window.PORTFOLIO_DATA = {
         "Collaborative project delivered for a data analytics course.",
       ],
       tags:     ["Excel", "PowerBI", "Canva"],
-      cover:    "https://assets.everspringpartners.com/ca/3b/d9e41e954f32a1a103cfbdd7efee/business-analytics.jpg",
+      role:     "Team",
+      cover:    "/assets/images/business-dashboard.jpg",
       github:   "https://arthuros.notion.site/Business-Data-Cleaning-and-Dashboard-Analysis-2a82a3f21be480b7b378f89e750e333a",
       featured: false,
     },
@@ -179,7 +190,8 @@ window.PORTFOLIO_DATA = {
         "Built a network graph to find influential hubs and bridges between genres.",
       ],
       tags:     ["SQL", "Python", "Pandas"],
-      cover:    "https://www.numerama.com/content/uploads/2017/05/netflix.jpeg",
+      role:     "Team",
+      cover:    "/assets/images/cinema-reviews.jpeg",
       github:   "https://github.com/ArthurOttevaere/WebMining-Cinema-Reviews",
       featured: false,
     },
@@ -197,7 +209,8 @@ window.PORTFOLIO_DATA = {
         "Explored the data in both R and Orange Data Mining.",
       ],
       tags:     ["R", "Python", "Orange Data Mining"],
-      cover:    "https://future-code.dev/wp-content/uploads/2023/08/Employee-Turnover-1.png",
+      role:     "Team",
+      cover:    "/assets/images/hr-analytics.png",
       github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",
       featured: false,
     },
@@ -215,7 +228,8 @@ window.PORTFOLIO_DATA = {
         "User-friendly interface, developed collaboratively.",
       ],
       tags:     ["Python", "Pandas", "Excel"],
-      cover:    "https://leseng.rosselcdn.net/sites/default/files/dpistyles_v2/ena_16_9_extra_big/2025/10/25/node_707101/32922101/public/2025/10/25/52593243.jpeg?itok=-DeTC7yM1761374705",
+      role:     "Team",
+      cover:    "/assets/images/student-registration.jpeg",
       github:   "https://arthuros.notion.site/Student-Registration-Management-System-26c2a3f21be48010922dc56b9c351f81?source=copy_link",
       featured: false,
     },
@@ -233,7 +247,8 @@ window.PORTFOLIO_DATA = {
         "Returns a validation report with company names and status.",
       ],
       tags:     ["Python", "API", "Peppol"],
-      cover:    "https://comptaperspectives.be/wp-content/uploads/2025/06/e-invoice-Wallonie-scaled.jpg",
+      role:     "Solo",
+      cover:    "/assets/images/vat-verification.jpg",
       github:   "https://github.com/ArthurOttevaere/vat_number_check",
       featured: false,
     },
@@ -242,8 +257,7 @@ window.PORTFOLIO_DATA = {
       title:    "Recommender System",
       cat:      "Academic",
       year:     "2026",
-      date:     "2026-06",   // ⚠️ example precise date — set the real finalisation day
-
+      date:     "2026-06",
       summary:  "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
       long:     "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
       highlights: [
@@ -252,6 +266,7 @@ window.PORTFOLIO_DATA = {
         "Full frontend-backend integration on the MovieLens dataset.",
       ],
       tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
+      role:     "Team",
       cover:    "/assets/images/movix.jpg",
       github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",
       featured: true,
@@ -270,7 +285,8 @@ window.PORTFOLIO_DATA = {
         "Modelled flows across three distinct products.",
       ],
       tags:     ["Python", "Optimization", "HTML Dashboard"],
-      cover:    "https://c0.wallpaperflare.com/preview/631/640/43/boat-sea-ocean-tanker.jpg",
+      role:     "Team",
+      cover:    "/assets/images/logistics-network.jpg",
       github:   "https://github.com/ArthurOttevaere/QDM_GlobalFlow",
       featured: false,
     },
@@ -288,7 +304,8 @@ window.PORTFOLIO_DATA = {
         "Benchmarked against machine learning baselines.",
       ],
       tags:     ["Python", "Gesture Recognition", "Machine Learning"],
-      cover:    "https://bluewhaleapps.com/wp-content/uploads/2019/08/Guesture-recognition-technology-blog-feature-image.jpg",
+      role:     "Team",
+      cover:    "/assets/images/gesture-recognition.jpg",
       github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",
       featured: false,
     },
@@ -306,7 +323,8 @@ window.PORTFOLIO_DATA = {
         "Stress-tests the grid against room failures and new surgeon arrivals.",
       ],
       tags:     ["XPress Mosel", "Python", "Optimization"],
-      cover:    "https://www.umass.edu/sites/default/files/2026-06/NEWS-Operating%20Room%20Surgery%20viaAdobeStock.jpeg",
+      role:     "Team",
+      cover:    "/assets/images/surgical-scheduling.jpeg",
       github:   "https://github.com/ArthurOttevaere/surgical-scheduling-optimization",
       featured: false,
     }

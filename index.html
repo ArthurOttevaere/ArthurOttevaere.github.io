@@ -32,6 +32,38 @@
 <meta name="twitter:description" content="Business Engineering & Business Analytics student. Dashboards, data projects, and the occasional Formula 1 build."/>
 <meta name="twitter:image" content="https://arthurottevaere.github.io/assets/images/og-image.jpg?v=3"/>
 
+<!-- Structured data — helps Google/LinkedIn understand who this page is about.
+     Keep the facts here in sync with data.js (name, links, school, skills). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Arthur Ottevaere",
+  "url": "https://arthurottevaere.github.io/",
+  "image": "https://arthurottevaere.github.io/assets/images/og-image.jpg",
+  "jobTitle": "Business Engineering — Business Analytics student",
+  "description": "Master's student in Business Engineering (Business Analytics). Dashboards, data projects, and the occasional Formula 1 build.",
+  "email": "mailto:arthurottevaere7@gmail.com",
+  "address": { "@type": "PostalAddress", "addressLocality": "Tournai", "addressCountry": "BE" },
+  "alumniOf": [
+    { "@type": "CollegeOrUniversity", "name": "UCLouvain — Louvain School of Management (FUCaM Mons)" },
+    { "@type": "CollegeOrUniversity", "name": "Erasmus University Rotterdam — Rotterdam School of Management" }
+  ],
+  "knowsAbout": ["Business Analytics", "Data Analytics", "Python", "R", "SQL", "Power BI", "Machine Learning", "Data Visualization"],
+  "sameAs": [
+    "https://www.linkedin.com/in/arthur-ottevaere/",
+    "https://github.com/ArthurOttevaere"
+  ]
+}
+</script>
+
+<!-- Privacy-friendly, cookieless analytics (GoatCounter — free for personal use).
+     SETUP: create a free account at https://www.goatcounter.com, then replace
+     "arthurottevaere" below with your GoatCounter subdomain. Route changes are
+     also counted from app.jsx. Remove these two lines to disable analytics. -->
+<script data-goatcounter="https://arthurottevaere.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
 <!-- Preload the featured project cover so it's ready the moment it scrolls in -->
 <link rel="preload" as="image" href="/assets/images/movix.jpg"/>
 
@@ -338,6 +370,43 @@
   @media (prefers-reduced-motion: reduce) {
     .cv-btn:hover svg path { animation: none; }
   }
+
+  /* CV language menu — clicking the CV pill opens a small popover to pick the
+     language (English / French / Dutch). */
+  .cv-wrap { position: relative; display: inline-flex; }
+  .cv-btn.is-open { background: var(--blue-soft); border-color: var(--blue); color: var(--blue-fg); }
+  /* Liquid glass — same recipe as the nav pill (heavy blur + saturation and a
+     bright top-edge highlight), but nearly opaque so the menu stays fully
+     legible over page content. */
+  .cv-pop {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 70;
+    display: flex; flex-direction: column; gap: 2px; padding: 6px; min-width: 154px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--bg-elev) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border: 1px solid color-mix(in oklab, var(--border-strong) 55%, transparent);
+    box-shadow:
+      0 14px 40px -20px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
+    animation: cv-pop-in 160ms cubic-bezier(.2,.7,.2,1);
+  }
+  html[data-theme="dark"] .cv-pop {
+    box-shadow:
+      0 14px 40px -20px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.2);
+  }
+  @keyframes cv-pop-in { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+  .cv-pop-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px;
+    text-decoration: none; color: var(--fg); font-size: 13px;
+    transition: background 140ms ease;
+  }
+  .cv-pop-item:hover { background: color-mix(in oklab, var(--fg) 8%, transparent); }
+  .cv-pop-lang { font-size: 11px; color: var(--fg-muted); min-width: 22px; }
+  @media (prefers-reduced-motion: reduce) { .cv-pop { animation: none; } }
 
   /* ── Page transitions ───────────────────────────────────────────── */
   /* Clean fade + tiny rise — no blur (it muddied the boot→page reveal). */
@@ -1440,6 +1509,14 @@
   .ab-edu-type {
     font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--blue-fg); margin-bottom: 3px;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  /* "Upcoming" pill — marks a timeline entry whose start date is still ahead. */
+  .ab-edu-upcoming {
+    display: inline-flex; align-items: center; letter-spacing: 0.06em;
+    padding: 2px 7px; border-radius: 999px; font-size: 9px;
+    color: var(--available); background: color-mix(in oklab, var(--available) 15%, transparent);
+    border: 1px solid color-mix(in oklab, var(--available) 40%, transparent);
   }
   .ab-edu-period { font-size: 12px; color: var(--fg-muted); }
   .ab-edu-degree { margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
@@ -1992,10 +2069,10 @@
 })();
 </script>
 
-<!-- React 18 + Babel (CDN) -->
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<!-- React 18 — production builds. JSX is precompiled into dist/app.js at build
+     time (npm run build), so there is no in-browser Babel anymore. -->
+<script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 </head>
 <body>
 <div id="root"></div>
@@ -2050,14 +2127,11 @@
 })();
 </script>
 
-<!-- Data (edit data.js to update your portfolio) -->
-<script src="data.js"></script>
+<!-- Data (edit data.js to update your portfolio — no rebuild needed) -->
+<script defer src="data.js"></script>
 
-<!-- Components (load order matters) -->
-<script type="text/babel" src="src/icons.jsx"></script>
-<script type="text/babel" src="src/covers.jsx"></script>
-<script type="text/babel" src="src/pages.jsx"></script>
-<script type="text/babel" src="src/cmdk.jsx"></script>
-<script type="text/babel" src="src/app.jsx"></script>
+<!-- App bundle — compiled from src/*.jsx by `npm run build` (tools/build.mjs).
+     `defer` keeps it after React + data.js while never blocking the parser. -->
+<script defer src="/dist/app.js?v=1"></script>
 </body>
 </html>

@@ -263,6 +263,62 @@ function BackToTop() {
   );
 }
 
+// ─── CV button (+ language menu) ──────────────────────────────────────────────
+// Primary click downloads the first/English CV; when several languages exist a
+// caret opens a small menu to pick French / Dutch. Reads profile.cv, which may
+// be a single string or a { en, fr, nl } object (see cvLinks in pages.jsx).
+function CvMenu() {
+  const P = (window.PORTFOLIO_DATA||{}).profile || {};
+  const links = window.cvLinks ? window.cvLinks(P) : [];
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(()=>{
+    if (!open) return;
+    function onDown(e){ if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    function onKey(e){ if (e.key==='Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return ()=>{ document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  if (!links.length) {
+    // No CV configured → keep the old disabled-looking button.
+    return (
+      <a href="#" onClick={e=>e.preventDefault()} className="cv-btn" title="Download CV">
+        <span>CV</span> <Icon.Download/>
+      </a>
+    );
+  }
+  // A single language → the button is a direct download; no menu needed.
+  if (links.length === 1) {
+    return (
+      <a href={links[0].href} target="_blank" rel="noopener noreferrer" className="cv-btn" title="Download CV">
+        <span>CV</span> <Icon.Download/>
+      </a>
+    );
+  }
+  // Several languages → clicking CV opens the language menu.
+  return (
+    <div className="cv-wrap" ref={ref}>
+      <button type="button" className={'cv-btn'+(open?' is-open':'')}
+        aria-haspopup="menu" aria-expanded={open}
+        onClick={()=>setOpen(o=>!o)} title="Download CV">
+        <span>CV</span> <Icon.Download/>
+      </button>
+      {open && (
+        <div className="cv-pop" role="menu">
+          {links.map(c=>(
+            <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer"
+               role="menuitem" className="cv-pop-item" onClick={()=>setOpen(false)}>
+              <span className="cv-pop-lang mono">{c.lang.toUpperCase()}</span>
+              <span>{c.label}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function Nav({ route, go, theme, setTheme }) {
   const P = (window.PORTFOLIO_DATA||{}).profile || {};
@@ -323,13 +379,7 @@ function Nav({ route, go, theme, setTheme }) {
           <CmdkTrigger/>
           <AccentPicker/>
           <ThemeToggle theme={theme} setTheme={setTheme}/>
-          <a href={P.cv&&P.cv!=='#'?P.cv:'#'}
-             target={P.cv&&P.cv!=='#'?'_blank':undefined}
-             rel="noopener noreferrer"
-             onClick={e=>{ if(!P.cv||P.cv==='#') e.preventDefault(); }}
-             className="cv-btn" title="Download CV">
-            <span>CV</span> <Icon.Download/>
-          </a>
+          <CvMenu/>
         </div>
       </div>
     </header>
@@ -525,13 +575,32 @@ function App() {
   }, [applyRoute]);
 
   useEffect(()=>{
-    const onHash = ()=> applyRoute(routeFromHash());
+    const onHash = ()=>{
+      const r = routeFromHash();
+      // Only reset scroll + replay the page-enter animation when the BASE route
+      // actually changes. A deep-link like #/work → #/work/f1 (opening a project
+      // modal) keeps the same base route, so the page must stay put.
+      setRoute(cur=>{
+        if (cur !== r){ setNavCount(c=>c+1); window.scrollTo({top:0,behavior:'instant'}); }
+        return r;
+      });
+    };
     window.addEventListener('hashchange', onHash);
     return ()=> window.removeEventListener('hashchange', onHash);
-  }, [applyRoute]);
+  }, []);
 
   // Expose for in-prose links
   useEffect(()=>{ window.__go = go; }, [go]);
+
+  // Analytics: GoatCounter (in index.html) auto-counts the first load; since we
+  // route via the hash, we count subsequent page changes ourselves. Skips the
+  // first render to avoid double-counting the landing. No-op if analytics is off.
+  const firstCount = useRef(true);
+  useEffect(()=>{
+    if (firstCount.current){ firstCount.current = false; return; }
+    const gc = window.goatcounter;
+    if (gc && gc.count) gc.count({ path: location.pathname + location.hash, title: document.title });
+  }, [route]);
 
   // Boot → landing handoff. The page stays hidden while the splash fades out,
   // and only fades in once the splash is fully gone — so the splash greeting

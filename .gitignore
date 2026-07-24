@@ -9,7 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build / output
-dist/
+# NOTE: dist/ is intentionally committed — GitHub Pages serves dist/app.js
+# (the compiled bundle). Run `npm run build` after editing src/*.jsx.
 build/
 out/
 .parcel-cache/
