@@ -1306,8 +1306,17 @@ function FeaturedCard({ p, onOpen }) {
         }
         .featured:focus-visible{outline:2px solid var(--blue);outline-offset:3px;}
         .featured-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
-        .featured-cover{position:relative;aspect-ratio:16/9;border-right:1px solid var(--border);background:var(--bg-soft);}
-        .featured-body{padding:32px 36px 44px;display:flex;flex-direction:column;justify-content:center;}
+        /* min-width:0 on both tracks: without it a grid item's automatic
+           minimum size is its min-content width, so the 1.15fr/1fr ratio is
+           only a suggestion and a long body can blow the columns past the
+           card. The cover's 16/9 is a MINIMUM height (::before spacer) rather
+           than an aspect-ratio, so a tall text column stretches the image
+           instead of widening it — with aspect-ratio, a taller row fed back
+           into a wider cover and the layout ran away. */
+        .featured-cover{position:relative;min-width:0;overflow:hidden;border-right:1px solid var(--border);background:var(--bg-soft);}
+        .featured-cover::before{content:'';display:block;padding-top:56.25%;}
+        .featured-cover>img,.featured-cover>svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+        .featured-body{min-width:0;padding:32px 36px 44px;display:flex;flex-direction:column;justify-content:center;}
         .featured-flag{
           position:absolute;top:14px;right:14px;
           display:inline-flex;align-items:center;gap:6px;
