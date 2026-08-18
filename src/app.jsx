@@ -264,12 +264,12 @@ function BackToTop() {
 }
 
 // ─── CV button (+ language menu) ──────────────────────────────────────────────
-// Primary click downloads the first/English CV; when several languages exist a
-// caret opens a small menu to pick French / Dutch. Reads profile.cv, which may
-// be a single string or a { en, fr, nl } object (see cvLinks in pages.jsx).
+// One language → the button downloads it directly; several → it opens a menu.
+// The list comes from useCvLinks (pages.jsx), which keeps only the languages
+// whose PDF is actually present in /assets/cv, so the menu follows the files
+// you ship rather than what data.js declares.
 function CvMenu() {
-  const P = (window.PORTFOLIO_DATA||{}).profile || {};
-  const links = window.cvLinks ? window.cvLinks(P) : [];
+  const links = window.useCvLinks ? window.useCvLinks() : [];
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(()=>{

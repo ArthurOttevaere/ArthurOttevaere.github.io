@@ -22,14 +22,61 @@ function computeAge(birth){
 
 // CV links. `profile.cv` may be a single string OR an object keyed by language
 // ({ en, fr, nl }); the first available entry is the primary one.
+//
+// The language menu follows the PDFs you actually ship: every same-origin CV
+// declared below is probed once (HEAD request), and a language whose file is
+// missing from /assets/cv is dropped from the menu. So dropping in only an EN
+// and an FR PDF leaves NL out on its own — no data.js edit needed. Probing
+// fails open (network error, file:// preview) so a link is never hidden by
+// accident, and external URLs are trusted as-is.
 const CV_LANGS = [['en','English'],['fr','Français'],['nl','Nederlands']];
-function cvLinks(P){
+
+// Links as declared in data.js, before the availability check.
+function cvDeclared(P){
   const cv = (P||{}).cv;
   if (!cv) return [];
   if (typeof cv === 'string') return (cv && cv!=='#') ? [{ lang:'en', label:'CV', href:cv }] : [];
   return CV_LANGS.map(([lang,label]) => (cv[lang] && cv[lang]!=='#') ? { lang, label, href:cv[lang] } : null).filter(Boolean);
 }
+
+const cvFound  = new Map();   // href -> true | false, once the probe answered
+const cvProbes = new Map();   // href -> in-flight probe, so we ask only once
+function cvProbe(href){
+  if (cvProbes.has(href)) return cvProbes.get(href);
+  const sameOrigin = !/^[a-z]+:\/\//i.test(href) && !href.startsWith('//');
+  const canProbe   = sameOrigin
+    && typeof fetch === 'function'
+    && typeof location !== 'undefined' && location.protocol !== 'file:';
+  const p = (canProbe
+      ? fetch(href, { method:'HEAD' }).then(r=>r.ok).catch(()=>true)
+      : Promise.resolve(true))
+    .then(ok=>{ cvFound.set(href, ok); return ok; });
+  cvProbes.set(href, p);
+  return p;
+}
+
+// Sync view: everything declared minus what a finished probe proved missing.
+function cvLinks(P){ return cvDeclared(P).filter(c => cvFound.get(c.href) !== false); }
+// Async view: waits for the probes, so the result is final.
+function cvLinksReady(P){
+  const declared = cvDeclared(P);
+  return Promise.all(declared.map(c=>cvProbe(c.href)))
+    .then(ok => declared.filter((c,i)=>ok[i]));
+}
 function cvPrimary(P){ const l = cvLinks(P); return l.length ? l[0].href : null; }
+
+// Hook used by the nav button and the About page: renders what we know now,
+// then re-renders once the missing-file check comes back.
+function useCvLinks(){
+  const P = PROFILE();
+  const [links, setLinks] = useState(()=>cvLinks(P));
+  useEffect(()=>{
+    let alive = true;
+    cvLinksReady(P).then(l=>{ if (alive) setLinks(l); });
+    return ()=>{ alive = false; };
+  }, []);
+  return links;
+}
 
 // Deep-link helper: the project id in "#/work/:id" (empty when on plain #/work).
 function workSubFromHash(){
@@ -1395,6 +1442,7 @@ function About({ go }) {
 // Only the first two bio paragraphs show here — bio[2]/bio[3] are unused.
 function AboutIntro({ lite, go }) {
   const P = PROFILE();
+  const cvs = useCvLinks();
   const paras = [P.bio?.[0], P.bio?.[1]].filter(Boolean).map(t=>t.split(/\s+/).filter(Boolean));
   const offsets = []; { let acc=0; paras.forEach(wa=>{ offsets.push(acc); acc+=wa.length; }); }
   const total = offsets.length ? offsets[offsets.length-1]+paras[paras.length-1].length : 0;
@@ -1455,7 +1503,7 @@ function AboutIntro({ lite, go }) {
           </div>
         </div>
         <div className="ab-id-actions">
-          {(()=>{ const links=cvLinks(P); const multi=links.length>1; return links.map(c=>(
+          {(()=>{ const multi=cvs.length>1; return cvs.map(c=>(
             <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer" className="btn-ghost-2">
               <Icon.Download/> Resume{multi ? ' · '+c.lang.toUpperCase() : ''}
             </a>
@@ -2063,4 +2111,4 @@ function Contact() {
   );
 }
 
-Object.assign(window, { Landing, Projects, About, Contact, ULink, cvLinks, cvPrimary });
+Object.assign(window, { Landing, Projects, About, Contact, ULink, cvLinks, cvLinksReady, cvPrimary, useCvLinks });

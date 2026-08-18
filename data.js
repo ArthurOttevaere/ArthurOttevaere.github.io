@@ -64,9 +64,14 @@ window.PORTFOLIO_DATA = {
 
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
 
-    /* CV — one PDF per language, hosted in /assets/cv. The first entry is the
-       primary one (opened by the nav "CV" button and the command palette).
-       A single string still works too (cv: "https://…") if you only have one. */
+    /* CV — one PDF per language, hosted in /assets/cv. The first available
+       entry is the primary one (opened by the nav "CV" button and the command
+       palette). A single string still works too (cv: "https://…").
+
+       You can leave all three lines here: the site checks which PDFs are
+       really in /assets/cv and only lists those. Drop in just the EN and FR
+       files and the language menu shows EN + FR — no NL. With a single PDF
+       left there is no menu at all, the CV button downloads it directly. */
     cv: {
       en: "/assets/cv/arthur-ottevaere-cv-en.pdf",   // English (primary)
       fr: "/assets/cv/arthur-ottevaere-cv-fr.pdf",   // Français
