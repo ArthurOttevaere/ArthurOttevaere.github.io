@@ -78,13 +78,6 @@ function useCvLinks(){
   return links;
 }
 
-// Deep-link helper: the project id in "#/work/:id" (empty when on plain #/work).
-function workSubFromHash(){
-  const raw = (typeof window!=='undefined' ? window.location.hash : '').slice(1); // "/work/f1"
-  const parts = raw.replace(/^\//,'').split(/[/?#]/);
-  return (parts[0]||'').toLowerCase()==='work' ? (parts[1]||'').toLowerCase() : '';
-}
-
 // ─── Scroll-scene helpers ────────────────────────────────────────────────────
 // Native scroll only — no hijacking. sceneProgress() returns 0→1 for how far a
 // tall section has travelled through the viewport, so its sticky inner content
@@ -1049,7 +1042,7 @@ function projDateKey(p){
   return y ? Date.UTC(y,11,31) : 0;
 }
 
-function Projects() {
+function Projects({ go }) {
   const projects = PROJS();
   // ?? null: only falls back when find() returns undefined (no match).
   // A project with featured:false is falsy, but projects.find() never returns false —
@@ -1061,26 +1054,9 @@ function Projects() {
   const [sort, setSort]     = useState('desc');   // 'desc' = newest first
   const [cols, setCols]     = useState(2);         // grid density (cards per row)
 
-  // The open project is driven by the URL hash (#/work/:id) so a project is
-  // shareable, refresh-safe, and closes on the browser Back button.
-  const projById = useCallback(id => projects.find(p=>p.id===id) || null, [projects]);
-  const [active, setActive] = useState(()=>projById(workSubFromHash()));
-  const openProject  = useCallback(p=>{
-    if (!p) return;
-    setActive(p);   // optimistic — the hashchange below re-affirms it
-    if (window.location.hash.slice(1) !== '/work/'+p.id) window.location.hash = '/work/'+p.id;
-  }, []);
-  const closeProject = useCallback(()=>{
-    // Rewind the deep link so Back/close both land on the plain grid; the
-    // hashchange listener then clears `active`. (Direct set when already plain.)
-    if (workSubFromHash()) window.location.hash = '/work';
-    else setActive(null);
-  }, []);
-  useEffect(()=>{
-    const onHash = ()=>{ const id = workSubFromHash(); setActive(id ? projById(id) : null); };
-    window.addEventListener('hashchange', onHash);
-    return ()=> window.removeEventListener('hashchange', onHash);
-  }, [projById]);
+  // Opening a project is a real navigation to #/work/:id, which App renders as
+  // a full ProjectPage. Shareable, refresh-safe, and Back returns to the grid.
+  const openProject = useCallback(p=>{ if (p) go('work/'+p.id); }, [go]);
 
   const rest = useMemo(()=>{
     const list = projects.filter(p=>p.id!==featured?.id);
@@ -1151,8 +1127,6 @@ function Projects() {
             </div>
           )}
       </div>
-
-      <ProjectModal p={active} onClose={closeProject}/>
     </div>
   );
 }
@@ -1224,67 +1198,541 @@ function ProjectCard({ p, onOpen }){
   );
 }
 
-// ─── Detail popup ─────────────────────────────────────────────────────────────
-// Rich modal: cover, meta, full description, key-point bullets, skills and the
-// link button. Escape / click-outside close it; body scroll is locked while open.
-function ProjectModal({ p, onClose }){
+// ═══════════════════════════════════════════════════════════════
+// PROJECT PAGE — one dedicated page per project, at #/work/:id
+// ═══════════════════════════════════════════════════════════════
+// Everything here is driven by data.js and EVERY block is optional:
+//   • no `sections` → falls back to `long` + `highlights`
+//   • no `gallery`  → no carousel at all (one image → a plain figure)
+//   • no `skills` / `metrics` → those blocks are skipped
+// So a project you never enrich still gets a correct page, and adding a
+// project to data.js adds its page with no other change.
+
+function projById(id){ return PROJS().find(p=>p.id===id) || null; }
+
+// Links shown in the top bar and the rail: the primary `github` field plus any
+// extra `links: [{ label, url }]`. Placeholders ("#", empty) are dropped.
+function projLinks(p){
+  const out = [];
+  if (p.github && p.github!=='#') out.push({ url:p.github, label:null });
+  (Array.isArray(p.links) ? p.links : []).forEach(l=>{
+    if (l && l.url && l.url!=='#') out.push({ url:l.url, label:l.label||null });
+  });
+  const seen = new Set();
+  return out.filter(l=>{ if (seen.has(l.url)) return false; seen.add(l.url); return true; });
+}
+
+// Body sections. Projects without a `sections` array still read well: their
+// `long` paragraph and `highlights` bullets are folded into the same layout.
+function projSections(p){
+  if (Array.isArray(p.sections) && p.sections.length) return p.sections;
+  const out = [];
+  const intro = p.long || p.summary;
+  if (intro) out.push({ title:'Overview', body:[intro] });
+  if (Array.isArray(p.highlights) && p.highlights.length)
+    out.push({ title:'Key points', list:p.highlights });
+  return out;
+}
+
+// `skills` accepts "Python" or { name:"Python", note:"what I did with it" }.
+function projSkills(p){
+  return (Array.isArray(p.skills) ? p.skills : [])
+    .map(s => typeof s==='string' ? { name:s, note:'' } : s)
+    .filter(s => s && s.name);
+}
+// `gallery` accepts "/path.png" or { src, caption }.
+function projGallery(p){
+  return (Array.isArray(p.gallery) ? p.gallery : [])
+    .map(g => typeof g==='string' ? { src:g, caption:'' } : g)
+    .filter(g => g && g.src);
+}
+
+// An image path, as opposed to a named SVG artwork key from covers.jsx.
+function isImageCover(c){
+  return !!c && (c.startsWith('http://') || c.startsWith('https://') || c.startsWith('/'));
+}
+
+// ─── Scroll reveal ────────────────────────────────────────────────────────────
+// Fade + rise as a block scrolls in, once. The CSS describes the final state;
+// `.pp-reveal` starts it hidden and `.in` releases it.
+function useReveal(){
+  const ref = useRef(null);
   useEffect(()=>{
-    if(!p) return;
-    function onKey(e){ if(e.key==='Escape') onClose(); }
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return ()=>{ window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  },[p, onClose]);
+    const el = ref.current; if(!el) return;
+    if (reduceMotion()){ el.classList.add('in'); return; }
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold:0.08, rootMargin:'0px 0px -6% 0px' });
+    io.observe(el);
+    return ()=>io.disconnect();
+  },[]);
+  return ref;
+}
 
-  if(!p) return null;
-  const k = linkKind(p.github);
-  const Glyph = k ? (Icon[k.icon] || Icon.ArrowUR) : null;
-  const points = Array.isArray(p.highlights) ? p.highlights : [];
+// NOTE ON TOOL ICONS: the rail lists tools as plain text, deliberately. Only a
+// handful of tags (Python, Excel, PowerBI, Canva…) have a logo in
+// profile.toolGroups, and several never will — "Optimization", "HTML
+// Dashboard", "Gesture Recognition" aren't products. Badging some and not
+// others read as an oversight, so it's all text or nothing.
 
-  // Rendered into <body> via a portal so it escapes .page-enter's transform —
-  // a transformed ancestor would otherwise capture position:fixed and the modal
-  // would scroll with the page instead of staying centred in the viewport.
-  return ReactDOM.createPortal((
-    <div className="pj-back" onMouseDown={onClose}>
-      <div className="pj-modal" role="dialog" aria-modal="true" aria-label={p.title}
-           onMouseDown={e=>e.stopPropagation()}>
-        <div className="pj-cover">
-          <CoverImg cover={p.cover} title={p.title}/>
-          <span className="cat-pill">{p.cat}</span>
-          <button className="pj-close" onClick={onClose} aria-label="Close" type="button">
-            <Icon.Close/>
-          </button>
-        </div>
-        <div className="pj-body">
-          <div className="pj-meta">
-            <span className="mono">{projDateLabel(p)}</span>
-            <span style={{color:'var(--fg-faint)'}}>·</span>
-            <span>{p.cat}</span>
-            {p.role && <><span style={{color:'var(--fg-faint)'}}>·</span><span>{p.role}</span></>}
-          </div>
-          <h3 className="pj-title">{p.title}</h3>
-          <p className="pj-long">{p.long || p.summary}</p>
-          {points.length>0 && (
-            <>
-              <div className="pj-h">Key points</div>
-              <ul className="pj-list">
-                {points.map((h,i)=>(<li key={i}><Icon.Check/><span>{h}</span></li>))}
-              </ul>
-            </>
-          )}
-          <div className="pj-tags">{p.tags.map(t=><Tag key={t}>{t}</Tag>)}</div>
-          {k && Glyph && (
-            <div className="pj-actions">
-              <a href={p.github} target="_blank" rel="noopener noreferrer" className="proj-link">
-                <Glyph/><span>View on {k.label}</span>
-              </a>
-            </div>
+// ─── Page root ────────────────────────────────────────────────────────────────
+function ProjectPage({ id, go }){
+  const p = projById(id);
+
+  // The tab title follows the project, and is put back when you navigate away.
+  useEffect(()=>{
+    if (!p) return;
+    const prev = document.title;
+    document.title = p.title + ' · Arthur Ottevaere';
+    return ()=>{ document.title = prev; };
+  }, [p && p.id]);
+
+  if (!p) return (
+    <div className="page-enter shell" style={{padding:'120px 0',textAlign:'center'}}>
+      <div className="eyebrow">Not found</div>
+      <h2 className="h2" style={{marginTop:10}}>No project here<span style={{color:'var(--fg-faint)'}}>.</span></h2>
+      <p className="sub" style={{marginTop:12}}>That link doesn't match any project.</p>
+      <button type="button" className="btn-ghost-2" style={{marginTop:24}} onClick={()=>go('work')}>
+        <Icon.Arrow style={{transform:'rotate(180deg)'}}/><span>Back to work</span>
+      </button>
+    </div>
+  );
+
+  const sections = projSections(p);
+  const metrics  = (Array.isArray(p.metrics) ? p.metrics : []).filter(m=>m && m.value);
+  const gallery  = projGallery(p);
+  const skills   = projSkills(p);
+
+  return (
+    <article className="page-enter pp">
+      <ProjectHero p={p} go={go}/>
+
+      <div className="shell pp-main">
+        <ProjectRail p={p}/>
+        <div className="pp-content">
+          {sections.map((s,i)=>(
+            <React.Fragment key={i}>
+              <ProjectSection s={s} n={i+1}/>
+              {/* The numbers land right after the opening section — context,
+                  then the scale of the thing, then the rest. */}
+              {i===0 && metrics.length>0 && <ProjectMetrics items={metrics}/>}
+            </React.Fragment>
+          ))}
+          {sections.length===0 && metrics.length>0 && <ProjectMetrics items={metrics}/>}
+          {gallery.length>0 && (
+            <ProjectGallery items={gallery} n={sections.length+1} title={p.galleryTitle}/>
           )}
         </div>
       </div>
+
+      {skills.length>0 && <ProjectSkills items={skills}/>}
+      <ProjectOutro p={p} go={go}/>
+    </article>
+  );
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+// Split in two: the project's identity on the left, its cover on the right as a
+// compact card. No tinted wash behind it — plain paper in both themes. Keeping
+// the hero this short is what lets the first section peek above the fold, which
+// is the actual invitation to scroll; the chevron below only confirms it.
+function ProjectHero({ p, go }){
+  const img   = isImageCover(p.cover);
+  const chips = [p.role, p.duration, p.team].filter(Boolean);
+  const links = projLinks(p);
+
+  const toBody = ()=>{
+    const el = document.querySelector('.pp-main');
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduceMotion() ? 'instant' : 'smooth', block:'start' });
+  };
+
+  return (
+    <header className="pp-hero">
+      <div className="shell pp-hero-inner">
+        {/* Prominent and first in the reading order — leaving a project must
+            never be a hunt. Repeated at the very bottom by ProjectOutro. */}
+        <button type="button" className="pp-back" onClick={()=>go('work')}>
+          <Icon.Arrow className="pp-back-ico"/><span>All projects</span>
+        </button>
+
+        <div className="pp-hero-grid">
+          <div className="pp-hero-text">
+            <div className="eyebrow">{p.cat} · {projDateLabel(p)}</div>
+            <h1 className="pp-title">{p.title}</h1>
+            {p.subtitle && <div className="pp-subtitle">{p.subtitle}</div>}
+            <div className="pp-rule" aria-hidden="true"/>
+            <p className="pp-lead">{p.summary}</p>
+            {chips.length>0 && (
+              <div className="pp-chips">
+                {chips.map((c,i)=><span className="pp-chip" key={i}>{c}</span>)}
+              </div>
+            )}
+            {links.length>0 && (
+              <div className="pp-hero-actions">
+                {links.map((l,i)=><ProjectLink key={i} url={l.url} label={l.label}/>)}
+              </div>
+            )}
+          </div>
+
+          <figure className="pp-shot">
+            {img
+              ? <img className="pp-shot-img" src={p.cover} alt={p.title} decoding="async"/>
+              : <div className="pp-shot-art"><CoverImg cover={p.cover} title={p.title}/></div>}
+          </figure>
+        </div>
+
+        <button type="button" className="pp-cue" onClick={toBody} aria-label="Read the project">
+          <Icon.ArrowDown/>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// ─── Rail — the spec sheet, sticky beside the text ───────────────────────────
+function ProjectRail({ p }){
+  const ref  = useReveal();
+  const rows = [
+    ['Context',  p.context || p.cat],
+    ['Role',     p.role],
+    ['Team',     p.team],
+    ['Duration', p.duration],
+    ['Date',     projDateLabel(p)],
+  ].filter(r=>r[1]);
+  const tools = Array.isArray(p.tags) ? p.tags : [];
+  const links = projLinks(p);
+
+  return (
+    <aside className="pp-rail pp-reveal" ref={ref}>
+      <div className="pp-rail-inner">
+        <dl className="pp-facts">
+          {rows.map(([k,v])=>(
+            <div className="pp-fact" key={k}>
+              <dt className="mono">{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {tools.length>0 && (
+          <div className="pp-rail-block">
+            <div className="pp-rail-h mono">Built with</div>
+            <ul className="pp-tools">
+              {tools.map(t=><li className="pp-tool" key={t}>{t}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Hidden on mobile: the hero already carries these links as a button,
+            and two GitHub buttons on one small screen is one too many. */}
+        {links.length>0 && (
+          <div className="pp-rail-block pp-rail-block-links">
+            <div className="pp-rail-h mono">Links</div>
+            <div className="pp-rail-links">
+              {links.map((l,i)=><ProjectLink key={i} url={l.url} label={l.label}/>)}
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ─── Body section ─────────────────────────────────────────────────────────────
+// A `body` entry is a string (paragraph) or one of:
+//   { h: "Sub-heading" } · { list: ["…","…"] } · { quote: "…" }
+// which is what gives you real structure — titles, sub-titles, lists, pull
+// quotes — without writing any HTML in data.js.
+function ProjectSection({ s, n }){
+  const ref  = useReveal();
+  const body = Array.isArray(s.body) ? s.body : (s.body ? [s.body] : []);
+  const list = Array.isArray(s.list) ? s.list : [];
+  // Dashes, not ticks: a checkmark reads as "feature shipped" and, being an
+  // accent-coloured icon, pulled more weight than the prose it illustrates.
+  const bullets = items => (
+    <ul className="pp-list">
+      {items.map((t,j)=>(
+        <li key={j}><span className="pp-li-mark" aria-hidden="true">—</span><span>{t}</span></li>
+      ))}
+    </ul>
+  );
+  return (
+    <section className="pp-sec pp-reveal" ref={ref}>
+      <div className="pp-sec-head">
+        <div className="pp-sec-num mono">{String(n).padStart(2,'0')}</div>
+        {s.title && <h2 className="pp-sec-title">{s.title}</h2>}
+      </div>
+      {body.map((b,i)=>{
+        if (typeof b === 'string')       return <p className="pp-p" key={i}>{b}</p>;
+        if (b && b.h)                    return <h3 className="pp-sub" key={i}>{b.h}</h3>;
+        if (b && Array.isArray(b.list))  return <React.Fragment key={i}>{bullets(b.list)}</React.Fragment>;
+        if (b && b.quote)                return <blockquote className="pp-quote" key={i}>{b.quote}</blockquote>;
+        return null;
+      })}
+      {list.length>0 && bullets(list)}
+    </section>
+  );
+}
+
+// ─── Numbers band ─────────────────────────────────────────────────────────────
+function ProjectMetrics({ items }){
+  const ref = useReveal();
+  return (
+    <div className="pp-metrics" ref={ref}>
+      {items.map((m,i)=>(
+        <span className="pp-metric" key={i}>
+          <span className="pp-metric-v">{m.value}</span>
+          <span className="pp-metric-l">{m.label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Gallery — scroll-snap film strip ────────────────────────────────────────
+// The active frame sits at full size and full opacity; its neighbours peek in
+// from both sides, shrunk and dimmed. Native scroll — trackpad, touch swipe,
+// arrows, dots and the keyboard all drive the same scroller. Clicking the
+// active frame opens it full screen.
+function ProjectGallery({ items, n, title }){
+  const [i, setI]       = useState(0);
+  const [zoom, setZoom] = useState(-1);
+  const trackRef  = useRef(null);
+  const slideRefs = useRef([]);
+  const secRef    = useReveal();
+
+  // Active slide = whichever centre sits closest to the track's centre. Measured
+  // on scroll rather than with an IntersectionObserver: the active slide scales
+  // up, which would feed straight back into an observer's ratio and oscillate.
+  useEffect(()=>{
+    const track = trackRef.current; if(!track) return;
+    let raf = 0;
+    const update = ()=>{
+      raf = 0;
+      const tr = track.getBoundingClientRect();
+      const cx = tr.left + tr.width/2;
+      let best = 0, bestD = Infinity;
+      slideRefs.current.forEach((s,idx)=>{
+        if(!s) return;
+        const sr = s.getBoundingClientRect();
+        const d  = Math.abs(sr.left + sr.width/2 - cx);
+        if (d < bestD){ bestD = d; best = idx; }
+      });
+      setI(best);
+    };
+    const onScroll = ()=>{ if(!raf) raf = requestAnimationFrame(update); };
+    update();
+    track.addEventListener('scroll', onScroll, { passive:true });
+    window.addEventListener('resize', onScroll);
+    return ()=>{
+      track.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [items.length]);
+
+  // Scroll the track itself. scrollIntoView() would also drag the PAGE
+  // vertically to bring the strip into view, which reads as a jump.
+  const goTo = useCallback(idx=>{
+    const track = trackRef.current, s = slideRefs.current[idx];
+    if (!track || !s) return;
+    track.scrollTo({
+      left: s.offsetLeft - (track.clientWidth - s.clientWidth)/2,
+      behavior: reduceMotion() ? 'instant' : 'smooth',
+    });
+  }, []);
+
+  function onKey(e){
+    if (e.key==='ArrowRight'){ e.preventDefault(); goTo(Math.min(i+1, items.length-1)); }
+    if (e.key==='ArrowLeft' ){ e.preventDefault(); goTo(Math.max(i-1, 0)); }
+  }
+
+  const label = title || 'Results';
+
+  return (
+    <section className="pp-sec pp-gal pp-reveal" ref={secRef}>
+      <div className="pp-sec-head">
+        <div className="pp-sec-num mono">{String(n).padStart(2,'0')}</div>
+        <h2 className="pp-sec-title">{label}</h2>
+      </div>
+
+      {items.length === 1 ? (
+        /* A single image needs no carousel chrome. */
+        <figure className="pp-single">
+          <button type="button" className="pp-frame" onClick={()=>setZoom(0)} aria-label="Open image full screen">
+            <img src={items[0].src} alt={items[0].caption||''} loading="lazy" decoding="async"/>
+          </button>
+          {items[0].caption && <figcaption className="pp-cap">{items[0].caption}</figcaption>}
+        </figure>
+      ) : (
+        <div className="pp-gal-wrap">
+          <div className="pp-gal-track" ref={trackRef} tabIndex={0} onKeyDown={onKey}
+               role="group" aria-roledescription="carousel" aria-label={label+' gallery'}>
+            {/* Flex spacers rather than padding: both resolve their percentage
+                against the same box, so the first and last frames can actually
+                reach the centre snap position. */}
+            <div className="pp-gal-pad" aria-hidden="true"/>
+            {items.map((g,idx)=>(
+              <figure key={idx} ref={el=>{ slideRefs.current[idx]=el; }}
+                      className={'pp-slide'+(idx===i?' is-active':'')}>
+                <button type="button" className="pp-frame"
+                        tabIndex={idx===i?0:-1}
+                        onClick={()=> idx===i ? setZoom(idx) : goTo(idx)}
+                        aria-label={idx===i ? 'Open image full screen' : 'Show image '+(idx+1)}>
+                  {/* The first two are eager: the neighbour peeks into view
+                      immediately, and a lazy one shows as an empty grey plate
+                      until it loads. The rest stay lazy. */}
+                  <img src={g.src} alt={g.caption||''} decoding="async"
+                       loading={idx<2 ? 'eager' : 'lazy'}/>
+                </button>
+              </figure>
+            ))}
+            <div className="pp-gal-pad" aria-hidden="true"/>
+          </div>
+
+          <div className="pp-gal-bar">
+            <button type="button" className="pp-gal-arrow" disabled={i===0}
+                    onClick={()=>goTo(Math.max(i-1,0))} aria-label="Previous image">
+              <Icon.Arrow style={{transform:'rotate(180deg)'}}/>
+            </button>
+            {/* keyed on `i` so the caption re-mounts and replays its fade-up */}
+            <div className="pp-cap-slot">
+              <span key={i} className="pp-cap">{items[i] && items[i].caption}</span>
+            </div>
+            <button type="button" className="pp-gal-arrow" disabled={i===items.length-1}
+                    onClick={()=>goTo(Math.min(i+1,items.length-1))} aria-label="Next image">
+              <Icon.Arrow/>
+            </button>
+          </div>
+
+          <div className="pp-dots">
+            {items.map((_,idx)=>(
+              <button key={idx} type="button"
+                className={'pp-dot'+(idx===i?' on':'')}
+                onClick={()=>goTo(idx)}
+                aria-label={'Go to image '+(idx+1)}
+                aria-current={idx===i ? 'true' : undefined}/>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {zoom>=0 && (
+        <Lightbox items={items} index={zoom} onIndex={setZoom} onClose={()=>setZoom(-1)}/>
+      )}
+    </section>
+  );
+}
+
+// ─── Full-screen image viewer ────────────────────────────────────────────────
+// Portalled to <body> so it escapes .page-enter's transform — a transformed
+// ancestor captures position:fixed and the overlay would scroll with the page.
+function Lightbox({ items, index, onIndex, onClose }){
+  useEffect(()=>{
+    function onKey(e){
+      if (e.key==='Escape')     onClose();
+      if (e.key==='ArrowRight') onIndex(Math.min(index+1, items.length-1));
+      if (e.key==='ArrowLeft')  onIndex(Math.max(index-1, 0));
+    }
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return ()=>{
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [index, items.length, onIndex, onClose]);
+
+  const g = items[index];
+  if (!g) return null;
+  return ReactDOM.createPortal((
+    <div className="pp-lb" role="dialog" aria-modal="true" aria-label={g.caption||'Image'}
+         onMouseDown={onClose}>
+      <button type="button" className="pp-lb-close" onClick={onClose} aria-label="Close">
+        <Icon.Close/>
+      </button>
+      <figure className="pp-lb-fig" onMouseDown={e=>e.stopPropagation()}>
+        <img src={g.src} alt={g.caption||''}/>
+        {g.caption && <figcaption>{g.caption}</figcaption>}
+      </figure>
+      {items.length>1 && (
+        <div className="pp-lb-nav" onMouseDown={e=>e.stopPropagation()}>
+          <button type="button" disabled={index===0}
+                  onClick={()=>onIndex(Math.max(index-1,0))} aria-label="Previous image">
+            <Icon.Arrow style={{transform:'rotate(180deg)'}}/>
+          </button>
+          <span className="mono">{index+1} / {items.length}</span>
+          <button type="button" disabled={index===items.length-1}
+                  onClick={()=>onIndex(Math.min(index+1,items.length-1))} aria-label="Next image">
+            <Icon.Arrow/>
+          </button>
+        </div>
+      )}
     </div>
   ), document.body);
+}
+
+// ─── Takeaways — skill on the left, what it actually meant on the right ──────
+function ProjectSkills({ items }){
+  const ref = useReveal();
+  return (
+    <section className="pp-skills">
+      <div className="shell">
+        <div className="pp-skills-inner pp-reveal" ref={ref}>
+          <div className="eyebrow">What I took away</div>
+          <ul className="pp-skill-list">
+            {items.map((s,i)=>(
+              <li className="pp-skill" key={i} style={{'--i':i}}>
+                <span className="pp-skill-name">{s.name}</span>
+                <span className="pp-skill-note">{s.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Outro — the two ways out ────────────────────────────────────────────────
+// Reaching the end means one of two things: keep going, or step back out. Both
+// are offered side by side rather than making the reader scroll back up to the
+// nav. "Next" follows the grid's newest-first order and wraps at the end.
+function ProjectOutro({ p, go }){
+  const all  = [...PROJS()].sort((a,b)=>projDateKey(b)-projDateKey(a));
+  const idx  = all.findIndex(x=>x.id===p.id);
+  const next = all.length > 1 ? all[(idx+1) % all.length] : null;
+  const hasNext = next && next.id !== p.id;
+
+  return (
+    <section className="pp-outro">
+      <div className="shell pp-outro-inner">
+        <button type="button" className="pp-outro-all" onClick={()=>go('work')}>
+          <Icon.Arrow className="pp-back-ico"/>
+          <span className="pp-outro-all-text">
+            <span className="eyebrow">Done here</span>
+            <span className="pp-outro-all-title">All projects</span>
+          </span>
+        </button>
+
+        {hasNext && (
+          <button type="button" className="pp-next-card" onClick={()=>go('work/'+next.id)}
+                  aria-label={'Next project: '+next.title}>
+            <span className="pp-next-cover"><CoverImg cover={next.cover} title={next.title}/></span>
+            <span className="pp-next-text">
+              <span className="eyebrow">Want more</span>
+              <span className="pp-next-title">{next.title}</span>
+              <span className="pp-next-meta mono">{next.cat} · {projDateLabel(next)}</span>
+            </span>
+            <Icon.Arrow className="pp-next-ico"/>
+          </button>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function FeaturedCard({ p, onOpen }) {
@@ -2111,4 +2559,4 @@ function Contact() {
   );
 }
 
-Object.assign(window, { Landing, Projects, About, Contact, ULink, cvLinks, cvLinksReady, cvPrimary, useCvLinks });
+Object.assign(window, { Landing, Projects, ProjectPage, About, Contact, ULink, cvLinks, cvLinksReady, cvPrimary, useCvLinks });

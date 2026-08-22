@@ -8,24 +8,32 @@
    Copy the template below, paste it at the END of the `projects`
    array (before the closing `]`), and fill in your values.
 
+   Every project automatically gets its own page at #/work/<id> — the grid
+   card links straight to it. The fields under "for the project page" are all
+   OPTIONAL: fill in what a project deserves, leave out the rest, and the page
+   simply skips the blocks you didn't write. A project with only the required
+   fields still gets a complete page.
+
    PROJECT TEMPLATE:
    -----------------
    {
-     id:       "my-project",          // Unique ID — no spaces, no special chars
+     id:       "my-project",          // Unique ID — no spaces, no special chars.
+     //                                  Also the page URL: #/work/my-project
      title:    "My Project Name",     // Displayed title
      cat:      "Academic",            // Category: "Academic" | "Personal"
      year:     "2025",               // Year as a string (fallback / coarse label)
      date:     "2025-06-15",         // OPTIONAL precise completion date.
      //                                 "YYYY-MM-DD" → "15 Jun 2025", "YYYY-MM" → "Jun 2025".
      //                                 Drives sorting too; omit it to fall back to `year`.
-     summary:  "One-line summary.",  // Short text shown on the grid card
-     long:     "Detailed paragraph.", // Shown in the project detail popup
-     highlights: [                   // 2–4 bullet points shown in the popup
+     summary:  "One-line summary.",  // Grid card + the lead line on the project page
+     long:     "Detailed paragraph.", // Used as the page body when there's no `sections`
+     highlights: [                   // Bullet points — same fallback role as `long`
        "First key point.",
        "Second key point.",
      ],
-     tags:     ["Python", "SQL"],    // Tech stack — 3 to 5 items
-     role:     "Solo",              // OPTIONAL — "Solo" or "Team" (shown as a meta chip)
+     tags:     ["Python", "SQL"],    // Tech stack — also the "Built with" list in the
+     //                                 page rail, with logos pulled from `toolGroups`
+     role:     "Solo",              // "Solo" or "Team" — a chip under the title
      cover:    "Generic",
      // DATA/ANALYTICS: "Dashboard" "Scatter" "TimeSeries" "Heatmap" "Clustering" "Regression"
      // TOOLS/TECH:     "Python" "SQL" "API" "Excel" "PowerBI" "ML"
@@ -34,6 +42,55 @@
      // IMAGE URL:      "https://…"  or  "/assets/cover.jpg"  (any image path also works)
      github:   "#",
      featured: false,                // true for exactly ONE project to pin at top
+
+     // ── Optional — for the project page ───────────────────────────────
+
+     subtitle: "A second line under the title",
+     context:  "Data Analytics course · UCLouvain",  // rail — defaults to `cat`
+     duration: "6 weeks",                            // rail + a chip
+     team:     "4 people",                           // rail + a chip
+     links: [                        // extra links, on top of `github`
+       { label: "Report", url: "https://…" },
+     ],
+
+     // Big numbers band, right after the first section. Skipped if absent.
+     metrics: [
+       { value: "900+", label: "reviews scraped" },
+       { value: "6",    label: "models compared" },
+     ],
+
+     // The page body. Sections are numbered automatically (01, 02, 03 …).
+     // A `body` entry is a plain string (a paragraph) or one of:
+     //     { h: "Sub-heading" }     { list: ["…","…"] }     { quote: "…" }
+     // which is how you get real structure without writing any HTML here.
+     sections: [
+       { title: "The context", body: [
+           "A first paragraph.",
+           "A second paragraph.",
+       ]},
+       { title: "The approach", body: [
+           "What you did and why.",
+           { h: "How it works" },
+           { list: ["A step.", "Another step."] },
+           { quote: "A line worth pulling out." },
+       ]},
+     ],
+
+     // Results gallery. LEAVE IT OUT (or empty) AND NO CAROUSEL IS SHOWN.
+     // One image → a plain figure; several → the scroll-snap film strip.
+     // Drop the files in /assets/images/projects/<id>/. Any aspect ratio
+     // works — images are shown whole, never cropped, on a soft plate.
+     gallery: [
+       { src:     "/assets/images/projects/my-project/result.png",
+         caption: "What this screenshot shows" },
+     ],
+     galleryTitle: "Results",        // section heading — defaults to "Results"
+
+     // The "What I took away" block at the bottom. A skill with a concrete
+     // note reads far better than a wall of badges. Plain strings work too.
+     skills: [
+       { name: "XGBoost", note: "Ensemble trained on eight seasons." },
+     ],
    },
 
    ================================================================= */
@@ -162,6 +219,52 @@ window.PORTFOLIO_DATA = {
       cover:    "/assets/images/f1-tracker.jpeg",
       github:   "https://github.com/ArthurOttevaere/f1_race_predictor",
       featured: true,
+
+      /* ── Project page. This one is filled in as a worked example — rewrite
+         the wording in your own voice, it's only built from what the fields
+         above already said. Every key here is optional. ─────────────────── */
+      /* `subtitle` is left out here on purpose — the title already says
+         "Prediction Game & Race Predictor", so a second line would only
+         repeat it. Use it on projects whose title is short. */
+      metrics: [
+        { value: "8",      label: "seasons of race data" },
+        { value: "Top 10", label: "predicted per Grand Prix" },
+        { value: "2",      label: "models in the ensemble" },
+      ],
+      sections: [
+        { title: "The idea", body: [
+            "Players predict the top 10 of every Grand Prix of the season, and are scored against a machine-learning benchmark rather than only against each other.",
+            "Scoring is rarity-weighted: the rarer a correct call is across all players, the more it is worth. Calling an unlikely podium beats agreeing with the crowd.",
+        ]},
+        { title: "The model", body: [
+            "An XGBoost/LightGBM ensemble trained on eight F1 seasons, with a leakage-safe temporal split so it is never validated on races it could already have seen.",
+            { h: "What it outputs" },
+            { list: [
+              "Full race and qualifying orders for every Grand Prix.",
+              "SHAP explanations surfacing the key factors behind each prediction.",
+              "Monte-Carlo win and podium probabilities per driver.",
+            ]},
+        ]},
+        { title: "Shipping it", body: [
+            "The whole thing runs end to end: a Flask service for the model, a Next.js front end on Vercel, and Supabase behind the accounts, the leagues and the championship picks.",
+        ]},
+      ],
+      skills: [
+        { name: "XGBoost / LightGBM", note: "Ensemble trained on eight seasons, with a leakage-safe temporal split." },
+        { name: "SHAP",               note: "Turned raw model output into readable key factors, prediction by prediction." },
+        { name: "Monte-Carlo",        note: "Simulated race outcomes to get win and podium probabilities per driver." },
+        { name: "FastF1",             note: "Pulled and cleaned timing and session data across eight seasons." },
+        { name: "Next.js / Vercel",   note: "Built and deployed the front end players actually use." },
+        { name: "Supabase",           note: "Accounts, leagues and championship picks, persisted end to end." },
+      ],
+      /* Screenshots live in /assets/images/projects/<id>/. Remove this block
+         (or empty it) and the carousel disappears entirely. */
+      gallery: [
+        { src:     "/assets/images/projects/f1/landing.png",
+          caption: "The pitch — next race countdown and the season-long duel" },
+        { src:     "/assets/images/projects/f1/prediction.png",
+          caption: "Building a top 10 before predictions lock, against the model's own entry" },
+      ],
     },
     {
       id:       "dash",

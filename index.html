@@ -1360,51 +1360,424 @@
     border-color: color-mix(in oklab, var(--fg) 22%, var(--border-strong));
   }
 
-  /* ═══ Project detail popup ════════════════════════════════════════ */
-  .pj-back {
-    position:fixed; inset:0; z-index:120;
-    background:color-mix(in oklab, var(--bg) 45%, transparent);
-    backdrop-filter:saturate(140%) blur(8px); -webkit-backdrop-filter:saturate(140%) blur(8px);
-    display:flex; align-items:center; justify-content:center;
-    padding:24px 16px;
-    animation:cmdkBack 180ms ease-out;
+  /* ═══ Project page (#/work/:id) ═══════════════════════════════════ */
+  /* A dedicated page per project, replacing the old detail popup. Every block
+     below is optional in data.js — the page simply skips what isn't there. */
+  .pp { --pp-nav: 76px; --pp-rail: 232px; }
+
+  /* ── Scroll reveal (see useReveal in pages.jsx) ───────────────────── */
+  .pp-reveal {
+    opacity:0; transform:translateY(16px);
+    transition:opacity 620ms cubic-bezier(.2,.7,.2,1), transform 700ms cubic-bezier(.2,.7,.2,1);
   }
-  .pj-modal {
-    width:100%; max-width:680px;
-    max-height:calc(100dvh - 48px); overflow-y:auto;
-    border:1px solid var(--border-strong); background:var(--bg-elev);
-    border-radius:18px;
-    box-shadow:0 40px 90px -30px rgba(0,0,0,0.45);
-    animation:cmdkPop 240ms cubic-bezier(.2,.7,.2,1);
+  .pp-reveal.in { opacity:1; transform:none; }
+
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+  /* Plain paper in both themes — no tinted wash. The project's colour comes
+     from its cover, sitting right there in the split. Short on purpose: the
+     first section has to clear the fold, which is what invites the scroll. */
+  .pp-hero { position:relative; padding:22px 0 4px; }
+  .pp-hero-grid {
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,0.82fr);
+    gap:52px; align-items:center; margin-top:26px;
   }
-  /* keep the close button pinned while the modal body scrolls internally */
-  .pj-cover { position:relative; aspect-ratio:16/9; background:var(--bg-soft); }
-  .pj-close {
-    position:absolute; top:14px; right:14px;
-    width:34px; height:34px; border-radius:9px; border:0; cursor:pointer;
+  .pp-hero-text { min-width:0; }
+
+  /* Deliberately a full pill, not a whisper: leaving a project must never be
+     a hunt. Repeated at the bottom of the page by .pp-outro-all. */
+  .pp-back {
+    display:inline-flex; align-items:center; gap:9px;
+    height:34px; padding:0 15px 0 12px; cursor:pointer;
+    border:1px solid var(--border-strong); border-radius:999px;
+    background:var(--bg-elev); color:var(--fg);
+    font-size:13px; font-weight:500;
+    box-shadow:var(--shadow);
+    transition:border-color 200ms ease, background 200ms ease,
+               color 200ms ease, transform 160ms ease;
+  }
+  .pp-back:hover { border-color:var(--blue); background:var(--blue-soft); color:var(--blue-fg); }
+  .pp-back:active { transform:scale(0.97); }
+  .pp-back-ico {
+    width:15px; height:15px; flex-shrink:0; transform:rotate(180deg);
+    transition:transform 260ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-back:hover .pp-back-ico { transform:rotate(180deg) translateX(3px); }
+  html[data-theme="dark"] .pp-back {
+    border-color:color-mix(in oklab, var(--fg) 26%, var(--border-strong));
+    background:color-mix(in oklab, var(--fg) 7%, var(--bg-elev));
+  }
+  html[data-theme="dark"] .pp-back:hover { border-color:var(--blue); background:var(--blue-soft); }
+
+  .pp-hero-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:24px; }
+  .pp-hero-actions .proj-link { padding:10px 16px; font-size:13.5px; border-radius:11px; }
+
+  /* Scroll cue — confirms the invitation the peeking section already made. */
+  .pp-cue {
+    display:block; margin:30px auto 0;
+    width:36px; height:36px; padding:0; cursor:pointer;
+    border:1px solid var(--border); border-radius:999px;
+    background:var(--bg-elev); color:var(--fg-muted);
+    animation:ppCue 2.4s ease-in-out infinite;
+    transition:border-color 200ms ease, color 200ms ease, background 200ms ease;
+  }
+  .pp-cue svg { width:16px; height:16px; }
+  .pp-cue:hover { border-color:var(--blue); color:var(--blue-fg); background:var(--blue-soft); animation-play-state:paused; }
+  @keyframes ppCue {
+    0%, 100% { transform:translateY(0);   }
+    50%      { transform:translateY(5px); }
+  }
+
+  .pp-title {
+    margin:14px 0 0; max-width:900px;
+    font-size:clamp(34px, 5.2vw, 62px); line-height:1.03;
+    letter-spacing:-0.035em; font-weight:500;
+  }
+  .pp-subtitle {
+    margin-top:12px; max-width:760px;
+    font-size:clamp(16px, 2vw, 21px); line-height:1.35;
+    letter-spacing:-0.012em; color:var(--fg-muted);
+  }
+  .pp-rule {
+    width:64px; height:2px; margin:26px 0 20px;
+    background:var(--blue); border-radius:2px;
+  }
+  .pp-lead {
+    margin:0; max-width:62ch;
+    font-size:clamp(15px, 1.5vw, 18px); line-height:1.62; color:var(--fg-muted);
+  }
+  .pp-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
+  .pp-chip {
+    display:inline-flex; align-items:center; height:28px; padding:0 12px;
+    border-radius:999px; font-size:12.5px; color:var(--fg);
+    border:1px solid color-mix(in oklab, var(--fg) 14%, transparent);
+    background:color-mix(in oklab, var(--bg-elev) 68%, transparent);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  }
+
+  /* The cover: whole, never cropped, and capped so a tall or square one can't
+     blow the hero past a screen. object-fit:contain makes the cap safe —
+     without it, max-height with width:100% would stretch the image. */
+  .pp-shot { margin:0; animation:ppShot 720ms 120ms cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes ppShot {
+    from { opacity:0; transform:translateY(18px) scale(0.985); }
+    to   { opacity:1; transform:none; }
+  }
+  .pp-shot-img, .pp-shot-art {
+    display:block; width:100%; height:auto;
+    max-height:340px; object-fit:contain;
+    border-radius:14px; background:var(--bg-soft);
+    border:1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+    box-shadow:0 24px 56px -28px rgba(0,0,0,0.34), 0 2px 8px -4px rgba(0,0,0,0.14);
+  }
+  /* Named SVG artwork has no intrinsic height — give it the covers' own ratio. */
+  .pp-shot-art { position:relative; aspect-ratio:16/9; overflow:hidden; }
+
+  /* ── Body: sticky spec rail + text column ─────────────────────────── */
+  /* No align-items:start here — the rail column must STRETCH to the row's
+     full height, otherwise it shrinks to its own content and the sticky
+     inner box has no travel left to stick through. */
+  .pp-main {
+    display:grid; grid-template-columns:var(--pp-rail) minmax(0,1fr);
+    gap:56px; margin-top:56px;
+    scroll-margin-top:calc(var(--pp-nav) + 16px);   /* target of the scroll cue */
+  }
+  .pp-rail-inner {
+    position:sticky; top:calc(var(--pp-nav) + 20px);
+    display:flex; flex-direction:column; gap:26px;
+  }
+  .pp-facts { margin:0; display:flex; flex-direction:column; }
+  .pp-fact { padding:11px 0; border-top:1px solid var(--border); }
+  .pp-fact:first-child { border-top:0; padding-top:0; }
+  .pp-fact dt {
+    font-size:10.5px; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--fg-faint);
+  }
+  .pp-fact dd { margin:5px 0 0; font-size:13.5px; line-height:1.45; color:var(--fg); }
+  .pp-rail-h {
+    margin-bottom:12px; font-size:10.5px; letter-spacing:0.09em;
+    text-transform:uppercase; color:var(--fg-faint);
+  }
+  /* Plain text, no badges — see the note above ProjectPage in pages.jsx. */
+  .pp-tools { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .pp-tool { font-size:13.5px; line-height:1.4; color:var(--fg); }
+  .pp-rail-links { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+
+  /* ── Text column: one ink, size does the ranking ──────────────────── */
+  /* Section titles carry the site accent; everything below them is the SAME
+     ink (--fg), ranked by size and weight alone. The previous scale mixed
+     six treatments and scattered the accent over numbers, ticks and rules —
+     and ran the body in --fg-muted while the bullets ran in --fg, so the
+     bullets outranked the prose they were illustrating. */
+  .pp-content { min-width:0; padding-bottom:20px; }
+  .pp-sec { margin-bottom:48px; }
+  .pp-sec:last-child { margin-bottom:0; }
+  .pp-sec-head { margin-bottom:16px; }
+  .pp-sec-num {
+    font-size:11px; letter-spacing:0.08em; color:var(--fg-faint);
+    margin-bottom:12px;
+  }
+  .pp-sec-title {
+    margin:0; font-size:clamp(22px, 2.3vw, 26px); line-height:1.22;
+    letter-spacing:-0.022em; font-weight:500; color:var(--blue);
+  }
+  .pp-p { margin:0 0 15px; max-width:66ch; font-size:16px; line-height:1.72; color:var(--fg); }
+  .pp-p:last-child { margin-bottom:0; }
+  .pp-sub {
+    margin:30px 0 12px; font-size:16px; font-weight:600;
+    letter-spacing:-0.012em; color:var(--fg);
+  }
+  .pp-list { margin:4px 0 18px; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .pp-list li {
+    display:flex; gap:12px; max-width:64ch;
+    font-size:16px; line-height:1.65; color:var(--fg);
+  }
+  .pp-li-mark { flex-shrink:0; color:var(--fg-faint); user-select:none; }
+  .pp-quote {
+    margin:26px 0; padding:2px 0 2px 20px;
+    border-left:2px solid color-mix(in oklab, var(--fg) 20%, transparent);
+    font-size:17px; line-height:1.62; letter-spacing:-0.01em; color:var(--fg);
+  }
+
+  /* ── Numbers ──────────────────────────────────────────────────────── */
+  /* A quiet mono run, not a display block. At 42px they were the loudest
+     thing on the page for what is secondary information; the figure keeps
+     full ink so it still registers, the label sits back in grey. */
+  /* Spacing separates the groups, not a "·" character: a middot rendered as
+     a flex child wraps to the next line glued to the wrong group. The
+     full-ink figure opening each pair is delimiter enough. */
+  .pp-metrics {
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 30px;
+    margin:22px 0 34px; max-width:64ch;
+    font-family:'Geist Mono',monospace; font-size:12.5px;
+    line-height:1.7; letter-spacing:0.03em; color:var(--fg-muted);
+    opacity:0; transform:translateY(8px);
+    transition:opacity 460ms ease, transform 520ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-metrics.in { opacity:1; transform:none; }
+  .pp-metric { display:inline-flex; align-items:baseline; gap:6px; }
+  .pp-metric-v { font-weight:500; color:var(--blue); }
+
+  /* ── Gallery — scroll-snap film strip ─────────────────────────────── */
+  .pp-gal-track {
+    position:relative; display:flex; gap:18px;
+    overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; padding:10px 0 6px; outline:none;
+  }
+  .pp-gal-track::-webkit-scrollbar { display:none; }
+  .pp-gal-track:focus-visible { outline:2px solid var(--blue); outline-offset:6px; border-radius:16px; }
+  /* Flex spacers, not padding: both percentages then resolve against the same
+     box, so the first and last frames can actually reach centre-snap. */
+  .pp-gal-pad { flex:0 0 13%; }
+  /* Only lightly dimmed: scale carries the focus. Pushed further down, a dark
+     screenshot on light paper collapses into a flat grey slab and the peek
+     stops reading as "another image". */
+  .pp-slide {
+    flex:0 0 74%; margin:0; scroll-snap-align:center;
+    opacity:0.75; transform:scale(0.93);
+    transition:opacity 420ms ease, transform 480ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-slide.is-active { opacity:1; transform:none; }
+  /* contain, not cover: a chart must keep its axes. The soft plate behind it
+     absorbs whatever aspect ratio the screenshot happens to have. */
+  /* 16/9 matches the shape a screenshot usually has, so `contain` leaves
+     almost no letterboxing on the common case while still never cropping
+     an odd one. */
+  .pp-frame {
+    display:block; width:100%; padding:0; aspect-ratio:16/9; cursor:pointer;
+    border:1px solid var(--border-strong); border-radius:14px; overflow:hidden;
+    background:var(--bg-soft); box-shadow:var(--shadow);
+    transition:border-color 240ms ease, box-shadow 320ms ease;
+  }
+  .pp-frame img { display:block; width:100%; height:100%; object-fit:contain; }
+  .pp-slide.is-active .pp-frame { box-shadow:var(--shadow-lg); }
+  .pp-slide.is-active .pp-frame:hover { border-color:var(--blue); }
+
+  .pp-gal-bar { display:flex; align-items:center; gap:14px; margin-top:16px; }
+  .pp-gal-arrow {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0; cursor:pointer;
     display:inline-flex; align-items:center; justify-content:center;
-    background:rgba(10,10,10,0.55); color:#fff; backdrop-filter:blur(8px);
-    transition:background 180ms ease, transform 220ms cubic-bezier(.2,.7,.2,1);
+    border:1px solid var(--border-strong); background:var(--bg-elev); color:var(--fg);
+    transition:border-color 200ms ease, background 200ms ease, color 200ms ease,
+               opacity 200ms ease, transform 160ms ease;
   }
-  .pj-close:hover { background:rgba(10,10,10,0.78); transform:rotate(90deg); }
-  .pj-close svg { width:18px; height:18px; }
-  .pj-body { padding:26px 30px 30px; }
-  .pj-meta { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--fg-muted); }
-  .pj-title { margin:10px 0 14px; font-size:27px; line-height:1.1; letter-spacing:-0.02em; font-weight:500; }
-  .pj-long { margin:0; font-size:15px; line-height:1.65; color:var(--fg-muted); }
-  .pj-h {
-    margin:24px 0 12px; font-family:'Geist Mono',monospace; font-size:11px;
-    text-transform:uppercase; letter-spacing:0.08em; color:var(--fg-faint);
+  .pp-gal-arrow svg { width:16px; height:16px; }
+  .pp-gal-arrow:hover:not(:disabled) { border-color:var(--blue); background:var(--blue-soft); color:var(--blue-fg); }
+  .pp-gal-arrow:active:not(:disabled) { transform:scale(0.94); }
+  .pp-gal-arrow:disabled { opacity:0.32; cursor:default; }
+  .pp-cap-slot { flex:1; min-width:0; min-height:20px; text-align:center; }
+  .pp-cap {
+    display:inline-block; font-size:13px; line-height:1.45; color:var(--fg-muted);
+    animation:ppCap 380ms cubic-bezier(.2,.7,.2,1) both;
   }
-  .pj-list { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
-  .pj-list li { display:flex; gap:11px; font-size:14.5px; line-height:1.5; color:var(--fg); }
-  .pj-list li svg { width:16px; height:16px; color:var(--blue); flex-shrink:0; margin-top:2px; }
-  .pj-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:22px; }
-  .pj-actions { margin-top:24px; }
-  .pj-actions .proj-link { padding:11px 18px; font-size:14px; border-radius:11px; }
+  @keyframes ppCap { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+  .pp-dots { display:flex; justify-content:center; gap:7px; margin-top:14px; }
+  .pp-dot {
+    width:7px; height:7px; padding:0; border:0; border-radius:999px; cursor:pointer;
+    background:color-mix(in oklab, var(--fg) 22%, transparent);
+    transition:width 320ms cubic-bezier(.2,.7,.2,1), background 240ms ease;
+  }
+  .pp-dot.on { width:22px; background:var(--blue); }
+  /* A single image needs no carousel chrome. */
+  .pp-single { margin:8px 0 0; }
+  .pp-single .pp-cap { display:block; margin-top:14px; text-align:center; }
+
+  /* ── Full-screen image viewer ─────────────────────────────────────── */
+  .pp-lb {
+    position:fixed; inset:0; z-index:200;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; padding:40px 24px;
+    background:color-mix(in oklab, var(--bg) 18%, rgba(0,0,0,0.86));
+    backdrop-filter:blur(10px) saturate(130%); -webkit-backdrop-filter:blur(10px) saturate(130%);
+    animation:ppLb 200ms ease-out;
+  }
+  @keyframes ppLb { from { opacity:0; } to { opacity:1; } }
+  .pp-lb-fig {
+    margin:0; max-width:min(1200px, 92vw); display:flex; flex-direction:column; gap:14px;
+    animation:ppLbFig 300ms cubic-bezier(.2,.7,.2,1);
+  }
+  @keyframes ppLbFig { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:none; } }
+  .pp-lb-fig img { display:block; max-width:100%; max-height:70vh; object-fit:contain; border-radius:12px; }
+  .pp-lb-fig figcaption { text-align:center; font-size:13.5px; color:rgba(255,255,255,0.72); }
+  .pp-lb-close {
+    position:absolute; top:20px; right:20px;
+    width:38px; height:38px; border-radius:10px; border:0; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.12); color:#fff;
+    transition:background 180ms ease, transform 240ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-lb-close:hover { background:rgba(255,255,255,0.22); transform:rotate(90deg); }
+  .pp-lb-close svg { width:19px; height:19px; }
+  .pp-lb-nav { display:flex; align-items:center; gap:16px; font-size:12px; color:rgba(255,255,255,0.8); }
+  .pp-lb-nav button {
+    width:36px; height:36px; border-radius:10px; border:0; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.12); color:#fff;
+    transition:background 180ms ease, opacity 180ms ease;
+  }
+  .pp-lb-nav button svg { width:16px; height:16px; }
+  .pp-lb-nav button:hover:not(:disabled) { background:rgba(255,255,255,0.22); }
+  .pp-lb-nav button:disabled { opacity:0.3; cursor:default; }
+
+  /* ── Takeaways ────────────────────────────────────────────────────── */
+  .pp-skills {
+    margin-top:72px; padding:52px 0;
+    border-top:1px solid var(--border); background:var(--bg-soft);
+  }
+  /* Two columns, note stacked UNDER its name. Side by side across the full
+     shell the note column ran 786px wide for ~490px of text, so 40% of every
+     row was empty and the eye had to cross that gap from a short name to its
+     note. Stacking halves the block's height and keeps lines short.
+     CSS multi-column rather than grid: it balances any number of items and
+     fills column one before column two, which is the reading order here. */
+  .pp-skill-list {
+    list-style:none; padding:0;
+    margin:26px 0 -28px;          /* absorbs the last item's bottom margin */
+    columns:2; column-gap:64px;
+  }
+  .pp-skill {
+    display:block; margin:0 0 28px; max-width:40ch;
+    break-inside:avoid; -webkit-column-break-inside:avoid;
+    opacity:0; transform:translateY(10px);
+    transition:opacity 460ms ease, transform 520ms cubic-bezier(.2,.7,.2,1);
+    transition-delay:calc(var(--i,0) * 55ms);
+  }
+  .pp-skills-inner.in .pp-skill { opacity:1; transform:none; }
+  .pp-skill-name {
+    display:block; margin-bottom:6px;
+    font-size:15.5px; font-weight:500; letter-spacing:-0.012em; color:var(--blue);
+  }
+  .pp-skill-note { display:block; font-size:14.5px; line-height:1.62; color:var(--fg-muted); }
+
+  /* ── Outro — "all projects" beside "next project" ─────────────────── */
+  .pp-outro { padding:36px 0 72px; }
+  .pp-outro-inner { display:flex; align-items:stretch; gap:16px; }
+  .pp-outro-all {
+    display:flex; align-items:center; gap:14px; text-align:left;
+    flex:0 0 auto; min-width:210px; padding:16px 22px; cursor:pointer;
+    border:1px solid var(--border); border-radius:16px;
+    background:var(--bg-soft); color:var(--fg);
+    transition:border-color 240ms ease, background 200ms ease, transform 260ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-outro-all:hover { border-color:var(--blue); background:var(--blue-soft); transform:translateY(-2px); }
+  .pp-outro-all:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+  .pp-outro-all .pp-back-ico { width:18px; height:18px; color:var(--fg-faint); }
+  .pp-outro-all:hover .pp-back-ico { color:var(--blue); }
+  .pp-outro-all-text { display:flex; flex-direction:column; gap:5px; }
+  .pp-outro-all-title { font-size:17px; font-weight:500; letter-spacing:-0.015em; }
+  .pp-outro-all:hover .pp-outro-all-title { color:var(--blue-fg); }
+
+  .pp-next-card {
+    flex:1 1 auto; min-width:0;
+    display:flex; align-items:center; gap:20px; text-align:left;
+    padding:16px 20px 16px 16px; cursor:pointer; color:var(--fg);
+    border:1px solid var(--border); border-radius:16px;
+    background:var(--bg-elev); box-shadow:var(--shadow);
+    transition:border-color 240ms ease, box-shadow 300ms ease, transform 260ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-next-card:hover {
+    border-color:var(--blue); transform:translateY(-2px);
+    box-shadow:0 24px 60px -28px color-mix(in oklab, var(--blue) 42%, transparent);
+  }
+  .pp-next-card:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+  .pp-next-cover {
+    position:relative; width:104px; flex-shrink:0; aspect-ratio:16/9;
+    border-radius:10px; overflow:hidden; background:var(--bg-soft);
+  }
+  .pp-next-cover img, .pp-next-cover svg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .pp-next-text { display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+  .pp-next-title { font-size:17px; font-weight:500; letter-spacing:-0.015em; color:var(--fg); }
+  .pp-next-card:hover .pp-next-title { color:var(--blue-fg); }
+  .pp-next-meta { font-size:11.5px; color:var(--fg-muted); }
+  .pp-next-ico {
+    width:18px; height:18px; flex-shrink:0; color:var(--fg-faint);
+    transition:transform 300ms cubic-bezier(.2,.7,.2,1), color 240ms ease;
+  }
+  .pp-next-card:hover .pp-next-ico { transform:translateX(4px); color:var(--blue); }
+
+  /* ── Responsive ───────────────────────────────────────────────────── */
+  /* Under 900px the rail unsticks and, because it comes first in the DOM,
+     lands as a compact fact strip between the hero and the text. */
+  @media (max-width:900px) {
+    .pp-hero-grid { grid-template-columns:1fr; gap:30px; }
+    .pp-shot-img, .pp-shot-art { max-height:300px; }
+    .pp-main { grid-template-columns:1fr; gap:32px; margin-top:36px; }
+    .pp-rail-inner { position:static; gap:22px; }
+    .pp-facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(132px,1fr)); gap:0 22px; }
+    .pp-fact, .pp-fact:first-child { border-top:1px solid var(--border); padding:10px 0; }
+    .pp-tools { flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .pp-tool {
+      padding:5px 12px; border-radius:999px;
+      border:1px solid var(--border); background:var(--bg-elev);
+    }
+    .pp-rail-links { flex-direction:row; flex-wrap:wrap; }
+    .pp-outro-inner { flex-direction:column; }
+    .pp-outro-all { min-width:0; }
+  }
   @media (max-width:640px) {
-    .pj-body { padding:22px 20px 26px; }
-    .pj-title { font-size:23px; }
+    .pp { --pp-nav:70px; }
+    .pp-shot-img, .pp-shot-art { border-radius:12px; }
+    /* The rail strip under the cover keeps the tools and nothing else. The
+       facts it drops are all already in the hero — date and category in the
+       eyebrow, role/duration/team in the chips — and the links are already
+       a button up there, so a second GitHub down here is pure duplication. */
+    .pp-facts, .pp-rail-block-links { display:none; }
+    .pp-rail-inner > .pp-rail-block:first-child .pp-rail-h { margin-top:0; }
+    /* The cue only earns its place where the fold is a real threshold; on a
+       phone the page is obviously scrollable already. */
+    .pp-cue { display:none; }
+    .pp-slide { flex:0 0 88%; }
+    .pp-gal-pad { flex:0 0 6%; }
+    .pp-sec { margin-bottom:42px; }
+    .pp-skills { margin-top:56px; padding:42px 0; }
+    .pp-skill-list { columns:1; margin-bottom:-22px; }
+    .pp-skill { margin-bottom:22px; max-width:none; }
+    .pp-next-cover { width:78px; }
+    .pp-next-card { gap:14px; padding:14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pp-reveal, .pp-skill, .pp-metrics, .pp-slide { transition:none; }
+    .pp-shot, .pp-cap, .pp-lb, .pp-lb-fig, .pp-cue { animation:none; }
   }
 
   /* ═══ About · immersive scroll story ══════════════════════════════ */

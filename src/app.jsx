@@ -9,12 +9,21 @@ const ROUTES = [
   { id:'contact', label:'contact' },
 ];
 
-// Map the URL hash (#/work, #/about, …) to a known route id; unknown/empty → home.
-// This makes every page shareable, refresh-safe, and wired to browser back/forward.
+// Map the URL hash (#/work, #/work/f1, #/about, …) to a known route id; the
+// second segment is the sub-route (a project id on #/work/:id). Unknown/empty
+// → home. This makes every page — project pages included — shareable,
+// refresh-safe, and wired to browser back/forward.
+function hashParts() {
+  const raw = (typeof window!=='undefined' ? window.location.hash : '').slice(1); // "/work/f1"
+  return raw.replace(/^\//,'').split(/[/?#]/);
+}
 function routeFromHash() {
-  const raw = (typeof window!=='undefined' ? window.location.hash : '').slice(1); // "/work"
-  const id  = raw.replace(/^\//,'').split(/[/?#]/)[0].toLowerCase();
+  const id = (hashParts()[0]||'').toLowerCase();
   return ROUTES.some(r=>r.id===id) ? id : 'home';
+}
+// "" on a plain route, "f1" on #/work/f1. Only meaningful for the work route.
+function subFromHash() {
+  return routeFromHash()==='work' ? (hashParts()[1]||'').toLowerCase() : '';
 }
 function hashForRoute(r){ return r==='home' ? '/' : '/'+r; }
 
@@ -551,39 +560,40 @@ function App() {
   // The URL hash is the source of truth for the route, so a shared/refreshed
   // link opens the right page and browser back/forward work.
   const [route, setRoute] = useState(routeFromHash);
+  // Sub-route: the project id on #/work/:id, "" on the plain grid.
+  const [sub,   setSub]   = useState(subFromHash);
   // Count navigations: the first paint (0) is revealed by the boot splash fade,
   // so we skip the page-enter animation then and only animate once the user
   // actually navigates. Keeps the boot→home reveal clean (no double motion).
   const [navCount, setNavCount] = useState(0);
 
-  // Apply a route to the view: swap page, re-enable the enter animation, top-scroll.
-  const applyRoute = useCallback(r=>{
-    setRoute(r);
-    setNavCount(c=>c+1);   // any navigation re-enables the page-enter anim
-    window.scrollTo({top:0,behavior:'instant'});
-  }, []);
+  // What's currently on screen, readable synchronously from the hashchange
+  // handler (state would be a render behind). Seeded from the initial state.
+  const shown = useRef(null);
+  if (shown.current === null) shown.current = { route, sub };
 
-  // Navigation writes the hash; the hashchange listener below turns that into an
-  // applyRoute. Clicking the current page (no hash change) still re-scrolls to top.
-  const go = useCallback(r=>{
-    const target = hashForRoute(r);
-    if (window.location.hash.slice(1) !== target) {
-      window.location.hash = target;
-    } else {
-      applyRoute(r);
-    }
-  }, [applyRoute]);
+  // Navigation writes the hash; the listener below turns that into a page swap.
+  // Clicking through to the page you're already on still re-scrolls to the top.
+  // `path` is a route id ("about") or a route + sub-route ("work/f1").
+  const go = useCallback(path=>{
+    const target = hashForRoute(path);
+    if (window.location.hash.slice(1) !== target) window.location.hash = target;
+    else window.scrollTo({top:0,behavior:'instant'});
+  }, []);
 
   useEffect(()=>{
     const onHash = ()=>{
-      const r = routeFromHash();
-      // Only reset scroll + replay the page-enter animation when the BASE route
-      // actually changes. A deep-link like #/work → #/work/f1 (opening a project
-      // modal) keeps the same base route, so the page must stay put.
-      setRoute(cur=>{
-        if (cur !== r){ setNavCount(c=>c+1); window.scrollTo({top:0,behavior:'instant'}); }
-        return r;
-      });
+      const r = routeFromHash(), s = subFromHash();
+      // #/work → #/work/f1 swaps the grid for a whole project page, so a change
+      // of EITHER segment counts as a navigation: reset scroll, replay the
+      // enter animation. (Before project pages existed, the sub-route only
+      // opened a modal over the grid and the page had to stay put.)
+      if (shown.current.route === r && shown.current.sub === s) return;
+      shown.current = { route:r, sub:s };
+      setRoute(r);
+      setSub(s);
+      setNavCount(c=>c+1);
+      window.scrollTo({top:0,behavior:'instant'});
     };
     window.addEventListener('hashchange', onHash);
     return ()=> window.removeEventListener('hashchange', onHash);
@@ -649,19 +659,20 @@ function App() {
 
   let Page;
   switch(route) {
-    case 'work':    Page = <Projects/>; break;
+    case 'work':    Page = sub ? <ProjectPage id={sub} go={go}/> : <Projects go={go}/>; break;
     case 'about':   Page = <About go={go}/>; break;
     case 'contact': Page = <Contact/>; break;
     default:        Page = <Landing go={go}/>;
   }
+  const viewKey = route + (sub ? '/'+sub : '');
 
   return (
     <div className={navCount===0 ? 'app-no-enter' : ''}
          style={{ opacity: revealed ? 1 : 0,
                   transition: 'opacity 560ms cubic-bezier(.4,0,.2,1)' }}>
-      <ReadingProgress key={route}/>
+      <ReadingProgress key={viewKey}/>
       <Nav route={route} go={go} theme={theme} setTheme={setTheme}/>
-      <main key={route} style={{minHeight:'calc(100vh - 64px - 96px)'}}>
+      <main key={viewKey} style={{minHeight:'calc(100vh - 64px - 96px)'}}>
         {Page}
       </main>
       <Footer route={route}/>
