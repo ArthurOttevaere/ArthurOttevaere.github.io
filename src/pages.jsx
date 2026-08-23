@@ -1204,6 +1204,7 @@ function ProjectCard({ p, onOpen }){
 // Everything here is driven by data.js and EVERY block is optional:
 //   • no `sections` → falls back to `long` + `highlights`
 //   • no `gallery`  → no carousel at all (one image → a plain figure)
+//   • no `attachments` → no files block
 //   • no `skills` / `metrics` → those blocks are skipped
 // So a project you never enrich still gets a correct page, and adding a
 // project to data.js adds its page with no other change.
@@ -1245,6 +1246,56 @@ function projGallery(p){
   return (Array.isArray(p.gallery) ? p.gallery : [])
     .map(g => typeof g==='string' ? { src:g, caption:'' } : g)
     .filter(g => g && g.src);
+}
+
+// ─── Attachments ─────────────────────────────────────────────────────────────
+// The files that ship with a project: report, slide deck, dataset, notebook…
+// An entry is a plain path/URL, or { label, url, type, note }. `type` is
+// optional — it is read off the file extension when missing, and it picks both
+// the glyph and the small kind label on the right of the row.
+const ATT_TYPES = {
+  pdf:'PDF',   doc:'Doc',    docx:'Doc',   odt:'Doc',   rtf:'Doc',
+  txt:'Doc',   md:'Doc',
+  ppt:'Slides', pptx:'Slides', key:'Slides', odp:'Slides',
+  xls:'Sheet', xlsx:'Sheet', ods:'Sheet',  csv:'Data',  json:'Data',
+  zip:'Archive', rar:'Archive', '7z':'Archive', tar:'Archive', gz:'Archive',
+  ipynb:'Notebook', py:'Code', r:'Code', sql:'Code',
+  // Spelled-out `type:` values from data.js land here too, so
+  // `type:"Slides"` works exactly like `type:"pptx"`.
+  slides:'Slides', report:'Report', paper:'Report', sheet:'Sheet',
+  data:'Data', dataset:'Data', code:'Code', notebook:'Notebook',
+  archive:'Archive', poster:'Poster', video:'Video', link:'Link',
+};
+const ATT_ICONS = {
+  PDF:'FileDoc',   Doc:'FileDoc',    Report:'FileDoc', Poster:'FileDoc',
+  Slides:'FileSlides', Video:'FileSlides',
+  Sheet:'FileSheet', Data:'FileSheet',
+  Archive:'FileZip',
+  Code:'FileCode', Notebook:'FileCode',
+  Link:'FileLink',
+};
+
+function projAttachments(p){
+  return (Array.isArray(p.attachments) ? p.attachments : [])
+    .map(a => typeof a === 'string' ? { url:a } : a)
+    .map(a => ({ ...a, url:(a && (a.url || a.file)) || '' }))
+    .filter(a => a.url && a.url !== '#')
+    .map(a => {
+      const clean = a.url.split(/[?#]/)[0];
+      const ext   = (clean.match(/\.([a-z0-9]+)$/i) || [])[1] || '';
+      const key   = String(a.type || ext).toLowerCase();
+      const kind  = ATT_TYPES[key] || (a.type ? a.type : 'Link');
+      return {
+        url:   a.url,
+        // No label? The file name is a better fallback than a generic word.
+        label: a.label || decodeURIComponent(clean.split('/').pop()) || kind,
+        note:  a.note || '',
+        kind,
+        icon:  ATT_ICONS[kind] || 'FileLink',
+        // Files hosted here download; anything remote opens in a new tab.
+        local: !/^(https?:)?\/\//i.test(a.url),
+      };
+    });
 }
 
 // An image path, as opposed to a named SVG artwork key from covers.jsx.
@@ -1303,6 +1354,7 @@ function ProjectPage({ id, go }){
   const sections = projSections(p);
   const metrics  = (Array.isArray(p.metrics) ? p.metrics : []).filter(m=>m && m.value);
   const gallery  = projGallery(p);
+  const files    = projAttachments(p);
   const skills   = projSkills(p);
 
   return (
@@ -1323,6 +1375,12 @@ function ProjectPage({ id, go }){
           {sections.length===0 && metrics.length>0 && <ProjectMetrics items={metrics}/>}
           {gallery.length>0 && (
             <ProjectGallery items={gallery} n={sections.length+1} title={p.galleryTitle}/>
+          )}
+          {/* Last block of the text column: you read the project, you looked at
+              it, now you can take the files with you. */}
+          {files.length>0 && (
+            <ProjectAttachments items={files} title={p.attachmentsTitle}
+                                n={sections.length + (gallery.length>0?1:0) + 1}/>
           )}
         </div>
       </div>
@@ -1673,6 +1731,44 @@ function Lightbox({ items, index, onIndex, onClose }){
       )}
     </div>
   ), document.body);
+}
+
+// ─── Attachments — the files that come with the project ──────────────────────
+// A quiet list of rows rather than cards in a grid: these are things to open,
+// not things to look at, and a row leaves space for a one-line note saying
+// what the file actually is. Absent or empty `attachments` → no block at all.
+function ProjectAttachments({ items, n, title }){
+  const ref = useReveal();
+  return (
+    <section className="pp-sec pp-att pp-reveal" ref={ref}>
+      <div className="pp-sec-head">
+        <div className="pp-sec-num mono">{String(n).padStart(2,'0')}</div>
+        <h2 className="pp-sec-title">{title || 'Attachments'}</h2>
+      </div>
+      <ul className="pp-att-list">
+        {items.map((a,i)=>{
+          const Glyph = Icon[a.icon] || Icon.FileLink;
+          return (
+            <li key={i}>
+              <a className="pp-att-card" href={a.url}
+                 target="_blank" rel="noopener noreferrer"
+                 aria-label={(a.local?'Open ':'Open ')+a.label+' ('+a.kind+')'}>
+                <span className="pp-att-ico" aria-hidden="true"><Glyph/></span>
+                <span className="pp-att-text">
+                  <span className="pp-att-label">{a.label}</span>
+                  {a.note && <span className="pp-att-note">{a.note}</span>}
+                </span>
+                <span className="pp-att-kind mono">{a.kind}</span>
+                {a.local
+                  ? <Icon.Download className="pp-att-arrow is-dl"/>
+                  : <Icon.ArrowUR className="pp-att-arrow"/>}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 // ─── Takeaways — skill on the left, what it actually meant on the right ──────

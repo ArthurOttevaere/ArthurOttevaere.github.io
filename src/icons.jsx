@@ -165,6 +165,49 @@ const Icon = {
     </svg>
   ),
 
+  /* ── Attachment glyphs ────────────────────────────────────────────
+     Used by the "Attachments" block on a project page. Which one shows
+     up is picked from the file extension — see ATT_TYPES in pages.jsx. */
+  FileDoc: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+      <path d="M14 3v5h5"/>
+      <path d="M9 13h6M9 17h4"/>
+    </svg>
+  ),
+  FileSlides: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 4h18"/>
+      <path d="M4.5 4v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V4"/>
+      <path d="M12 16v3M9 21l3-2 3 2"/>
+    </svg>
+  ),
+  FileSheet: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10"/>
+    </svg>
+  ),
+  FileZip: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="2.75" y="3.75" width="18.5" height="4" rx="1"/>
+      <path d="M4.25 7.75h15.5v10.5a2 2 0 0 1-2 2h-11.5a2 2 0 0 1-2-2z"/>
+      <path d="M10 12h4"/>
+    </svg>
+  ),
+  FileCode: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+      <path d="M14 3v5h5"/>
+      <path d="m10.5 12.5-1.5 1.75 1.5 1.75M13.5 12.5 15 14.25l-1.5 1.75"/>
+    </svg>
+  ),
+  FileLink: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M18.4 11.6 12 18a4 4 0 0 1-5.66-5.66l7.07-7.07a2.75 2.75 0 0 1 3.89 3.89l-7.07 7.07a1.5 1.5 0 0 1-2.12-2.12l6.36-6.36"/>
+    </svg>
+  ),
+
   /* ══════════════════════════════════════════════════════════════════
      PASTE NEW ICONS HERE
      ------------------------------------------------------------------

@@ -1659,6 +1659,51 @@
   .pp-lb-nav button:hover:not(:disabled) { background:rgba(255,255,255,0.22); }
   .pp-lb-nav button:disabled { opacity:0.3; cursor:default; }
 
+  /* ── Attachments — report, slides, dataset… ───────────────────────── */
+  /* Rows, not a card grid: these are things to open, and a row leaves room
+     for the one-line note that says what the file actually is. */
+  .pp-att-list {
+    list-style:none; margin:0; padding:0;
+    display:flex; flex-direction:column; gap:10px; max-width:64ch;
+  }
+  .pp-att-card {
+    display:flex; align-items:center; gap:14px; padding:13px 16px;
+    border:1px solid var(--border); border-radius:12px;
+    background:var(--bg-elev); color:var(--fg); text-decoration:none;
+    transition:border-color 240ms ease, background 200ms ease,
+               box-shadow 300ms ease, transform 260ms cubic-bezier(.2,.7,.2,1);
+  }
+  .pp-att-card:hover {
+    border-color:var(--blue); background:var(--blue-soft);
+    transform:translateY(-2px); box-shadow:var(--shadow);
+  }
+  .pp-att-card:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+  .pp-att-ico {
+    flex-shrink:0; width:34px; height:34px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border); background:var(--bg-soft); color:var(--fg-muted);
+    transition:border-color 240ms ease, color 240ms ease;
+  }
+  .pp-att-ico svg { width:17px; height:17px; }
+  .pp-att-card:hover .pp-att-ico { border-color:var(--blue); color:var(--blue); }
+  .pp-att-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .pp-att-label {
+    font-size:15px; font-weight:500; letter-spacing:-0.012em;
+    overflow-wrap:anywhere;
+  }
+  .pp-att-card:hover .pp-att-label { color:var(--blue-fg); }
+  .pp-att-note { font-size:13px; line-height:1.45; color:var(--fg-muted); }
+  .pp-att-kind {
+    flex-shrink:0; font-size:10.5px; letter-spacing:0.09em;
+    text-transform:uppercase; color:var(--fg-faint);
+  }
+  .pp-att-arrow {
+    width:16px; height:16px; flex-shrink:0; color:var(--fg-faint);
+    transition:transform 300ms cubic-bezier(.2,.7,.2,1), color 240ms ease;
+  }
+  .pp-att-card:hover .pp-att-arrow { color:var(--blue); transform:translate(2px,-2px); }
+  .pp-att-card:hover .pp-att-arrow.is-dl { transform:translateY(2px); }
+
   /* ── Takeaways ────────────────────────────────────────────────────── */
   .pp-skills {
     margin-top:72px; padding:52px 0;
@@ -1772,11 +1817,13 @@
     .pp-skills { margin-top:56px; padding:42px 0; }
     .pp-skill-list { columns:1; margin-bottom:-22px; }
     .pp-skill { margin-bottom:22px; max-width:none; }
+    .pp-att-kind { display:none; }
     .pp-next-cover { width:78px; }
     .pp-next-card { gap:14px; padding:14px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .pp-reveal, .pp-skill, .pp-metrics, .pp-slide { transition:none; }
+    .pp-att-card, .pp-att-arrow { transition:none; }
     .pp-shot, .pp-cap, .pp-lb, .pp-lb-fig, .pp-cue { animation:none; }
   }
 
