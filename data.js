@@ -322,7 +322,7 @@ window.PORTFOLIO_DATA = {
       tags:     ["Excel", "PowerBI", "DAX", "Canva"],
       role:     "Team",
       cover:    "/assets/images/business-dashboard.jpg",
-      github:   "https://arthuros.notion.site/Business-Data-Cleaning-and-Dashboard-Analysis-2a82a3f21be480b7b378f89e750e333a",
+      github:   "https://github.com/ArthurOttevaere/Data-Analytics-Dashboard",
       featured: false,
 
       /* ── The project page ──────────────────────────────────────────── */
