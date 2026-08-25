@@ -561,7 +561,7 @@ window.PORTFOLIO_DATA = {
       tags:     ["R", "Python", "Orange Data Mining"],
       role:     "Team",
       cover:    "/assets/images/hr-analytics.png",
-      github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",
+      github:   "https://github.com/ArthurOttevaere/HR-Predictive-Analytics",
       featured: false,
 
       /* ── The project page ──────────────────────────────────────────── */
@@ -681,45 +681,84 @@ window.PORTFOLIO_DATA = {
       cat:      "Academic",
       year:     "2024",
       date:     "2024-12",
-      summary:  "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
-      long:     "A Python-based system for managing student registrations with Excel integration. Collaboratively developed to handle 1,000+ student records, including ID generation, data analytics, and a user-friendly interface.",
+      summary:  "A command-line registry for 1,005 students and 61 courses, written in Python on top of an Excel workbook — ten menu actions covering everything from adding a student to exporting course statistics.",
+      long:     "A university registry has to be editable by people who do not write code, which in practice means it lives in an Excel file. This project keeps the workbook as the database and puts a Python command-line application in front of it: guided data entry with validation on every field, generated student IDs, search, sorting, filtering, and statistics per course or per student — with any view exportable to a new spreadsheet.",
       highlights: [
-        "Handles 1,000+ student records with Excel integration.",
-        "Automatic student ID generation and built-in data analytics.",
-        "User-friendly interface, developed collaboratively.",
+        "Ten menu actions over a 1,005-row, 73-column workbook covering personal details and grades for 61 courses from BA1 to MA2.",
+        "Automatic student IDs built from consonants and birth year, regenerated until unique against the whole registry.",
+        "Validation on every field at entry — leap years, phone format, grades bounded to 0–20, enumerated campuses and curricula.",
+        "Two sentinel values separate \"not enrolled\" from \"enrolled, no grade yet\", so no statistic is polluted by a missing mark.",
       ],
-      tags:     ["Python", "Pandas", "Excel"],
+      tags:     ["Python", "pandas", "openpyxl", "Excel"],
       role:     "Team",
       cover:    "/assets/images/student-registration.jpeg",
-      github:   "https://arthuros.notion.site/Student-Registration-Management-System-26c2a3f21be48010922dc56b9c351f81?source=copy_link",
+      github:   "https://github.com/ArthurOttevaere/Student-Registration-Management-System",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "Ten menu actions, 1,005 students, and an Excel file that stays the source of truth",
+      context:  "MINFO1302 Coding Project · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      team:     "2 people",
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
+        { value: "1,005", label: "student records in the registry" },
+        { value: "61",    label: "courses tracked, BA1 to MA2" },
+        { value: "10",    label: "actions in the main menu" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
+        { title: "The brief", body: [
+            "Build something in Python that manages a real university registry: add students, find them, change them, and answer questions about their results. The interesting constraint was not the code — it was that a registry belongs to an administrative office, and an administrative office works in Excel.",
+            "So the workbook stays the database. The script reads it, writes back to it, and every view it produces can be exported as a new spreadsheet. Nobody has to learn a new tool to keep using the data after the program has closed.",
+            "The dataset it ships with covers 1,005 students across four campuses and two curricula, with their personal details and their grades in 61 courses spread over the five years from BA1 to MA2.",
+        ]},
+        { title: "An Excel file as the database", body: [
+            "pandas reads `Sheet1` into a DataFrame, the operation happens in memory, and the sheet is written back in place. That is the whole storage layer — no database, no schema migration, no server.",
+            "It buys two things and costs one. It buys a file anyone can open, and it buys a format the rest of the faculty already exchanges. It costs atomicity: adding one student rewrites the entire workbook, so the program tells you plainly to keep a backup before experimenting.",
+            "The path to the workbook is resolved from the script's own location rather than from the working directory, so the pair of files can be moved anywhere together and still find each other. Startup checks for both the missing file and the missing sheet, and exits with a readable message instead of a traceback.",
+        ]},
+        { title: "Giving every student an ID", body: [
+            "New students need an identifier that is short, human-readable, and guaranteed not to collide with any of the thousand already in the file.",
+            "The scheme takes the first three consonants of the first name, the first two and the last consonant of the surname, the birth year, and one random digit — `mrtlry20010` for a Martin Laurey born in 2001. The random digit is what makes it survive twins and namesakes: the generated ID is checked against the set of existing IDs and rerolled until it is unique.",
+            { quote: "The readable part is a hint, not a key. The digit at the end is what actually does the work." },
+        ]},
+        { title: "Validating at the point of entry", body: [
+            "Every field in the add-a-student flow sits inside its own loop that refuses to move on until the input is valid, because a registry only stays trustworthy if bad data never reaches it in the first place:",
+            { list: [
+              "Dates of birth are checked month by month, including the 30-day months and February — with the leap-year rule applied to the year actually typed.",
+              "Phone numbers must be ten digits starting with 04; grades must be integers between 0 and 20.",
+              "Academic year, curriculum and campus are checked against closed lists, so no free-text variant of \"Louvain-la-Neuve\" ever enters the file.",
+              "The year of birth is bounded by the current year, computed at runtime rather than hard-coded.",
+            ]},
+            "The rejection messages are printed in red and the prompt simply comes back. It is the least clever part of the project and the part that does the most for the data.",
+        ]},
+        { title: "Two kinds of missing", body: [
+            "A blank grade cell is ambiguous: it can mean the student is not enrolled in that course, or that they are enrolled and the exam has not been marked yet. Averaging over either one silently produces a wrong number.",
+            "So the registry distinguishes them. A course a student never takes is stored as -2; a course they are enrolled in without a result yet is -1. When a student is added, their year determines which courses get grades entered and which get which sentinel — a BA3 student is asked for two years of marks and has their third year opened as enrolled-but-unmarked.",
+            "Every statistic then excludes both values before computing anything, and the failure filter reports three separate groups rather than one: students who failed, students still waiting for a mark, and students who were never enrolled. Three states, three answers.",
+        ]},
+        { title: "Ten actions behind one menu", body: [
+            "The menu is a dictionary mapping each key to a label and the function that implements it, so the loop that prints the options and the loop that dispatches them are the same loop — adding an action means adding one line.",
+            { list: [
+              "Add, search (five different criteria), modify any field, delete with confirmation.",
+              "Sort the registry by name, surname, ID, date of birth or academic year, ascending or descending.",
+              "Filter by who passed or failed a given course, or by bachelor versus master.",
+              "Statistics across all courses, and statistics for a single student — min, max, mean, median, standard deviation.",
+              "All grades for one course, or all courses for one student.",
+            ]},
+            "Results are printed through `tabulate` in a boxed grid rather than as raw DataFrame output, and `colorama` separates prompts from errors from confirmations. After each view the program asks whether to save it, names the file for you if you forget the extension, and returns to the menu.",
+        ]},
+        { title: "What the code taught me", body: [
+            "Reading it back a year later, the lessons are not in the features. The startup carefully builds an absolute path to the workbook — and then three of the later functions open it by bare filename anyway, which works only as long as you launch the script from its own directory. The same information was established once and then quietly re-derived, worse, in four different places.",
+            "The statistics functions select grade columns by position instead of by name, which is exactly the kind of assumption that breaks the day someone inserts a column. Naming the columns would have cost nothing and stayed correct.",
+            "And every write rewrites the whole file. At a thousand rows that is invisible; it is also the reason the README tells you to keep a backup. Those three habits — resolve a path once, address data by name, and know what your write actually touches — are what I took from this project, and they came from the code being long enough to start disagreeing with itself.",
+        ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/coding_project/.
@@ -728,19 +767,18 @@ window.PORTFOLIO_DATA = {
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/coding_project/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
         // { label: "Final report", url: "/assets/files/coding_project/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/coding_project/slides.pdf" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
+        { name: "pandas",            note: "An Excel workbook as the whole persistence layer — read, filter, concatenate, sort, write back." },
+        { name: "Input validation",  note: "A loop per field, including a leap-year-aware date check, so bad data never reaches the file." },
+        { name: "Data modelling",    note: "Sentinel values that let a missing grade say why it is missing, and statistics that respect them." },
+        { name: "CLI design",        note: "A dispatch dictionary, boxed tables and coloured output — a terminal program a non-programmer can use." },
+        { name: "Pair work",         note: "Splitting a thousand lines between two people and keeping one menu coherent across both halves." },
       ],
     },
     {
@@ -1315,5 +1353,5 @@ window.PORTFOLIO_DATA = {
      alternating right, left, right, left... around it.
      Leave the array empty ([]) to fall back to the automatic pick
      (featured project first, then the first few others). */
-  homeDeck: ["recommender_system", "chwapi", "f1", "quantitative_decision_making", "ai_gesture_recognition", "dash"],
+  homeDeck: ["f1","recommender_system", "chwapi", "quantitative_decision_making", "ai_gesture_recognition", "dash"],
 };
