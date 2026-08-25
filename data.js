@@ -310,222 +310,253 @@ window.PORTFOLIO_DATA = {
       title:    "Business Data Cleaning & Dashboard",
       cat:      "Academic",
       year:     "2025",
-      date:     "2025-11",
-      summary:  "Cleaned a raw fictitious company dataset and built a dashboard surfacing actionable business insights for the analytics course.",
-      long:     "As part of a data analytics course, this collaborative project involved processing a raw, fictitious company dataset to generate actionable business insights through a dashboard interface.",
+      date:     "2025-10",
+      summary:  "Nine years of messy sales data for a fictional furniture retailer, cleaned into a Power BI dashboard and read back to management as three places the margin was leaking.",
+      long:     "Acting as the data function of AEKI, a fictional US furniture retailer, a four-person team consolidated nine years of raw sales extracts into a single trustworthy dataset, modelled it in Power BI around a fact table and three dimensions, and built an interactive dashboard on top. Six analytical axes — temporal, geographic, customer, product, discount and logistics — turned into a management report with costed recommendations.",
       highlights: [
-        "Cleaned and structured a raw, fictitious company dataset.",
-        "Built an interactive dashboard surfacing actionable business insights.",
-        "Collaborative project delivered for a data analytics course.",
+        "Consolidated CSV and text extracts into one clean dataset, fixing a date format that changed mid-series and two order-of-magnitude outliers.",
+        "Modelled a fact table with date, product and shipping dimensions, and wrote the DAX behind every KPI.",
+        "Built a dynamic Top/Bottom-N product visual driven by RANKX, a disconnected table and a numeric parameter.",
+        "Traced a −8% margin back to a single product sold at a 50% discount, and wrote the pricing rule that would have stopped it.",
       ],
-      tags:     ["Excel", "PowerBI", "Canva"],
+      tags:     ["Excel", "PowerBI", "DAX", "Canva"],
       role:     "Team",
       cover:    "/assets/images/business-dashboard.jpg",
       github:   "https://arthuros.notion.site/Business-Data-Cleaning-and-Dashboard-Analysis-2a82a3f21be480b7b378f89e750e333a",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "Nine years of sales, six analytical axes, and three places the margin was quietly leaking",
+      context:  "Data Analytics course · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "4 people",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      team:     "4 people",
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        { value: "Hundreds",   label: "rows cleaned in Power Query" },
-        { value: "4",   label: "KPIs tracked on the dashboard" },
-        { value: "6",      label: "different types of interactive filters" },
-        // { value: "900+", label: "reviews scraped" },
+        { value: "$4.59M", label: "of sales analysed, 2014 to 2022" },
+        { value: "12.5%",  label: "profit margin, stable across both cycles" },
+        { value: "−8%",    label: "margin hiding inside a best-selling product" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
-      { title: "The brief", body: [
-            "A four-person team acting as the data function of a fictional company: take the raw operational extract, make it trustworthy, and hand management something they can decide on without asking an analyst first.",
-            "Four deliverables came out of it — a clean dataset, a written management report, an interactive Power BI dashboard, and a presentation of the findings.",
+        { title: "The brief", body: [
+            "A four-person team acting as the data function of AEKI, a fictional US furniture retailer: take the raw operational extracts covering 2014 to 2022, make them trustworthy, and hand management something they can decide on without asking an analyst first.",
+            "Four deliverables came out of it — a consolidated dataset, an interactive Power BI dashboard, a written management report, and a presentation of the findings. Six analytical axes structured the work: temporal, geographic, customer, product, discount and logistics.",
         ]},
         { title: "Getting the data trustworthy", body: [
-            "Most of the work happened before any chart existed. Power Query handled the missing and inconsistent values, the date and category columns that had been typed by hand, and the merges between sources that only lined up once the keys were normalised.",
-            "TODO — one concrete example here: the specific defect you found in the raw file and the rule you wrote for it. That single sentence is what separates this page from every other submission in the class.",
-        ]},
-        { title: "What the dashboard shows", body: [
-            "Built for readers who don't write queries: the filters do the drilling, so a manager can go from company-level to a single product line without leaving the page.",
+            "Most of the work happened before any chart existed. The source was a set of CSV and text files that first had to be consolidated into a single Excel workbook, and consolidating them exposed the defects.",
             { list: [
-              "Sales performance over time, sliceable by segment.",
-              "Customer value, to separate the accounts worth defending from the rest.",
-              "Product-level results, surfacing the underperformers.",
+              "The date format changed mid-series — records before and after 2018 were encoded differently, which silently broke any chronological sort. Text-to-Columns re-parsed the whole column onto one standard.",
+              "Two values were wrong by orders of magnitude: 3311000 should have been 33.11, and 14796 should have been 1.4796. Both were corrected against the surrounding data rather than deleted.",
+              "Empty cells in profit, sales and discount were set to 0, so aggregations stopped silently skipping rows.",
+              "Redundant fragments in the product and customer IDs were stripped — after confirming with the data manager that they carried no meaning.",
             ]},
+            "One gap could not be fixed: 2018 is simply absent from the source. Rather than interpolate it, the year-on-year comparisons for that period were measured from 2017 to 2019 and the discontinuity was stated in the report.",
+        ]},
+        { title: "The model behind the dashboard", body: [
+            "The clean data went into Power BI as a fact table (fact_sales) with dimensions for products and shipping, plus a dedicated dim_date table built specifically to make time navigation work properly rather than relying on the raw date column.",
+            "The KPIs are card visuals over that model, with profit margin as its own measure — DIVIDE(SUM(Profit), SUM(Sales)) × 100 — so it recalculates correctly under every filter combination instead of being averaged.",
+            { h: "The visual that took the actual work" },
+            "The product comparison lets the reader choose Top or Bottom and how many items to show. That needed four pieces: a RANKX measure ranking products by sales, a disconnected table holding \"Top\" and \"Bottom\" feeding a slicer, a SELECTEDVALUE measure to read that slicer and flip the ranking direction, and a numeric range parameter for N. The sales and cost measures then return BLANK() for anything outside the selected range, so the chart filters itself.",
+            "The shipping visual pairs sales and costs as clustered columns with average delivery time on a secondary axis, computed as AVERAGEX over DATEDIFF between order date and ship date.",
+        ]},
+        { title: "What nine years of sales say", body: [
+            "Two growth cycles, 2014–2017 and 2020–2022, separated by a slowdown in 2018–2019. 2016 is the record year: +30% sales, +32% profit, +23% units. By 2022 the business is back to roughly its 2017 level.",
+            "Through all of it the profit margin barely moves, oscillating between 10% and 13% and averaging around 12.5% — including through the slowdown. Growth came from volume, not from pricing, and the model held.",
+            { h: "A seasonality you could schedule around" },
+            "February is reliably the worst month of the year; September, November and December are the best. The pattern holds across customer types — Consumer at 50% of turnover, Corporate at 31%, Home Office at 19% — which makes it a genuine seasonal effect rather than one segment's habit.",
+        ]},
+        { title: "Where the margin leaks", body: [
+            "Geography splits the country three ways. California (15K units, 13.2% margin) and New York (8,352 units, 20.8%) are the commercial backbone, together over a third of national sales. The Central Plains do the opposite — small volumes at margins above 16%, with South Dakota at 29.2% on just 114 units. And a handful of states lose money outright, North Carolina at −3.77% alongside Arkansas, while North Dakota, Montana, Wyoming and Idaho register no activity at all.",
+            { h: "Discounts that don't buy anything" },
+            "Plotting each customer's average discount against their total revenue, Power BI's clustering splits them into three groups. The third is the problem: customers receiving 20% to 40%+ discounts while generating low to moderate revenue, frequently at negative profit. The customers who actually spend cluster around moderate discounts — a big discount does not produce a big order.",
+            { h: "One product, traced all the way down" },
+            "The Canon imageCLASS 2200 is the cash cow: 40 units, over $123k in revenue, a 40% margin. The Cisco TelePresence EX90 is its mirror image. Twelve units sold across March 2014 and March 2019 at a 50% discount, running an 8% negative margin — sold below cost of goods, and a high sales figure the whole way down.",
+            { quote: "It is also the Home Office segment's best-selling product. The one segment whose top seller loses money on every unit." },
+        ]},
+        { title: "The logistics nobody was watching", body: [
+            "Across regions the ordering is consistent: Standard Class is slowest and carries the most volume, then Second, First, and Same Day fastest and marginal. Home Office customers are the exception, favouring First Class — they value speed over cost.",
+            "Then the anomalies. In Maryland, First and Second Class take nearly the same time despite the price gap. In New Hampshire, Second Class is on average faster than First. Oregon shows Second Class slower than Standard, and Utah has First Class slower than Second. Customers in those states are paying for a service tier that does not exist.",
+            "The likely causes are structural — distance from distribution centres, carriers without dedicated express capacity in the region, and stock shipped from distant warehouses when local inventory runs short.",
         ]},
         { title: "What we told management", body: [
-            "Three recommendations came out of the analysis: tighten the discount policy, address the segments dragging on margin, and concentrate effort on the highest-value customers and products.",
-            "TODO — put the number behind at least one of them. \"Discounts above X% stopped paying for themselves\" is an argument; \"optimise the discount policy\" is a bullet point.",
+            "Three pillars, each attached to a number rather than an intuition:",
+            { list: [
+              "Pricing governance — a hard floor on discounts for high-cost items, so nothing can be sold below COGS the way the EX90 was, plus separate pricing for the Home Office segment.",
+              "Regional profitability audit — unit economics in Arkansas and North Carolina first, then the low-margin high-volume states like Florida and Colorado; consolidate the coastal hubs and develop the Central Plains without giving up their margins.",
+              "Operational flow — shipping defaults matched to what each region actually delivers, marketing concentrated on the September-to-December peak with a stimulus campaign to lift February, and stock planned against that seasonality.",
+            ]},
+            "The underlying finding is the one worth keeping: AEKI's model is sound, and every problem found was a leak rather than a structural fault. High sales volume never guaranteed profitability, and it took six different angles on the same dataset before that showed up clearly.",
         ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/dash/.
       gallery: [
-        { src: "/assets/images/projects/dash/dashboard.png", caption: "The dashboard, with filters and KPIs" },
-        { src: "/assets/images/projects/dash/filters.png", caption: "The filters" },
-        // { src: "/assets/images/projects/dash/result.png", caption: "What it shows" },
+        { src: "/assets/images/projects/dash/dashboard.png", caption: "The dashboard: four KPIs, monthly trend, quantity by state, and the discount, product and shipping visuals underneath." },
+        { src: "/assets/images/projects/dash/filters.png", caption: "The filter pane — period, customer, product and location, plus the Top/Bottom selector and the N parameter driving the product chart." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/dash/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/dash/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/dash/slides.pdf" },
+        { label: "Management report", url: "/assets/files/dash/report.pdf",
+          note:  "16 pages, including the cleaning log and the DAX behind each visual" },
+        { label: "Slide deck",        url: "/assets/files/dash/slides.pdf",
+          note:  "Presentation of the findings, 15 slides" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
-      { name: "Excel / Power Query", note: "Cleaned, reshaped and merged the raw extract into a dataset the whole team could build on." },
-        { name: "Power BI",            note: "Interactive dashboard designed for non-technical readers rather than for analysts." },
-        { name: "Business analysis",   note: "Turned the cleaned data into three concrete recommendations for management." },
-        /* Add this one only if it's true — DAX measures are a real signal and
-           worth naming explicitly:
-        { name: "DAX",                 note: "Wrote the measures behind the KPIs and the time comparisons." },
-        */
+        { name: "Excel / data cleaning", note: "Consolidated CSV and text extracts, re-parsed a date format that changed mid-series, and fixed order-of-magnitude outliers." },
+        { name: "Power BI",              note: "Fact and dimension model with a dedicated date table, and an interactive report built for readers who don't write queries." },
+        { name: "DAX",                   note: "RANKX, SELECTEDVALUE and a numeric parameter behind a self-filtering Top/Bottom-N visual; AVERAGEX over DATEDIFF for delivery times." },
+        { name: "Business analysis",     note: "Six analytical axes over the same dataset, converging on three costed recommendations." },
+        { name: "Reporting",             note: "Writing findings so a manager can act on them — the discount rule, not \"optimise the discount policy\"." },
       ],
     },
     {
       id:       "netflix",
       title:    "Web Mining: Cinema Reviews Analysis",
       cat:      "Academic",
-      year:     "2025",
-      date:     "2025-12",
-      summary:  "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews.",
-      long:     "A collaborative project mapping the 'DNA' of cinema by scraping 900+ professional reviews. Using NLP (TF-IDF, SVD) and Network Science, we transformed raw text into a graph to identify influential hubs and semantic bridges between genres.",
+      year:     "2026",
+      date:     "2026-01-06",
+      summary:  "900 professional film reviews scraped from RogerEbert.com, then read three ways — as text, as sentiment, and as a network of semantically linked films.",
+      long:     "A breadth-first crawl of RogerEbert.com collected 900 long-form film reviews. An NLTK + TF-IDF/SVD pipeline turned them into a 34,000-term vector space, K-Means recovered twelve themes without supervision, and a semantic similarity graph of 892 films exposed which works hold the corpus together.",
       highlights: [
-        "Scraped 900+ professional cinema reviews.",
-        "Applied NLP (TF-IDF, SVD) to turn raw text into structured features.",
-        "Built a network graph to find influential hubs and bridges between genres.",
+        "Crawled 900 long-form reviews with a depth-limited BFS over the site's own internal citations.",
+        "Cut 840k raw tokens to 307k across a 34,297-term vocabulary, then compressed to 150 SVD components.",
+        "Found twelve unsupervised themes, and a war cluster rated 3.40/4 while scoring negative on sentiment.",
+        "Built a small-world graph — 892 nodes, 6.90 hops on average — and ranked it by PageRank, betweenness and information centrality.",
       ],
-      tags:     ["SQL", "Python", "Pandas"],
+      tags:     ["Python", "NLTK", "scikit-learn", "NetworkX", "Gephi"],
       role:     "Team",
       cover:    "/assets/images/cinema-reviews.jpeg",
       github:   "https://github.com/ArthurOttevaere/WebMining-Cinema-Reviews",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "A recommender that serves five models to real users, and an evaluation pipeline that keeps them honest",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "What film critics actually say, and which films hold the map together",
+      context:  "Web Mining course · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "3 people",                 // rail + a chip, e.g. "4 people"
+      team:     "3 people",
       links:    [                   // extra links, on top of `github`
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
-        { value: "5",  label: "carousels, five different models" },
-        { value: "0",  label: "retraining when a new user signs up" },
-        { value: "3",  label: "metric families in the evaluation" },
+        { value: "900",  label: "reviews scraped by breadth-first crawl" },
+        { value: "12",   label: "themes recovered without supervision" },
+        { value: "6.90", label: "hops between any two films, on average" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
-        { title: "The idea", body: [
-            "A streaming-style home page built on MovieLens and enriched with TMDB metadata. A new user rates a handful of films during onboarding, and the page fills with personalised carousels a few seconds later.",
-            "The point wasn't one model that wins. It was several models, each answering a different question, sitting next to each other where a user can feel the difference between them.",
+        { title: "The question", body: [
+            "Film ratings are a summary of an argument, and summaries lose things. The project set out to test how much: do the words of a review actually line up with the stars awarded, and what themes emerge between reviews when nobody labels them in advance?",
+            "The corpus is RogerEbert.com, and only RogerEbert.com. Unlike IMDb, it publishes long essays by professional critics — an average of 933 words per review — with a consistent editorial structure and a rich evaluative vocabulary. That narrow choice is also the main bias: one site means one house style, and stylistic homogeneity is exactly the kind of thing a semantic model will happily mistake for meaning.",
         ]},
-        { title: "Five carousels, five answers", body: [
-            "Each row of the home page is a different algorithm, deliberately chosen so that they disagree:",
+        { title: "Crawling a blog on purpose", body: [
+            "The collection is a breadth-first search rather than a bulk download. Seeds come from the site's AJAX feed of recent reviews; each visited page is then parsed for hyperlinks to other reviews, which join a queue. Only URLs on the domain and matching /reviews/ survive the filter, and a depth constraint (< 2) keeps the crawl on direct citations instead of letting it diverge.",
+            "That matters for what comes later: reviews are not sampled at random but through the editorial links critics themselves draw between films, so communities emerge from the site's own structure.",
+            { h: "What each page yields" },
             { list: [
-              "Based On What You Like — per-user RidgeCV regression on genome tags and TMDB content features.",
-              "Viewers Like You Also Watched — user-based kNN with Pearson-baseline similarity and popularity re-ranking.",
-              "Top Picks For You — implicit ALS, weighted matrix factorisation on the interaction matrix.",
-              "Discover Something New — Bayesian Personalized Ranking with a novelty re-ranking pass.",
-              "Trending — a live TMDB feed, and the only row that isn't a learned model.",
+              "Title from the <h1>, used as the unique node identifier in the graph.",
+              "Score, read off the CSS classes of the star widget.",
+              "Full text from the paragraphs of the main container — the input to every text analysis.",
+              "Metadata: year, director, cast, runtime, genre, author, publication date.",
+              "Parent URL, which is what reconstructs the edges of the citation graph.",
             ]},
-            "A custom Jaccard similarity, implemented from scratch because Surprise doesn't ship one, runs in the offline pipeline alongside the rest.",
+            "Everything lands in a frozen reviews_final_900.csv, so the text mining and the link analysis run on the exact same corpus.",
         ]},
-        { title: "The problem nobody warns you about", body: [
-            "A user who signs up today was not in the training set. Retraining four models on every registration isn't an option, so the backend estimates their latent vector in closed form — a folding-in step that places them in the existing factor space without touching the models.",
-            "That buys instant recommendations, and it costs exactness: the served models reproduce the algorithms that were evaluated offline, not their precise offline scores. Naming that trade-off was part of the work.",
+        { title: "From 840,000 tokens to a vocabulary", body: [
+            "HTML cleaning is not linguistic cleaning. An NLTK pipeline normalises case and strips non-alphabetic characters, tokenises, then POS-tags — the tagging is the pivot of the whole pipeline, because it decides what gets lemmatised how and which named entities get dropped.",
+            "Lemmatisation is conditional rather than blunt: wordnet.VERB is applied strictly to verbs, so actions normalise to the infinitive while adjectives keep their default treatment. Stemming would have flattened the comparatives, and the comparatives are where a critic's intensity lives.",
+            "Two statistical filters then cut the noise — min_df = 2 removes hapax and typos, max_df = 0.5 removes terms present in over half the corpus, \"film\" included. The corpus falls from 839,744 to 307,367 tokens (−63%) over a final dictionary of 34,297 unique terms.",
+            { h: "Vectors that can be explained" },
+            "TF-IDF over unigrams and bigrams was chosen over BERT or Doc2Vec deliberately: this is an exploratory analysis, and being able to name the terms that make two reviews similar was worth more than capturing subtler semantics inside a black box. Truncated SVD compresses to 150 components, followed by L2 normalisation — on a unit sphere, minimising euclidean distance is maximising cosine similarity, so review length stops distorting proximity.",
+            "The sanity check held up. A Bug's Life and Antz score 0.945 — different films, same ants, same release window, near-identical lexical field. Queen of the Damned and Nosferatu sit at 0.858 across decades on vampirism alone. And Dog Day Afternoon shows up three times over, a lexical hub of suspense and drama.",
         ]},
-        { title: "Measuring it", body: [
-            "A reproducible pipeline scores every model on three families of metric, because no single number decides which recommender is better:",
+        { title: "What the ratings hide", body: [
+            "The score distribution is lopsided: 73.1% of reviews sit above 3 stars, under 7% are harsh. That is editorial positivity bias — a site that reviews what deserves to be seen. Higher-rated films also get longer reviews, with the 4/4 category carrying both the longest texts and the widest spread.",
+            "Lexical richness runs slightly the other way. Type-Token Ratio clusters between 0.75 and 0.90, but drifts from about 0.85 on the harshest reviews down to 0.80 on the best-rated ones — a hint that panning a film takes more argumentative work, tempered by the fact that TTR is itself sensitive to length.",
+            "VADER's compound score does correlate positively with the rating, and so does the positive/negative word ratio. But for any single score the compound value spans nearly the whole range, and some 2.5-star reviews are more lexically positive than 4-star ones.",
+            { quote: "A favourable review can be full of reservations, and a negative one can still praise. The star rating is a summary, not the argument." },
+            { h: "Where the judgement actually lands" },
+            "Splitting each review into five narrative segments and scoring them separately shows the discriminating moment is the ending, not the opening. Outstanding films (3–4) open at 0.29, dip to 0.22 as reservations get aired, and close at 0.55. Disappointing films (0–2) open near-neutral at 0.11, bottom out at 0.00, rise at the climax — even a bad review finds something to like — and then settle back to 0.14.",
+        ]},
+        { title: "Twelve themes, and one paradox", body: [
+            "Rather than trusting declared genres, K-Means was run on the SVD space for K from 2 to 12, scored by silhouette on cosine distance. K = 12 won at 0.032 — a low value, and an honest one: thematic boundaries in text are diffuse, and no partition of a review corpus is going to be clean.",
+            "The clusters are readable anyway. Musical carries the highest average sentiment of the corpus (+0.890), Crime/Thriller the lowest (−0.454), Horror close behind (−0.353). A 16-document cluster isolates films about race with real precision.",
+            "The interesting one is War. It holds the highest average rating in the corpus, 3.40/4, on a compound sentiment of −0.247. VADER is not wrong — war, soldier, bomb, fight is a negative lexical field — it is measuring the subject matter while the rating measures the film. Seeing the two come apart is the point of running both.",
+        ]},
+        { title: "The corpus as a network", body: [
+            "The last phase rebuilds the corpus as an undirected graph: nodes are reviews, edges are semantic similarity. A stricter stopword list strips generic cinema jargon first, so two reviews cannot be joined by shared industry tics alone.",
+            "Edges follow a two-threshold rule rather than one global cut — each film links to its 4 nearest neighbours inside its own theme (similarity > 0.30), and may open a bridge to a different theme only at a much stricter > 0.50. Cohesion inside, selectivity across.",
+            { h: "A small world with islands" },
+            "892 nodes, a diameter of 15 and an average shortest path of 6.90: any two films are about seven semantic steps apart. But the radius is 1, which is not a sign of tightness — it exposes small disconnected components, niche documentaries and codified horror that never join the giant component. Not every film blends into the mainstream.",
+            "The spectral partition on the Fiedler vector splits the graph almost evenly, 463 against 429, and the split is not thematic — the major genres appear on both sides. Whatever separates the two halves is stylistic, not topical.",
+            { h: "Which films matter, and in which sense" },
             { list: [
-              "Rating accuracy — RMSE and MAE, meaningful only for the models that actually predict ratings.",
-              "Ranking — Hit-Rate@K and NDCG@K, over the full catalogue and under a 1-positive-vs-99-negatives protocol.",
-              "Beyond accuracy — catalogue coverage, MIUF novelty and intra-list diversity.",
+              "Degree and PageRank agree strongly (rs = 0.93) and both crown Star Wars (Ep. IV) — the lexical reference point of the sci-fi cluster.",
+              "Betweenness picks out something else entirely: Is This Thing On? tops it as the sole shortest-path bridge between otherwise disjoint communities.",
+              "Information centrality, computed from the pseudo-inverse of the Laplacian (L+) so that all paths count rather than only the shortest, saturates at 1.0 for nine films including Misery. Its correlation with degree is −0.17: these are not blockbusters with generic vocabulary, they are the load-bearing members of specific groups.",
+              "Closeness is the cautionary one — a perfect 1.0 for La Femme Nikita measures a tiny isolated island, while Star Wars scores 0.17 because real centrality still has to cross a lot of graph.",
             ]},
-            "TODO — the finding. Which model won which family, and the one result that surprised you. A pipeline that measures is table stakes; the sentence that says what it measured is the project.",
-        ]},
-        { title: "Shipping it", body: [
-            "A single FastAPI process serves both the REST API and the web UI. Trained artifacts are too large for git, so they ship as a versioned GitHub Release and a launcher script fetches them on first run — clone, one command, working app.",
-            "The frontend is deliberately dependency-free vanilla JavaScript: posters, watchlist, taste statistics, and an LLM-backed search assistant that degrades to a keyword matcher when no API key is present.",
+            "Averaging Floyd-Warshall distances between clusters finally draws the map: crime, action and family sit close together on shared vocabulary, while Musical is a genuine semantic outlier — 11.8 hops from the action cluster, the largest distance in the matrix.",
         ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/netflix/.
       gallery: [
-        // { src: "/assets/images/projects/netflix/result.png", caption: "What it shows" },
+        { src:     "/assets/images/projects/netflix/network-graph.png",
+          caption: "The similarity graph laid out in Gephi, coloured by the twelve K-Means themes — dense cores, thin bridges, and a few islands off the main component." },
+        { src:     "/assets/images/projects/netflix/score-distribution.png",
+          caption: "Score distribution across the 900 reviews: 73.1% above 3 stars, and almost nothing below 1.5 — the positivity bias that shapes every later result." },
+        { src:     "/assets/images/projects/netflix/sentiment-trajectory.png",
+          caption: "Sentiment across the five narrative segments. Both groups rise at the climax; only the conclusion really separates them." },
+        { src:     "/assets/images/projects/netflix/wordcloud.png",
+          caption: "The most frequent terms after filtering — narrative words (woman, world, show) sitting next to evaluative ones (love, best)." },
+        { src:     "/assets/images/projects/netflix/cluster-distances.png",
+          caption: "Average shortest-path distance between clusters. Crime, action and family are neighbours; Musical is the outlier at 11.8 hops from action." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/netflix/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/netflix/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/netflix/slides.pdf" },
+        { label: "Final report", url: "/assets/files/netflix/report.pdf",
+          note:  "Full write-up in French, 24 pages including the 16 annexes" },
+        { label: "Slide deck",   url: "/assets/files/netflix/slides.pdf",
+          note:  "Defence presentation, 29 slides" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
-        { name: "Matrix factorisation", note: "iALS and BPR on implicit feedback, with novelty re-ranking on the discovery row." },
-        { name: "scikit-surprise",      note: "kNN baselines, plus a Jaccard similarity written from scratch where the library stopped." },
-        { name: "Content-based ML",     note: "Per-user RidgeCV over genome tags and TMDB features." },
-        { name: "RecSys evaluation",    note: "RMSE, NDCG@K, coverage, novelty and diversity in one reproducible pipeline." },
-        { name: "FastAPI",              note: "One process serving the API, the models and the static frontend." },
-        { name: "Reproducibility",      note: "Artifacts published as a Release and fetched by a launcher — clone and run, no training." },
+        { name: "Web scraping",       note: "Depth-limited BFS over a site's own citations, filtered to /reviews/ and parsed with BeautifulSoup into a frozen CSV." },
+        { name: "NLP preprocessing",  note: "NLTK tokenisation, POS tagging and conditional lemmatisation that keeps comparatives — and the critic's intensity — intact." },
+        { name: "TF-IDF & SVD",       note: "150 latent components, L2-normalised so euclidean distance and cosine similarity coincide." },
+        { name: "K-Means clustering", note: "Silhouette-selected K on text with genuinely diffuse boundaries, and the honesty to report a 0.032 score." },
+        { name: "VADER sentiment",    note: "Compound scores, positive/negative ratios, and a five-segment narrative trajectory per review." },
+        { name: "Graph analysis",     note: "PageRank, betweenness and information centrality via the Laplacian pseudo-inverse, laid out in Gephi." },
       ],
     },
     {
       id:       "layoffs",
       title:    "HR Predictive Analytics",
       cat:      "Academic",
-      year:     "2025",
-      date:     "2025-12",
-      summary:  "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
-      long:     "Applying Machine Learning to identify the core drivers of employee turnover, transforming complex HR variables into actionable business recommendations.",
+      year:     "2026",
+      date:     "2026-01-15",
+      summary:  "A full SEMMA data-mining pass over 3,025 employee surveys: satisfaction turned out to be predictable, stress refused to be, and saying so was the result.",
+      long:     "A complete data-mining study of workplace well-being on a 3,025-employee survey, run end to end through the SEMMA methodology. Four supervised models predict satisfaction and stress, two clustering methods segment the workforce into five profiles, and the honest finding is that one of the two targets cannot be explained by the data at all.",
       highlights: [
-        "Modelled the core drivers of employee turnover with machine learning.",
-        "Turned complex HR variables into actionable business recommendations.",
-        "Explored the data in both R and Orange Data Mining.",
+        "Ran the full SEMMA cycle — Sample, Explore, Modify, Model, Assess — on 3,025 observations and 23 variables.",
+        "Binarising the targets lifted satisfaction accuracy from 49% to 74%, and exposed that stress had no signal at all.",
+        "Hierarchical clustering split the workforce into five interpretable profiles at a silhouette of 0.5614.",
+        "Chose logistic regression over better-scoring black boxes, because the question was which levers to pull.",
       ],
       tags:     ["R", "Python", "Orange Data Mining"],
       role:     "Team",
@@ -533,53 +564,115 @@ window.PORTFOLIO_DATA = {
       github:   "https://arthuros.notion.site/HR-Predictive-Analytics-Optimizing-Talent-Retention-Employee-Insights-31f2a3f21be480f8a583d8042ec9fd95",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "One target you can model, one you can't, and the discipline to report both",
+      context:  "Data Mining course · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      team:     "2 people",
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
+        { value: "3,025", label: "employee surveys, 23 variables" },
+        { value: "74%",   label: "accuracy on satisfaction, up from 49%" },
+        { value: "−0.030", label: "MCC on stress — worse than guessing" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
+        { title: "The brief", body: [
+            "HR departments increasingly want quantitative answers about well-being at work: what drives satisfaction, what drives stress, and which employees resemble which. This project takes a 3,025-row \"Employee Survey\" dataset from Kaggle — 23 variables spanning personal, professional and organisational attributes — and runs it end to end through SEMMA: Sample, Explore, Modify, Model, Assess.",
+            "Three questions were set in advance, each with a hypothesis attached, so that the modelling would have something to be right or wrong about:",
+            { list: [
+              "Stress — do workload, sleep, physical activity and work–life balance explain and predict it?",
+              "Satisfaction — do a good work environment, more training and a senior position explain and predict it?",
+              "Segmentation — can employees be grouped into homogeneous profiles usable by an HR team?",
+            ]},
+            "The data is clean in a way real HR data rarely is: zero missing values, and outliers that stay plausible for a working population, so none were removed. 80% went to training (2,420 rows), 20% held out for the final assessment (605).",
+        ]},
+        { title: "What exploration already gave away", body: [
+            "The average respondent is 35.7, has 9.1 years of experience, sleeps 7 hours, works in a team of 16, and receives 37 hours of training a year. Self-declared stress is low (1.74/5) and satisfaction moderate (3.39/5).",
+            "The correlation matrices split the variables into two worlds. One is a tight career block — age, experience, number of previous employers, team size, direct reports and annual training hours all move together, up to 0.84 between age and training hours. The other is everything to do with personal habits, which floats free of all of it.",
+            { h: "Satisfaction has a structure; stress does not" },
+            "Satisfaction correlates, modestly but consistently, with work environment (0.250) and work–life balance (0.249), and negatively with workload (−0.248). Stress correlates with essentially nothing — every coefficient in its row sits within a whisker of zero.",
+            "The contingency tables say the same thing more bluntly. Cross stress against workload and the distribution is flat: employees reporting the heaviest workload are no more likely to report high stress than anyone else. Same for work–life balance. Same for overtime, where more than six employees in ten do none regardless of their stress level.",
+        ]},
+        { title: "When multi-class prediction fails", body: [
+            "The first modelling pass tried to predict the exact 1–5 score for both targets, using a decision tree (depth 10, minimum 20 instances per leaf), a random forest (500 trees) and a logistic regression.",
+            "It didn't work. The best model on satisfaction reached 49.8% accuracy — wrong every other employee — with an F1 around 0.40 and most errors falling between adjacent classes. The boundary between \"3\" and \"4\" on a subjective survey scale is simply too noisy to learn, and the over-representation of scores 3 to 5 pushed the models toward the majority classes.",
+            "So the targets were binarised: satisfaction becomes 1 at ≥ 4, stress becomes 1 at ≥ 3, with the thresholds read off the observed distributions. It trades precision of output for reliability of output, which is the right trade for the actual managerial question — not what score an employee would give, but whether they sit in the at-risk group or the satisfied one.",
+        ]},
+        { title: "One target improves, the other exposes itself", body: [
+            "On satisfaction, binarisation worked. Logistic regression reaches 74.0% accuracy, an AUC of 0.779 and an F1 of 0.737, with gradient boosting and the random forest within a point of it. The MCC doubled, from 0.294 to 0.464.",
+            "On stress, the same transformation produced the trap worth the whole project. Accuracy jumps to 78.5% — better, on paper, than the satisfaction model. But the MCC collapses to 0.057 for logistic regression and to −0.030 for the random forest, which is fractionally worse than guessing.",
+            { quote: "The accuracy is real and completely meaningless: with 1.74/5 average stress, always predicting \"not stressed\" is already right most of the time." },
+            "Exploration and modelling converge on the same verdict, so the first hypothesis is refuted outright. Stress is not badly modelled here — it is absent from this data. Whatever drives it (management quality, psychological pressure, events outside work) was never collected, and no model recovers a variable that isn't there.",
+        ]},
+        { title: "Which levers actually move satisfaction", body: [
+            "Four models finished within a point of each other on satisfaction, so the choice fell to logistic regression on the strength of being a white box — the coefficients name the levers, which is what an HR department was asking for in the first place.",
+            "A depth-3 decision tree, built purely to be read, confirms the same hierarchy without human intervention: it splits first on workload, then on work environment, then on work–life balance. That an unsupervised split-finder lands on exactly the three variables the correlation analysis flagged is the strongest validation in the report.",
+            "The second hypothesis is therefore only half right. The work environment matters, but job level and training hours do not — satisfaction is spread evenly across hierarchy levels, and training volume tracks a career trajectory rather than how anyone feels about their job.",
+        ]},
+        { title: "Five profiles, built from careers not feelings", body: [
+            "Segmentation used hierarchical clustering (Ward linkage on euclidean distance, categorical variables one-hot encoded and numerics scaled to 0–1) against K-means as a check. Training hours were deliberately left unscaled — the spread between a leader and an intern is a structural fact, and normalising it would have erased the signal.",
+            "K-means peaked at K = 2 (silhouette 0.546), which is statistically tidy and analytically useless; its best interpretable partition was K = 5 at 0.512. Hierarchical clustering reached 0.5614 on the same five groups, and the dendrogram justifies the cut visually rather than by an a priori K, so it won.",
+            { h: "The five groups" },
+            { list: [
+              "C1 — Experienced leaders (10.1%): senior and lead roles, large teams, many reports, 54–64 h of training.",
+              "C2 — Heterogeneous (39.6%): the largest and least defined group, with a silhouette of only 0.379 and no clear signature beyond high training volume.",
+              "C3 — Consolidating professionals (23.7%): mid-level, intermediate experience, no direct reports, 30–40 h of training.",
+              "C4 — Interns and beginners (6.7%): the cleanest cluster at 0.684 — young, no experience, no reports, ~10 h of training.",
+              "C5 — Developing juniors (19.9%): young with limited experience, small teams, 20–23 h of training.",
+            ]},
+            "The third hypothesis is fully validated, and its shape is the interesting part: the clusters are drawn entirely by demographic and career variables — age, experience, hierarchy, training, responsibilities. Stress and satisfaction contribute nothing to the segmentation. Well-being cuts across employee profiles instead of defining them, which is precisely why an HR policy cannot target it by segment alone.",
+        ]},
+        { title: "What we told HR", body: [
+            "Three recommendations, each tied to a result rather than to intuition:",
+            { list: [
+              "Act on the levers that measure: work environment, workload and flexibility policies are where satisfaction actually responds — job titles and training budgets are not.",
+              "Stop trying to quantify stress with this instrument. It needs qualitative tools — internal interviews, feedback mechanisms — because the survey demonstrably does not capture it.",
+              "Use the five profiles for targeted policy, knowing they describe career stages and not states of mind.",
+            ]},
+            "The wider lesson is the one the accuracy figure on stress nearly hid: not every intuitively relevant variable is predictive, and a metric chosen to flatter an imbalanced dataset will happily say so.",
+        ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/layoffs/.
       gallery: [
-        // { src: "/assets/images/projects/layoffs/result.png", caption: "What it shows" },
+        { src:     "/assets/images/projects/layoffs/correlation-matrix.png",
+          caption: "Spearman correlations. The career block glows in the top-left; the Stress row is flat across the board." },
+        { src:     "/assets/images/projects/layoffs/target-distributions.png",
+          caption: "The two targets: satisfaction skewed toward 4, stress piled almost entirely on 1 — the imbalance that made accuracy misleading." },
+        { src:     "/assets/images/projects/layoffs/decision-tree.png",
+          caption: "A depth-3 tree on binary satisfaction, kept readable on purpose. It splits on workload, then work environment, then work–life balance." },
+        { src:     "/assets/images/projects/layoffs/dendrogram.png",
+          caption: "The dendrogram, cut just below a height of 200 — five clusters, before the fusion heights jump and inertia is lost." },
+        { src:     "/assets/images/projects/layoffs/summary-poster.jpg",
+          caption: "The one-page summary poster: the whole SEMMA pipeline, from research questions to HR recommendations." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/layoffs/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/layoffs/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/layoffs/slides.pdf" },
+        { label: "Final report",     url: "/assets/files/layoffs/report.pdf",
+          note:  "Full write-up in French, 48 pages" },
+        { label: "Technical annex",  url: "/assets/files/layoffs/technical-annex.pdf",
+          note:  "The R and Python scripts behind every figure, 14 pages" },
+        { label: "Summary poster",   url: "/assets/files/layoffs/summary-poster.pdf",
+          note:  "The whole study on one page", type: "Poster" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
+        { name: "SEMMA",              note: "A full cycle — Sample, Explore, Modify, Model, Assess — where each phase actually constrained the next." },
+        { name: "Orange Data Mining", note: "Built and compared four supervised models and two clustering methods, letting the algorithms find their own cut points." },
+        { name: "R & Python",         note: "RStudio, pandas, seaborn and matplotlib for the exploratory statistics and every figure in the report." },
+        { name: "Metric literacy",    note: "Reading MCC against accuracy on an imbalanced target, and catching a 78.5% model with no discriminative power." },
+        { name: "Clustering",         note: "Ward hierarchical clustering against K-means, chosen on silhouette and on whether the cut could be justified." },
+        { name: "Model selection",    note: "Picking logistic regression over marginally better black boxes because the deliverable was a list of levers." },
+        { name: "Reporting negatives", note: "Writing up a refuted hypothesis as a finding instead of quietly dropping the target." },
       ],
     },
     {
@@ -656,45 +749,68 @@ window.PORTFOLIO_DATA = {
       cat:      "Personal",
       year:     "2025",
       date:     "2025-02",
-      summary:  "A Python-based system for verifying VAT numbers using the Peppol API. Compares VAT numbers from an Excel file with Peppol's database and returns a validation report including company names and status.",
-      long:     "A Python-based system for verifying VAT numbers using the Peppol API. Compares VAT numbers from an Excel file with Peppol's database and returns a validation report including company names and status.",
+      summary:  "A small Python tool that checks a whole list of VAT numbers against the public Peppol Directory and writes back a sortable report — one afternoon of scripting instead of a week of manual lookups.",
+      long:     "Before sending an electronic invoice to a business partner in Europe, you need to know whether that partner is reachable on the Peppol network. The Peppol Directory answers that question one VAT number at a time, through a web form. This script asks it for an entire list at once, using a strict identifier lookup with a free-text fallback, and writes the answers to a CSV report.",
       highlights: [
-        "Reads VAT numbers straight from an Excel file.",
-        "Checks each one against the Peppol database via its API.",
-        "Returns a validation report with company names and status.",
+        "Batches VAT numbers through the public Peppol Directory search API — no key, no account.",
+        "Two lookup strategies per number: an exact identifier match first, a free-text search as fallback.",
+        "Reports the company name, country and which method produced the match, so results can be audited.",
+        "Ships with placeholder data and a .gitignore that keeps the real client database out of git.",
       ],
-      tags:     ["Python", "API", "Peppol"],
+      tags:     ["Python", "pandas", "requests", "Peppol"],
       role:     "Solo",
       cover:    "/assets/images/vat-verification.jpg",
       github:   "https://github.com/ArthurOttevaere/vat_number_check",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "Batch-checking e-invoicing readiness against a public directory that only answers one question at a time",
+      context:  "Internal tool",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
       team:     "",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
+        { value: "2",    label: "lookup strategies per VAT number" },
+        { value: "0",    label: "API keys or accounts needed" },
+        { value: "0.5s", label: "between calls, to stay polite to a public API" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
+        { title: "The problem", body: [
+            "Peppol is the network European businesses use to exchange electronic invoices. Before you can send one to a partner, you need to know whether they are actually registered and reachable on it — otherwise the invoice goes nowhere.",
+            "The Peppol Directory answers that question, but through a web form, one number at a time. With a contact database of any real size that turns into an afternoon of copy-pasting, and the kind of task where a mistake is invisible until an invoice silently fails.",
+            "The tool exists to make the check a batch operation: hand it a list, get back a report you can sort and filter.",
+        ]},
+        { title: "How the lookup works", body: [
+            "The script reads a CSV with a `vat` column and queries the Peppol Directory search API for each entry. That API is public and unauthenticated, so there is nothing to configure — no key, no account, no rate-limit tier to negotiate.",
+            "Each number goes through two attempts, in order:",
+            { list: [
+              "Strict lookup — search the value in Peppol's registered identifiers, and only count it as a match if an identifier matches the VAT number exactly. This is the answer you actually want.",
+              "Fallback lookup — if the strict search finds nothing, run a broader free-text query and keep the first result for reference. It might be the same company under a different registration, or a near-miss worth a human glance.",
+            ]},
+            "Both attempts are recorded, and the report says which one produced the result. A strict match is a fact; a free-text match is a lead, and conflating the two would make the whole report untrustworthy.",
+            "Requests are spaced half a second apart. The directory is a free public service, and hammering it for a few hundred numbers would be both rude and a good way to get throttled.",
+        ]},
+        { title: "What comes out", body: [
+            "One row per VAT number, written to a CSV that opens straight in Excel:",
+            { list: [
+              "found_in_peppol — whether the number is on the network at all.",
+              "entity_name — the company registered against it, which doubles as a sanity check that the number belongs to who you think it does.",
+              "country — the registered country code.",
+              "search_method — identifierValue for a strict match, q for a fallback one.",
+            ]},
+            "It also prints a live line per number while it runs, so a long list gives some sign of progress rather than sitting silent.",
+        ]},
+        { title: "Keeping the real data out", body: [
+            "The original run was against a company's private supplier and customer database, which is exactly the kind of thing that should never end up in a public repository.",
+            "So the repo ships with three obviously fake VAT numbers as sample data, and a .gitignore that covers the generated result files and the local dataset names. The script itself is unchanged — swap the placeholder rows for real ones and it runs identically.",
+            { quote: "The interesting part of a small tool like this isn't the fifty lines of code. It's that the fifty lines can be published at all." },
+        ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/vat_verification/.
@@ -703,127 +819,141 @@ window.PORTFOLIO_DATA = {
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/vat_verification/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
         // { label: "Final report", url: "/assets/files/vat_verification/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/vat_verification/slides.pdf" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
+        { name: "REST APIs",      note: "Querying a public directory, parsing its nested JSON, and handling the case where it simply has no answer." },
+        { name: "pandas",         note: "CSV in, report out — the whole data path of a tool that has to hand its results to someone in Excel." },
+        { name: "Defensive code", note: "Timeouts, exception handling and rate limiting, so one bad response doesn't take down a run of several hundred." },
+        { name: "Data hygiene",   note: "Publishing a working tool built on a client database, with the client database left behind." },
       ],
     },
     {
       id:       "recommender_system",
-      title:    "Recommender System",
+      title:    "Movix — Movie Recommender System",
       cat:      "Academic",
       year:     "2026",
-      date:     "2026-06",
-      summary:  "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
-      long:     "Netflix-style recommendation system comparing 6 models (content-based, KNN, iALS, BPR) with diversity metrics, full frontend-backend integration, and explainable recommendations.",
+      date:     "2026-06-06",
+      summary:  "A streaming-style web app backed by six recommendation models, benchmarked across four protocols that deliberately disagree with each other.",
+      long:     "Movix pairs a real-time recommendation web app with an offline evaluation pipeline, so the same models are both served to users and measured against standard RecSys metrics. Six models — content-based ridge, two user-based neighbourhood variants, iALS, BPR and BPR+Novelty — are scored on rating error, full-catalogue ranking, sampled ranking, and catalogue diversity. No model wins everywhere, and the interface is built around that.",
       highlights: [
-        "Compares 6 recommendation models (content-based, KNN, iALS, BPR).",
-        "Adds diversity metrics and explainable recommendations.",
-        "Full frontend-backend integration on the MovieLens dataset.",
+        "Six models across three families, all trained on 381,181 MovieLens ratings enriched with TMDB metadata and 1,128 genome dimensions.",
+        "Four evaluation protocols run in parallel — the disagreement between them is the finding.",
+        "Four carousels, each served by the model that is genuinely best at that job.",
+        "FastAPI backend that folds a brand-new user into pre-trained models in closed form, with no retraining.",
       ],
-      tags:     ["Python", "API", "MovieLens", "scikit-learn", "Surprise"],
+      tags:     ["Python", "FastAPI", "scikit-learn", "Surprise", "JavaScript"],
       role:     "Team",
       cover:    "/assets/images/movix.jpg",
-      github:   "https://github.com/ArthurOttevaere/Recommender_System_Assignments",
+      github:   "https://github.com/ArthurOttevaere/movix-recommender",
       featured: false,
 
-     /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "A recommender that serves five models to real users, and an evaluation pipeline that keeps them honest",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "Six recommenders, four protocols, and the honest answer that none of them wins",
+      context:  "Recommender Systems course · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "3 people",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
-        // { label: "Report", url: "https://…" },
+      team:     "3 people",
+      links:    [
+        { label: "Video demo", url: "https://www.youtube.com/watch?v=rvToIaW10m4" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
-        { value: "5",  label: "carousels, five different models" },
-        { value: "0",  label: "retraining when a new user signs up" },
-        { value: "3",  label: "metric families in the evaluation" },
+        { value: "6",    label: "models benchmarked side by side" },
+        { value: "381k", label: "ratings, on a 95.64% sparse matrix" },
+        { value: "30×",  label: "swing in iALS hit rate between two protocols" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
         { title: "The idea", body: [
             "A streaming-style home page built on MovieLens and enriched with TMDB metadata. A new user rates a handful of films during onboarding, and the page fills with personalised carousels a few seconds later.",
-            "The point wasn't one model that wins. It was several models, each answering a different question, sitting next to each other where a user can feel the difference between them.",
+            "The point was never to find the one model that wins. It was to put several models — each answering a different question — next to each other, where a user can feel the difference between the rows and where an evaluation pipeline can say, with numbers, why they disagree.",
         ]},
-        { title: "Five carousels, five answers", body: [
-            "Each row of the home page is a different algorithm, deliberately chosen so that they disagree:",
+        { title: "The data underneath", body: [
+            "381,181 explicit ratings from 1,000 users across 8,737 films, on a 0.5–5.0 scale. The interaction matrix is 95.64% empty, which is the constraint that shapes every modelling decision that follows.",
+            "The users themselves are unusually active — the floor is around 50 ratings per profile and 76.5% of them have rated more than 200 films, with the heaviest approaching 2,000. Plenty of history per user, almost nothing per cell.",
+            { h: "Two biases worth naming before modelling" },
             { list: [
-              "Based On What You Like — per-user RidgeCV regression on genome tags and TMDB content features.",
-              "Viewers Like You Also Watched — user-based kNN with Pearson-baseline similarity and popularity re-ranking.",
-              "Top Picks For You — implicit ALS, weighted matrix factorisation on the interaction matrix.",
-              "Discover Something New — Bayesian Personalized Ranking with a novelty re-ranking pass.",
-              "Trending — a live TMDB feed, and the only row that isn't a learned model.",
+              "Positivity: the global mean rating is 3.45, with mass piled on 4.0 and 5.0.",
+              "Popularity: ratings per film follow a hard power law — a small core of blockbusters absorbs a disproportionate share of the volume, and everything else is long tail.",
+              "Genre volume does not track genre appreciation. Drama collects over 160,000 ratings; Film-Noir fewer than 5,000 — yet Film-Noir averages 3.89, the highest in the catalogue, while Horror sits at 3.22.",
             ]},
-            "A custom Jaccard similarity, implemented from scratch because Surprise doesn't ship one, runs in the offline pipeline alongside the rest.",
+            "To fight the sparsity, the ratings matrix is joined to TMDB metadata and to MovieLens genome scores across 1,128 semantic dimensions, which is what makes a content-based model possible at all.",
         ]},
-        { title: "The problem nobody warns you about", body: [
-            "A user who signs up today was not in the training set. Retraining four models on every registration isn't an option, so the backend estimates their latent vector in closed form — a folding-in step that places them in the existing factor space without touching the models.",
-            "That buys instant recommendations, and it costs exactness: the served models reproduce the algorithms that were evaluated offline, not their precise offline scores. Naming that trade-off was part of the work.",
-        ]},
-        { title: "Measuring it", body: [
-            "A reproducible pipeline scores every model on three families of metric, because no single number decides which recommender is better:",
+        { title: "Six models, four carousels", body: [
+            "Four models are deployed in the app, one per carousel. Two more exist only in the benchmark, as reference points.",
             { list: [
-              "Rating accuracy — RMSE and MAE, meaningful only for the models that actually predict ratings.",
-              "Ranking — Hit-Rate@K and NDCG@K, over the full catalogue and under a 1-positive-vs-99-negatives protocol.",
-              "Beyond accuracy — catalogue coverage, MIUF novelty and intra-list diversity.",
+              "Based On What You Like — a per-user RidgeCV regression over a 4,000+ dimensional content space (genome scores, TF-IDF on tags and synopses, genres, year, TMDB metadata), with α selected automatically. The only model that can recommend a film nobody has rated.",
+              "Viewers Like You Also Watched — Surprise KNNBaseline with Pearson-baseline similarity and shrinkage, k = 40, min_k = 2, min_support = 3, plus a popularity re-ranking pass.",
+              "Top Picks For You — iALS, weighted matrix factorisation on implicit signal, f = 50 factors, λ = 0.01 and a confidence weight c = 1 + 40·r, so a 5-star rating carries a confidence of 201 against 21 for half a star.",
+              "Discover Something New — BPR with a logarithmic popularity penalty at β = 0.2, applied at scoring time so the effect of the penalty can be isolated from training.",
+              "Trending — a live TMDB feed, the only row that isn't a learned model.",
             ]},
-            "TODO — the finding. Which model won which family, and the one result that surprised you. A pipeline that measures is table stakes; the sentence that says what it measured is the project.",
+            "The two benchmark-only models are plain BPR, which isolates what the novelty penalty actually costs, and a user-based variant driven by a Jaccard similarity written from scratch — Surprise doesn't ship one, and the brief required a similarity the library doesn't provide.",
+        ]},
+        { title: "Four protocols, because one number lies", body: [
+            "Each protocol answers a different question, and running them together is what makes the comparison honest:",
+            { list: [
+              "A 75/25 random split with a fixed seed, for rating-prediction error — RMSE and MAE only.",
+              "Full-catalogue Leave-One-Out: hold out each user's last interaction and rank it against every unrated film in the catalogue, scored by HR@K and NDCG@K.",
+              "Sampled Leave-One-Out following He et al. (2017): the same held-out item, but ranked against only 99 random negatives — a pool of 100 candidates instead of nearly 9,000.",
+              "Full mode on 100% of the interactions, generating top-40 lists for every user, to measure catalogue coverage, intra-list diversity and MIUF novelty.",
+            ]},
+        ]},
+        { title: "The results refuse to name a winner", body: [
+            "Content-Based Ridge takes rating accuracy with an RMSE of 0.744, ahead of the Pearson neighbourhood model at 0.805 and its Jaccard twin at 0.835. That ordering is itself informative: Jaccard compares only which films two users rated, ignoring how they rated them, and on an explicit-feedback dataset that is exactly the signal RMSE rewards. The implicit models score 2.3 to 3.5, which measures the offset of an uncalibrated score rather than any predictive failure.",
+            "Then the ranking tables invert it. Against the full catalogue, BPR leads clearly (HR@10 = 0.137) because its pairwise objective optimises precisely what HR and NDCG measure — while Content-Based, the RMSE champion, finishes last at 0.024. Predicting a held-out rating accurately and surfacing that film near the top of nine thousand candidates are simply different problems.",
+            { h: "And then the protocol itself changes the answer" },
+            "Under the sampled protocol iALS jumps from near-last (HR@10 = 0.028) to first (0.857) — a thirty-fold move that no property of the model explains. Sampled metrics are not order-preserving, and the distortion is worst for models whose scores track item popularity: iALS separates one positive from 99 random negatives easily, and drowns that same positive among thousands. A report quoting only the sampled numbers would have crowned iALS the best ranker, which the full-catalogue table flatly contradicts.",
+            "Diversity splits the field a third way. BPR+Novelty reaches the widest catalogue coverage (51.17%) and the strongest long-tail exposure of the ranking models (MIUF = 3.627), exactly what its popularity penalty was for. But intra-list diversity barely moves — 0.650 against BPR's 0.655, marginally lower. The penalty buys novelty, not within-list spread, and those are not the same thing.",
+            { quote: "The benchmark does not select a winner; it justifies why four models coexist." },
+        ]},
+        { title: "The trade-off you can see on screen", body: [
+            "The user-based models are the sharpest illustration that a metric only means something next to the interface it feeds. They post the highest intra-list diversity of the benchmark (≈0.73) alongside a catastrophic 5–6% catalogue coverage and the lowest novelty by a wide margin — a system recommending a narrow band of popular titles to nearly everyone.",
+            "That collapse was a deliberate choice. Before re-ranking, their MIUF sat between 4.3 and 5.3: carousels full of genuinely obscure films, nominally novel, offering no recognisable anchor and therefore no reason to trust the row. The popularity re-ranking pass dropped novelty to ≈1.25 and lifted the Leave-One-Out metrics enough to move them into third place overall.",
+            "The resulting carousel reads as less adventurous on paper and works better in practice — familiar titles first to earn the click, niche discoveries further along for anyone who keeps scrolling. A lower diversity figure is not automatically a worse outcome; it is the visible price of a decision about first impressions.",
         ]},
         { title: "Shipping it", body: [
-            "A single FastAPI process serves both the REST API and the web UI. Trained artifacts are too large for git, so they ship as a versioned GitHub Release and a launcher script fetches them on first run — clone, one command, working app.",
-            "The frontend is deliberately dependency-free vanilla JavaScript: posters, watchlist, taste statistics, and an LLM-backed search assistant that degrades to a keyword matcher when no API key is present.",
+            "A single FastAPI process serves both the REST API and the web UI. A user who signs up today was not in any training set, and retraining four models per registration is not an option, so the backend estimates their latent vector in closed form — a folding-in step that places them in the existing factor space without touching the models. It buys instant recommendations and costs exactness: the served models reproduce the algorithms that were evaluated offline, not their precise offline scores.",
+            "Trained artifacts are too large for git, so they ship as a versioned GitHub Release and a launcher script fetches the ~54 MB on first run — clone, one command, working app, no training on anyone's machine.",
+            "The frontend is deliberately dependency-free vanilla JavaScript: posters, More Like This, a watchlist, a profile page with taste statistics, and a Gemini-backed search assistant that degrades to a keyword matcher when no API key is present.",
         ]},
       ],
 
-      // Screenshots — drop the files in /assets/images/projects/netflix/.
+      // Screenshots — drop the files in /assets/images/projects/recommender_system/.
       gallery: [
-        // { src: "/assets/images/projects/netflix/result.png", caption: "What it shows" },
+        { src:     "/assets/images/projects/recommender_system/long-tail.png",
+          caption: "Ratings per film, sorted by popularity — the power law that every diversity metric in the benchmark is fighting." },
+        { src:     "/assets/images/projects/recommender_system/sparsity.png",
+          caption: "A 100×100 slice of the interaction matrix. Each dot is a rating; the whitespace is the 95.64% sparsity." },
+        { src:     "/assets/images/projects/recommender_system/ratings-per-user.png",
+          caption: "Ratings per user — an unusually active base, with 76.5% of profiles above 200 films." },
+        { src:     "/assets/images/projects/recommender_system/ratings-by-genre.png",
+          caption: "Volume against appreciation by genre: Drama dominates the counts, Film-Noir barely registers yet rates highest at 3.89." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/netflix/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/netflix/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/netflix/slides.pdf" },
+        { label: "Final report", url: "/assets/files/recommender_system/report.pdf",
+          note:  "Full write-up, 22 pages with the complete result tables" },
+        { label: "Slide deck",   url: "/assets/files/recommender_system/slides.pdf",
+          note:  "Defence presentation, 10 slides" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
-        { name: "Matrix factorisation", note: "iALS and BPR on implicit feedback, with novelty re-ranking on the discovery row." },
-        { name: "scikit-surprise",      note: "kNN baselines, plus a Jaccard similarity written from scratch where the library stopped." },
-        { name: "Content-based ML",     note: "Per-user RidgeCV over genome tags and TMDB features." },
-        { name: "RecSys evaluation",    note: "RMSE, NDCG@K, coverage, novelty and diversity in one reproducible pipeline." },
-        { name: "FastAPI",              note: "One process serving the API, the models and the static frontend." },
+        { name: "Matrix factorisation", note: "iALS on confidence-weighted implicit signal and BPR on a pairwise ranking loss, with a novelty re-ranking pass on the discovery row." },
+        { name: "scikit-surprise",      note: "KNNBaseline with Pearson-baseline shrinkage, plus a Jaccard similarity written from scratch where the library stopped." },
+        { name: "Content-based ML",     note: "Per-user RidgeCV over a 4,000-dimensional space of genome tags, TF-IDF text and TMDB metadata." },
+        { name: "RecSys evaluation",    note: "RMSE, HR@K, NDCG@K, coverage, MIUF and ILD across four protocols in one reproducible pipeline." },
+        { name: "Reading metrics",      note: "Knowing that a sampled protocol can reorder the leaderboard, and reporting both instead of picking the flattering one." },
+        { name: "FastAPI",              note: "One process serving the API, the models and the static frontend, with closed-form folding-in for new users." },
         { name: "Reproducibility",      note: "Artifacts published as a Release and fetched by a launcher — clone and run, no training." },
       ],
     },
@@ -929,67 +1059,119 @@ window.PORTFOLIO_DATA = {
       title:    "AI Gesture Recognition",
       cat:      "Academic",
       year:     "2026",
-      date:     "2026-06",
-      summary:  "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
-      long:     "Comparative analysis of sequence modeling techniques for 3D gesture recognition, implementing DTW and Edit Distance algorithms from scratch and evaluating against machine learning baselines.",
+      date:     "2026-05",
+      summary:  "Six methods for recognising 3D hand gestures, benchmarked on 2,000 sequences under two cross-validation protocols and tested for statistical significance rather than declared winners.",
+      long:     "A comparative study of six 3D hand-gesture recognition methods — DTW, edit distance, Random Forest, Decision Tree, Logistic Regression and a 3D adaptation of the $1 recognizer — on two gesture domains of 1,000 sequences each. Every method is run under user-independent and user-dependent cross-validation, across three preprocessing pipelines, with paired Wilcoxon tests and Benjamini-Hochberg correction deciding which differences are real.",
       highlights: [
-        "Implemented DTW and Edit Distance algorithms from scratch.",
-        "Recognises 3D gestures using sequence modelling techniques.",
-        "Benchmarked against machine learning baselines.",
+        "Implemented DTW, edit distance and a 3D $1 recognizer from scratch, alongside three feature-based classifiers.",
+        "Ran 6 methods × 2 domains × 2 protocols × 3 preprocessing conditions on 2,000 gesture sequences.",
+        "Standardisation gained up to +37.9 accuracy points; PCA denoising degraded every single configuration.",
+        "Tested all 15 method pairs with Wilcoxon signed-rank and BH correction — on the hard domain, almost nothing was significant.",
       ],
-      tags:     ["Python", "Gesture Recognition", "Machine Learning"],
+      tags:     ["Python", "scikit-learn", "NumPy", "Dynamic Programming"],
       role:     "Team",
       cover:    "/assets/images/gesture-recognition.jpg",
       github:   "https://github.com/ArthurOttevaere/AI-GestureRecognition-Group6",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "Which recogniser is best depends on the gesture — and half the differences don't survive a significance test",
+      context:  "Artificial Intelligence course · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      team:     "3 people",
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
+        { value: "0.992",  label: "best user-independent accuracy on numerals" },
+        { value: "+37.9",  label: "points gained from standardisation alone" },
+        { value: "1/15",   label: "method pairs significant on the 3D domain" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
+        { title: "The question", body: [
+            "A depth sensor tracks the centre of a palm and hands you a sequence of 3D position vectors. Turning that into a recognised gesture is an old problem with many plausible answers, and the point of this study was to find out which one is actually right — and whether the differences between them hold up.",
+            "Six methods, deliberately spanning three families: two dynamic-programming baselines (DTW and edit distance), three feature-based classifiers (Random Forest, Decision Tree, Logistic Regression), and one template-matching algorithm (the $1 recognizer, extended to 3D following Kratz & Rohs).",
+            "Four research questions framed the work: what preprocessing actually does, which method wins under each protocol, whether the gaps are statistically significant, and how much a system gains from knowing its user.",
+        ]},
+        { title: "Two domains, chosen to disagree", body: [
+            "The data comes from Huang et al. — two gesture domains of 1,000 sequences each: 10 classes, 10 users, 10 repetitions, recorded on a SoftKinetic DepthSense camera.",
+            { list: [
+              "Domain 1 — the Arabic numerals 0–9 drawn in the air. Quasi-planar: the first two principal components capture 94.2% of the variance. Sequences run 31 to 240 time steps, averaging 85.",
+              "Domain 4 — ten procedural CAD symbols (cuboid, cylinder, sphere, pyramid, toroid…). Genuinely volumetric: the third component still holds 15.7% of the variance. Sequences run 56 to 314 steps, averaging 140.",
+            ]},
+            "That contrast is what makes the study work. A method tuned for flat shapes and a method built for temporal alignment should behave very differently across the two, and they do.",
+            "Sequence lengths vary enormously within a class as well as between them, which is the whole justification for DTW and edit distance: any point-to-point comparison would penalise a gesture simply for being drawn slowly.",
+        ]},
+        { title: "Six methods, built rather than imported", body: [
+            { h: "Dynamic programming" },
+            "DTW finds the optimal warping path between two sequences through an accumulation matrix, with the diagonal transition weighted ×2 to balance the alignment types, and normalises the cost by the summed lengths so distances stay comparable. Edit distance needs symbols, not coordinates, so trajectories are vector-quantised with k-means — fitted inside each fold on training points only, so no test data ever touches the centroids. Validation curves put k at 20 for Domain 1 and 15 for Domain 4.",
+            { h: "The $1 recognizer in 3D" },
+            "Four normalisation steps: resample to 150 equidistant points along arc length, rotate to an indicative reference frame via Rodrigues' formula, translate the centroid to the origin, then scale uniformly so the largest dimension is 1. Matching uses Golden Section Search over the three rotation axes to minimise point-to-point MSE, 11 iterations per axis, with templates preprocessed once and cached.",
+            { h: "Feature-based classifiers" },
+            "44 features per gesture — per-axis statistics, velocity, acceleration, arc length, bounding box, curvature, per-third segment dynamics — rising to 47 when the PCA explained-variance ratios are included. Random Forest runs 200 trees on √p features; the single Decision Tree exists specifically to measure what bagging contributes; Logistic Regression is the linear lower bound. All three go through the same per-fold selection pipeline (variance filter, correlation pruning at |r| > 0.99, permutation importance to 95% cumulative) and GridSearchCV on 5 inner folds.",
+            "DTW, edit distance and $1 produce distances, not labels, so classification is 1-NN throughout — the canonical parameter-free baseline in the gesture literature. An LSTM was attempted and abandoned: 1,000 sequences per domain is simply not enough data, and it underfitted.",
+        ]},
+        { title: "Preprocessing decides more than the algorithm", body: [
+            "The ablation study ran every method under three conditions — raw, per-gesture standardisation, and standardisation plus PCA denoising — separately for each protocol and domain.",
+            "Standardisation is transformative, and the gains are largest exactly where scale variation is worst. On Domain 4 user-independent, DTW goes from 0.486 to 0.865 (+37.9 points) and edit distance from 0.492 to 0.837 (+34.5). On Domain 1, DTW gains +29.4 and edit distance +31.7.",
+            "PCA denoising was the hypothesis that failed. Projecting out the third principal component should have removed sensor noise on the quasi-planar numerals — instead it degraded every method in every configuration, dropping DTW from 0.918 to 0.879 on Domain 1 and Random Forest from 0.864 to 0.718 on Domain 4.",
+            { quote: "PC3 carries only 5.8% of the variance on the numerals, and removing it still hurts. Low variance is not the same thing as noise." },
+            "The $1 recognizer is the exception that proves the rule: it performs better on raw data (0.992) than standardised (0.885), because its own normalisation pipeline already handles scale, and standardising twice destroys the geometry it depends on.",
+        ]},
+        { title: "Two domains, two different winners", body: [
+            "On Domain 1 the $1 recognizer dominates: 0.992 user-independent and 0.999 user-dependent — one error in a thousand sequences. Its normalisation preserves shape exactly, and the Golden Section Search over rotation captures the orientation micro-differences that separate a 6 from a 9. DTW follows at 0.918, Random Forest at 0.912, Decision Tree last at 0.827.",
+            "On Domain 4 the ordering inverts. $1 collapses by 17 points to 0.821 — a pipeline built around planar shape matching has little to say about a volumetric trajectory — while DTW takes the lead at 0.865, with Random Forest at 0.864 and Logistic Regression at 0.851 essentially tied with it.",
+            "The confusion matrices explain where the difficulty lives. $1 on Domain 1 is almost perfectly diagonal, its handful of errors geometrically defensible (2 → 1 four times, both sharing an initial vertical stroke). DTW on Domain 4 misreads cylinder as cuboid 39 times out of 100 — the two share a rectangular structure that survives temporal alignment — and scatters 30% of the sphere class across every other curved symbol.",
+        ]},
+        { title: "What the significance tests took away", body: [
+            "Accuracy tables invite a ranking. Paired Wilcoxon signed-rank tests over 100 per-(gesture, user) observations, with Benjamini-Hochberg correction across all 15 method pairs, decide whether the ranking is real.",
+            "On Domain 1 it mostly is: $1 is significantly superior to all five other methods, DTW beats edit distance and the Decision Tree, and Random Forest beats the Decision Tree and Logistic Regression. Everything else forms an undifferentiated plateau around 0.82–0.92.",
+            "On Domain 4, one comparison out of fifteen survives — Random Forest over Decision Tree. DTW's lead over the field is numerical, not statistical: the methods sit within 5.2 points of each other and the fold-to-fold standard deviations run 0.07–0.10. Reporting DTW as the winner there without the caveat would have been the wrong conclusion.",
+        ]},
+        { title: "Knowing the user is worth more than the model", body: [
+            "The user-dependent protocol restricts the nearest-neighbour search to the test user's own gestures, and it improves everything — but not evenly, and the unevenness is the finding.",
+            "On Domain 1 the gains are modest (+0.7 to +10.3 points) because the numerals are already well separated. On Domain 4 they are enormous: DTW +12.2, edit distance +14.7, $1 +15.2, carrying the whole field to 0.97–0.99.",
+            "Which means inter-user variability, not geometric complexity, is the real bottleneck for volumetric gestures. The same algorithms that struggle to generalise across people are near-perfect once they only have to recognise one. For a real deployment, a short personalisation phase would buy more than any change of method.",
+            { h: "One more thing the accuracy column hides" },
+            "Train-test gaps show the Decision Tree overfitting hardest everywhere (+0.106 to +0.135) despite GridSearchCV, Random Forest cutting that roughly in half through bagging, and Logistic Regression the most stable of the three (~0.03–0.09) at the cost of raw performance. Accuracy alone was never going to settle this.",
+        ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/ai_gesture_recognition/.
       gallery: [
-        // { src: "/assets/images/projects/ai_gesture_recognition/result.png", caption: "What it shows" },
+        { src:     "/assets/images/projects/ai_gesture_recognition/gestures-domain1.png",
+          caption: "Domain 1 — the Arabic numerals drawn in the air, projected onto the XY plane. Green marks the start of the trajectory, red the end." },
+        { src:     "/assets/images/projects/ai_gesture_recognition/gestures-domain4.png",
+          caption: "Domain 4 — ten procedural CAD symbols. Flattened to 2D they already look ambiguous; in 3D they are what breaks the $1 recognizer." },
+        { src:     "/assets/images/projects/ai_gesture_recognition/confusion-dollar1-d1.png",
+          caption: "$1 on Domain 1, user-independent: a near-perfect diagonal, with the few errors falling between digits that share an opening stroke." },
+        { src:     "/assets/images/projects/ai_gesture_recognition/confusion-dtw-d4.png",
+          caption: "DTW on Domain 4, user-independent. Cylinder is read as cuboid 39 times out of 100 — the shared rectangular structure survives temporal alignment." },
+        { src:     "/assets/images/projects/ai_gesture_recognition/pca-evr-domain4.png",
+          caption: "Explained variance per principal component on Domain 4: PC3 still holds 15.7%, which is why projecting it away costs accuracy." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/ai_gesture_recognition/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/ai_gesture_recognition/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/ai_gesture_recognition/slides.pdf" },
+        { label: "Final report", url: "/assets/files/ai_gesture_recognition/report.pdf",
+          note:  "IEEE-format write-up, 12 pages with the full result tables" },
+        { label: "Slide deck",   url: "/assets/files/ai_gesture_recognition/slides.pdf",
+          note:  "Defence presentation, 25 slides including the derivations" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
+        { name: "Dynamic programming", note: "DTW and Levenshtein implemented from the recurrence up, with normalisation that keeps distances comparable." },
+        { name: "Template matching",   note: "The $1 recognizer ported to 3D — resampling, Rodrigues rotation, and Golden Section Search over three axes." },
+        { name: "Feature engineering", note: "44 descriptors of a trajectory, from curvature to per-third segment dynamics, selected fresh at every fold." },
+        { name: "Experimental design", note: "Shared fold indices across all methods, k-means fitted inside the fold, and no preprocessing choice made on test data." },
+        { name: "Statistical testing",  note: "Paired Wilcoxon over 15 method pairs with Benjamini-Hochberg control, and the discipline to report what wasn't significant." },
+        { name: "Model diagnostics",    note: "Train-test gaps and confusion matrices to explain results that the accuracy column left unexplained." },
       ],
     },
     {
@@ -997,67 +1179,131 @@ window.PORTFOLIO_DATA = {
       title:    "Surgical Scheduling Optimization",
       cat:      "Academic",
       year:     "2026",
-      date:     "2026-06",
-      summary:  "A mathematical optimization model that rebuilds a hospital's surgical scheduling grid from scratch, taking into account patient flows and various operational constraints.",
-      long:     "A mathematical optimization model that rebuilds a hospital's surgical scheduling grid from scratch, taking into account patient flows and various operational constraints.",
+      date:     "2026-06-09",
+      summary:  "A MIP that rebuilds a hospital's weekly operating schedule for 57 surgeons, and answers the question management actually asks: how much change is worth it?",
+      long:     "As CHwapi consolidates three sites onto one, its weekly operating grid has to schedule 57 surgeons across 10 disciplines, 17 operating rooms and a 54-bed day hospital. This mixed-integer model smooths four dimensions of hospital activity at once while controlling how far the proposed grid may drift from the current one — then stress-tests the result against surgeon recruitment and room failures.",
       highlights: [
-        "Schedules 57 surgeons across 17 operating rooms.",
-        "Optimises patient flow smoothing across a 54-bed day hospital.",
-        "Stress-tests the grid against room failures and new surgeon arrivals.",
+        "Schedules 57 surgeons across 10 disciplines, 17 operating rooms and a 54-bed day hospital.",
+        "Found the equilibrium at 10 schedule changes: 10% better than 4, while 15 to 20 adds only 0.7%.",
+        "Removed a structural 2.4-bed overload on Tuesdays without reducing weekly activity.",
+        "Restored feasibility for 9 of 10 disciplines after a room failure, via an intra-association transfer mechanism.",
       ],
-      tags:     ["XPress Mosel", "Python", "Optimization"],
+      tags:     ["Xpress Mosel", "Excel", "Python", "Optimization"],
       role:     "Team",
       cover:    "/assets/images/surgical-scheduling.jpeg",
       github:   "https://github.com/ArthurOttevaere/surgical-scheduling-optimization",
       featured: false,
 
-      /* ── The project page ────────────────────────────────────────────
-         Every field below is OPTIONAL and every block disappears while its
-         field is empty — so this template can just sit here until you have
-         something to put in it. Fill in what the project deserves. */
-      subtitle: "",                 // a second line under the title
-      context:  "",                 // rail line — defaults to the category
+      /* ── The project page ──────────────────────────────────────────── */
+      subtitle: "How much change is enough? The model says ten, and can prove it",
+      context:  "Quantitative Project · UCLouvain",
       duration: "",                 // rail + a chip, e.g. "6 weeks"
-      team:     "",                 // rail + a chip, e.g. "4 people"
-      links:    [                   // extra links, on top of `github`
+      team:     "3 people",
+      links:    [
         // { label: "Report", url: "https://…" },
       ],
 
       // Big numbers band, right after the first section.
       metrics: [
-        // { value: "900+", label: "reviews scraped" },
+        { value: "10",   label: "schedule changes capture most of the gain" },
+        { value: "2.4",  label: "beds of Tuesday overload, eliminated" },
+        { value: "9/10", label: "disciplines still running after a room fails" },
       ],
 
       // The page body — sections are numbered automatically (01, 02, 03…).
-      // A `body` entry is a plain string, or { h: "…" } / { list: [] } / { quote: "…" }.
       sections: [
-        // { title: "The context", body: [
-        //     "A first paragraph.",
-        //     { h: "A sub-heading" },
-        //     { list: ["A point.", "Another point."] },
-        //     { quote: "A line worth pulling out." },
-        // ]},
+        { title: "The brief", body: [
+            "CHwapi is consolidating three hospital sites — 2,700 staff, 24,500 admissions a year — onto a single UNION campus. Every operational decision gains weight in that move, and the weekly operating grid is the one that propagates furthest: it drives the operating theatre, the day hospital, the inpatient units and the equipment pools all at once.",
+            "The grid has to place 57 surgeons across 10 surgical disciplines, 17 operating rooms and a day hospital capped at 54 beds. Solving that by hand is not realistic, which is the case for a mathematical model — not to produce a theoretically perfect timetable, but one CHwapi could actually adopt on a Monday morning.",
+        ]},
+        { title: "The model", body: [
+            "Binary decision variables assign each surgeon to day-and-slot operating slots. The objective is multi-criteria, and every term is a smoothing factor measuring the gap between the week's peak and its average — a value of 1.0 would be a perfectly flat week.",
+            { list: [
+              "fLisDis — the spread of each discipline's presence across the week, so a specialty is available every day rather than clustered.",
+              "fLisHJ — day hospital bed occupancy, the hard capacity constraint at 54 beds.",
+              "fLisUnit — pressure on the inpatient units downstream of surgery.",
+              "fLisOrtho — orthopaedic interventions on the same limb, which compete for the same equipment.",
+            ]},
+            "Hard constraints guarantee operational feasibility — surgeon assignments, block capacity, the hospital's own organisational rules. Softer preferences (limiting how many days a surgeon is present, keeping morning and afternoon activity coherent) enter as penalised constraints.",
+            "The parameter that makes the whole study useful is MaxGDif: a cap on how many slots may differ from the grid CHwapi runs today. It turns an abstract optimum into a dial between performance and organisational acceptability.",
+        ]},
+        { title: "How much change is enough", body: [
+            "Sweeping MaxGDif from 4 to 20 traces a textbook curve of diminishing returns. Moving from a conservative 4 changes to 10 improves the global objective by about 10%. Moving from 15 to 20 buys 0.67%.",
+            "Ten is the equilibrium point, and the indicators behind it are what justify it as the reference grid: the day hospital peak sits 1.85% above its weekly average, orthopaedic pressure falls from 70.4% above average to 38.0%, no discipline's presence peaks more than 11.4% above its own mean, and inpatient-unit load stays within 28.1%.",
+            { quote: "Past ten changes, the organisational disruption is no longer paid for by the gains." },
+        ]},
+        { title: "The day hospital is the bottleneck", body: [
+            "The current grid puts the day hospital 2.39 beds over its 54-bed ceiling on Tuesdays, while Fridays sit at 49.96 — a 6.43-bed swing across the week. The optimised grid closes that to 1.91 beds, with every day at or under capacity, and the weekly average unchanged at 53.02. The activity is not reduced, only redistributed.",
+            { h: "How hard to push it" },
+            "Weighting the day hospital objective (PHJ) against the other three shows exactly where to stop. At PHJ = 0 the worst day runs 10.3% above average; at 1, 1.8%; at 5, only 0.5%. Beyond that the gains vanish, while the cost becomes visible elsewhere — discipline smoothing degrades by 5.38 percentage points between PHJ = 0 and PHJ = 20, and it is the objective most sensitive to the trade.",
+            "Flexibility is what unlocks it. With only 4 changes allowed, even PHJ = 5 leaves the peak 3.4% above average: the rigidity constraint becomes binding before the weighting can do its work.",
+            { h: "What margin is left" },
+            "Quantifying how much unplanned activity each day could still absorb gives the hospital a resilience budget, and it is thin. Thursday takes +5.8% of surgical activity (about 1.9 beds), Wednesday 1.6 and Tuesday 1.2. Monday offers a symbolic 0.24 bed. Friday is saturated at exactly zero — any unplanned flow that day breaches capacity immediately.",
+        ]},
+        { title: "Unlocking capacity that was already there", body: [
+            "Coronary angiography and interventional radiology had been treated as fixed, even though both feed the same 54 beds. Making their weekly placement a decision variable — with volume conservation and a fixed number of open days per activity — costs nothing and pays.",
+            "The global objective improves 0.68%, day hospital smoothing goes from 1.0185 to 1.0142, and inpatient-unit smoothing gains 2.01%, while discipline smoothing stays exactly where it was. Nothing is traded away.",
+            "The mechanism is concrete: the solver concentrates coronary angiography onto Tuesday (4.61 beds, a full 8-hour day) and spreads interventional radiology across the middle of the week. Pulling both off Friday frees 3.47 beds on the week's most constrained day, part of which is then reallocated to surgery — Friday drops from 54.00 to 52.93 beds, and no day exceeds 53.77.",
+            "Twelve combinations of open-day counts were tested, and several reach the same optimum. The solution is not unique, which leaves CHwapi room to pick whichever configuration its service leads can actually live with.",
+        ]},
+        { title: "Where a new surgeon could go", body: [
+            "No grid is permanent. Adding a fictional surgeon to each discipline in turn — profiled on the average of that discipline's existing surgeons — and re-solving at MaxGDif = 10 measures who has genuine room.",
+            { list: [
+              "Real headroom: neurosurgery, urology and stomatology degrade the grid least and keep saturation contained. Stomatology adds a surgeon without a single extra saturated slot.",
+              "Structurally full: vascular and thoracic surgery is the worst case (+7.8% on the objective, +14.2% on discipline smoothing), with orthopaedics behind it (+6.5%, saturated slots going from 5 to 9). Neither can absorb anyone without opening capacity.",
+              "A false positive: plastic surgery shows a 40% occupancy rate that looks like room to spare. It only operates Monday and Tuesday — the free slots are inactivity, not availability, and its 2.78 smoothing score is the worst of any discipline.",
+            ]},
+            "Downstream, the fragility is concentrated in one place: paediatrics absorbs almost all of the inpatient-unit degradation across the simulations, while every other unit moves by less than 0.1 point.",
+        ]},
+        { title: "What happens when a room fails", body: [
+            "Making the room allocation itself a decision variable produced the study's most useful negative result: at MaxGDif = 4 and 7, the model reproduces CHwapi's current allocation exactly. The existing layout is not historical accident, it is already coherent with the constraints.",
+            "At 10 changes the model does move two rooms — one from abdominal, one from vascular/thoracic, both to plastic surgery — but every indicator stays identical. Shrinking the total allocation from 21 down to 19 confirms why: those two rooms are structural surplus, removable without degrading anything. And the extra rooms do nothing for plastic surgery, whose smoothing score is bound by its own weekly volume, not by capacity.",
+            { h: "The stress test" },
+            "Simulating the loss of one room per discipline is brutal without help: only abdominal and vascular/thoracic remain solvable. The other eight cannot place their weekly surgical volume at all.",
+            "Introducing an intra-association transfer mechanism — disciplines within the same grouping lending each other a room for a half-day, with borrowing penalised so it stays a last resort — restores feasibility for nine of ten. Abdominal and vascular/thoracic need no help at all; gynaecology borrows 8 slots a week and orthopaedics 5; ophthalmology, belonging to no association, has no safety net by design.",
+            "The lending patterns matter operationally. Association 1 is perfectly reciprocal (ENT and stomatology, 4 slots each way). Association 2 is lopsided — abdominal and urology lend, gynaecology borrows 8 and returns 1. In association 3, neurosurgery lends 7 slots of 10 and is the single pivot: any new pressure on it mechanically weakens orthopaedics and plastic surgery.",
+            { quote: "The surplus in abdominal and vascular surgery is not a design flaw. It is the block's first line of defence." },
+        ]},
+        { title: "The final proposal", body: [
+            "The recommended grid combines three things: 10 authorised changes, equal weights across the four smoothing objectives, and flexible coronary/radiology scheduling — with the intra-association transfer mechanism held in reserve as a contingency rule rather than used in normal operation.",
+            "Against the base grid, the global objective goes from 1.1985 to 1.1903, day hospital smoothing from 1.0185 to 1.0142, inpatient-unit smoothing from 1.2808 to 1.2551, and discipline smoothing does not move at all — confirming the gains do not destabilise weekly specialty coverage.",
+            "The limits are stated rather than hidden. Day hospital margins remain thin on Monday, Tuesday and Thursday, at roughly a quarter of a bed. Whether a new surgeon fits depends entirely on their discipline. And the Coro/RI reorganisation needs sign-off from the service leads before it means anything — a model can show a schedule is feasible, not that people will accept it.",
+        ]},
       ],
 
       // Screenshots — drop the files in /assets/images/projects/chwapi/.
       gallery: [
-        // { src: "/assets/images/projects/chwapi/result.png", caption: "What it shows" },
+        { src:     "/assets/images/projects/chwapi/pareto-front.png",
+          caption: "Every smoothing indicator against the number of authorised changes. The elbow at 10 is the whole recommendation in one chart." },
+        { src:     "/assets/images/projects/chwapi/day-hospital-occupancy.png",
+          caption: "Day hospital occupancy, optimised versus current. Tuesday's 56.39 beds breach the 54-bed ceiling; the optimised week never does." },
+        { src:     "/assets/images/projects/chwapi/discipline-saturation.png",
+          caption: "Occupancy rate against saturated slots per discipline — the diagnostic behind which specialties can take a new surgeon." },
+        { src:     "/assets/images/projects/chwapi/borrowed-slots.png",
+          caption: "Cost of losing one room, per discipline: slots that must be borrowed to stay feasible. Ophthalmology, isolated, cannot recover." },
+        { src:     "/assets/images/projects/chwapi/room-transfers.png",
+          caption: "Who lends to whom across the three associations. Neurosurgery lends 7 of 10 slots — the pivot the whole grouping depends on." },
       ],
       galleryTitle: "",             // heading — defaults to "Results"
 
-      // Attachments — report, slide deck, dataset, notebook… Files go in
-      // /assets/files/chwapi/, or point at any URL. The kind label and the
-      // icon come from the extension; `type` overrides it, `note` is the
-      // one-liner shown under the name.
       attachments: [
-        // { label: "Final report", url: "/assets/files/chwapi/report.pdf", note: "24 pages" },
-        // { label: "Slide deck",   url: "/assets/files/chwapi/slides.pdf" },
+        { label: "Final report",       url: "/assets/files/chwapi/report.pdf",
+          note:  "Full write-up in French, 32 pages with the five analyses and annexes" },
+        { label: "Model formulation",  url: "/assets/files/chwapi/model.pdf",
+          note:  "The complete MIP — sets, parameters, variables and constraints, 8 pages" },
+        { label: "Slide deck",         url: "/assets/files/chwapi/slides.pdf",
+          note:  "Defence presentation, 24 slides with the backup material" },
       ],
       attachmentsTitle: "",         // heading — defaults to "Attachments"
 
       // The "What I took away" block at the bottom.
       skills: [
-        // { name: "Python", note: "What you actually did with it." },
+        { name: "MIP modelling",       note: "A multi-objective scheduling model with hard feasibility constraints, penalised preferences, and a dial controlling deviation from the current grid." },
+        { name: "Xpress Mosel",        note: "Built and solved every scenario of the study, exporting results to Excel for the analysis." },
+        { name: "Scenario analysis",   note: "Change budgets, objective weightings, flexible flows, simulated recruitment and room failures — each isolated so its effect could be read." },
+        { name: "Sensitivity analysis", note: "Making the room allocation endogenous and shrinking the total to prove which capacity was genuinely surplus." },
+        { name: "Resilience design",   note: "Turning a structural surplus into a transfer mechanism that restores feasibility for nine disciplines out of ten." },
+        { name: "Decision framing",    note: "Reporting a trade-off curve and an equilibrium point instead of an optimum management would never have adopted." },
       ],
     },
   ],
