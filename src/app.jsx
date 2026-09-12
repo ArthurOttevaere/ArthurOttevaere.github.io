@@ -97,20 +97,27 @@ function CvButton(){
 /* ── Nav ───────────────────────────────────────────────────────────────── */
 function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
   const [hidden, setHidden] = useState(false);
-  const lastY = useRef(0);
   useEffect(() => {
-    let raf = 0;
+    let raf = 0, lastY = Math.max(0, window.scrollY), travel = 0;
+    setHidden(false);
     const update = () => {
       raf = 0;
-      const y = window.scrollY;
-      const down = y > lastY.current;
-      lastY.current = y;
-      setHidden(down && y > 320);
+      // Clamp elastic overscroll and require sustained movement before toggling.
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const y = clamp(window.scrollY, 0, max);
+      const delta = y - lastY;
+      lastY = y;
+      if (y <= 320 || menuOpen){ travel = 0; setHidden(false); return; }
+      if (!delta) return;
+      if (Math.sign(delta) !== Math.sign(travel)) travel = 0;
+      travel += delta;
+      if (travel >= 48) setHidden(true);
+      else if (travel <= -16) setHidden(false);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
-  }, []);
+  }, [route, menuOpen]);
   return (
     <header className={'nav' + (hidden && !menuOpen ? ' hidden' : '')}>
       <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
@@ -360,8 +367,7 @@ function App(){
     if (reduceMotion() || !window.Lenis) return;
     if (window.matchMedia('(pointer: coarse)').matches) return;
     const lenis = new window.Lenis({
-      duration: 1.05,
-      easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: .14,
       smoothWheel: true,
     });
     window.__lenis = lenis;

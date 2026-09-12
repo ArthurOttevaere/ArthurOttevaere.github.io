@@ -57,7 +57,7 @@ function HeroScene({ ready }){
     const groups = Array.prototype.slice.call(nameEl.querySelectorAll('.hero-word'));
     const fitEl  = nameEl.querySelector('.hero-fit');
     const hover  = window.matchMedia('(hover: hover)').matches && !reduceMotion();
-    let mx = -1e5, my = -1e5, raf = 0;
+    let mx = -1e5, my = -1e5, raf = 0, lastPaint = null, settled = false, alive = true;
     const narrow = () => window.innerWidth <= 860;
 
     // width of every letter: from its rest value to its scrolled value, plus
@@ -65,6 +65,9 @@ function HeroScene({ ready }){
     // ones open — the contrast is the point).
     function paint(p, withHover){
       const t = smooth(clamp(p, 0, 1));
+      const key = t.toFixed(4) + ':' + narrow();
+      if (!withHover && key === lastPaint) return;
+      lastPaint = withHover ? null : key;
       const items = [];
       groups.forEach(g => {
         const w0 = +(narrow() ? g.dataset.m0 : g.dataset.w0);
@@ -88,6 +91,7 @@ function HeroScene({ ready }){
     // The last name always spans the full width, whatever the screen.
     function fit(){
       if (!fitEl) return;
+      lastPaint = null;
       paint(0, false);
       const avail = nameEl.clientWidth;
       if (!avail) return;
@@ -101,7 +105,6 @@ function HeroScene({ ready }){
       const vh = window.innerHeight, vw = window.innerWidth, y = window.scrollY;
       const G0 = .18 * vh, G1 = .86 * vh, F0 = .95 * vh, F1 = 2.0 * vh;
 
-      paint(y / G1, hover && mx > -1e4 && y < G1);
       if (!veil || !dot) return;
 
       const fd  = document.getElementById('featured-dot');
@@ -110,6 +113,9 @@ function HeroScene({ ready }){
       const S1 = fdr ? (y + fdr.top + fdr.height / 2 - .30 * vh) : Infinity;
       const S0 = Math.max(F1 + .08 * vh, S1 - .8 * vh);
 
+      // Once the hand-off is complete, leave the finished scene alone.
+      if (y >= S1 && settled) return;
+      settled = y >= S1;
       const dr = dot.getBoundingClientRect();
       const c0 = { x: dr.left + dr.width / 2, y: dr.top + dr.height / 2, r: dr.width / 2 };
 
@@ -127,6 +133,8 @@ function HeroScene({ ready }){
         r = lerp(coverRadius(cx, cy, vw, vh), fdr.width / 2, t);
         fade = 1 - clamp(t * 1.8, 0, 1);           // the words leave before the disc does
       }
+      // Read geometry before font writes, avoiding a forced layout each frame.
+      paint(y / G1, hover && mx > -1e4 && y < G1);
       veil.style.visibility = show ? 'visible' : 'hidden';
       if (show) veil.style.clipPath = 'circle(' + r.toFixed(1) + 'px at ' + cx.toFixed(1) + 'px ' + cy.toFixed(1) + 'px)';
       if (innerRef.current) innerRef.current.style.opacity = fade.toFixed(3);
@@ -141,7 +149,7 @@ function HeroScene({ ready }){
     function schedule(){ if (!raf) raf = requestAnimationFrame(frame); }
     function onMove(e){ mx = e.clientX; my = e.clientY; schedule(); }
     function onLeave(){ mx = my = -1e5; schedule(); }
-    function relayout(){ fit(); frame(); }
+    function relayout(){ if (!alive) return; settled = false; fit(); schedule(); }
 
     fit();
     if (!animated){ paint(0, false); return; }
@@ -156,6 +164,7 @@ function HeroScene({ ready }){
     const t1 = setTimeout(relayout, 400);
 
     return () => {
+      alive = false;
       clearTimeout(t1);
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', relayout);

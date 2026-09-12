@@ -322,6 +322,7 @@ function TimelineTravel({ entries }){
         if (el.classList.contains('tl-year')) el.style.top = (barsBottom + 12) + 'px';
       });
       if (todayRef.current) todayRef.current.style.left = x(now) + 'px';
+      if (pastRef.current) pastRef.current.style.width = x(tEnd) + 'px';
 
       cardRefs.current.forEach((c, i) => {
         if (!c) return;
@@ -360,11 +361,11 @@ function TimelineTravel({ entries }){
 
       track.style.transform = 'translate3d(' + shift.toFixed(1) + 'px,0,0)';
       if (readRef.current) readRef.current.textContent = fmt(T);
-      if (pastRef.current) pastRef.current.style.width = Math.max(0, x(T)).toFixed(1) + 'px';
+      if (pastRef.current) pastRef.current.style.transform = 'scaleX(' + clamp(x(T) / x(tEnd), 0, 1).toFixed(4) + ')';
 
       barRefs.current.forEach((bar, i) => {
         const fill = bar && bar.firstChild;
-        if (fill) fill.style.width = (clamp((T - entries[i].start) / Math.max(1, entries[i].end - entries[i].start), 0, 1) * 100).toFixed(1) + '%';
+        if (fill) fill.style.transform = 'scaleX(' + clamp((T - entries[i].start) / Math.max(1, entries[i].end - entries[i].start), 0, 1).toFixed(4) + ')';
       });
 
       cardRefs.current.forEach((c, i) => {
