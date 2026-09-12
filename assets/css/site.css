@@ -206,8 +206,10 @@ html.lenis,html.lenis body{height:auto}
 .js .rv-media.in > img,.js .rv-media.in > svg{transform:none;transition:transform 1.5s var(--ease-expo) var(--d,0s)}
 
 .words{display:block}
-.words .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.06em 0 .06em;margin:-.06em 0}
-.js .words .wi{display:inline-block;transform:translateY(108%)}
+/* Give descenders and glyph overhangs room inside the reveal mask.
+   Negative margins preserve the heading spacing and line wrapping. */
+.words .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.18em .1em .28em;margin:-.18em -.1em -.28em}
+.js .words .wi{display:inline-block;transform:translateY(160%)}
 .js .words.in .wi{transform:none;transition:transform .95s var(--ease-expo) calc(var(--d,0s) + var(--i,0) * 42ms)}
 
 @media (prefers-reduced-motion:reduce){
@@ -258,16 +260,23 @@ html.lenis,html.lenis body{height:auto}
 .nav.hidden:focus-within{transform:translateX(-50%);opacity:1;pointer-events:auto}
 .nav-logo{display:inline-flex;align-items:center;height:36px;padding:0 12px 0 11px;color:inherit}
 .nav-logo svg{height:16px;width:auto}
-.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links{position:relative;isolation:isolate;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:center;gap:2px}
+.nav-active{
+  position:absolute;inset:0 auto 0 0;width:calc((100% - 4px)/3);border-radius:999px;
+  background:color-mix(in oklab,var(--paper) 14%,var(--ink));
+  box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--paper) 10%,transparent);
+  pointer-events:none;z-index:-1;
+  transition:transform .24s var(--ease-expo),opacity .18s ease;
+}
+@media (prefers-reduced-motion:reduce){.nav-active{transition:none}}
 .nav-link{
-  position:relative;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;
+  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 13px;
   border-radius:999px;font-size:14.5px;font-weight:500;letter-spacing:-.005em;
   color:color-mix(in oklab,var(--paper) 66%,transparent);
   transition:color .22s ease,background-color .22s ease;
 }
 .nav-link:hover{color:var(--paper)}
 .nav-link.on{color:var(--paper)}
-.nav-link.on::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
 .nav-sep{width:1px;height:20px;background:color-mix(in oklab,var(--paper) 16%,transparent);margin:0 5px;flex:none}
 .nav-icon{
   width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:inherit;
