@@ -50,3 +50,5 @@ coverage.json
 *.key
 
 index_old.html
+# Agent / assistant local state
+.omc/

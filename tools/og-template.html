@@ -3,98 +3,114 @@
 <head>
 <meta charset="utf-8"/>
 <!--
-  Open Graph card template (1200×630). This is rendered to a PNG by
-  tools/generate-og.mjs — edit the copy / colours here, then re-run:
-      node tools/generate-og.mjs
-  Uses the real "a." brand mark and the site's own Geist fonts so the preview
-  matches the site exactly.
+  Link-preview card (1200×630). Rendered to JPEG by tools/generate-og.mjs —
+  one for the site, one per project. Edit the design here, then run:
+      npm run og
+  The script fills it through window.setCard({...}); nothing is hard-coded.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 1200px; height: 630px; }
+  :root{
+    --paper:#F6F4EF; --ink:#101014; --muted:#67656C; --rule:#DDD9D0; --accent:#FF4A12;
+    --f:'Archivo',Arial,sans-serif; --v:'Instrument Serif',Georgia,serif; --m:'Geist Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px}
+  body{
+    font-family:var(--f);color:var(--ink);
+    background-color:var(--paper);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .card{width:1200px;height:630px;padding:56px 64px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px;font-family:var(--m);font-size:20px;letter-spacing:.02em;color:var(--muted)}
+  .brand svg{height:22px;width:auto}
+  .kicker{font-family:var(--m);font-size:18px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
-  .card {
-    position: relative; width: 1200px; height: 630px; overflow: hidden;
-    background: radial-gradient(125% 125% at 10% 4%, #ffffff 0%, #f5f5f7 52%, #eceef4 100%);
-    font-family: 'Geist', system-ui, sans-serif; color: #0a0a0a;
-  }
-  /* Soft accent spotlight (echoes the site's cursor glow) */
-  .glow {
-    position: absolute; top: -260px; left: -180px; width: 820px; height: 820px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(37,99,235,.22), rgba(37,99,235,0) 60%);
-  }
-  /* Oversized faint monogram bleeding off the right edge */
-  .watermark {
-    position: absolute; top: 50%; right: -140px; transform: translateY(-50%);
-    height: 620px; color: #2563eb; opacity: .07;
-  }
-  .watermark svg { height: 100%; width: auto; display: block; }
+  /* site card — the hero lockup */
+  .site{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+  .l1{display:flex;align-items:baseline;line-height:.82}
+  .first{font-weight:850;font-stretch:62%;font-size:150px;letter-spacing:-.01em}
+  .dot{width:26px;height:26px;border-radius:50%;background:var(--accent);margin-left:9px;flex:none}
+  .ptitle + .dot{width:16px;height:16px;margin-left:5px}
+  .last{font-weight:850;font-stretch:125%;font-size:150px;letter-spacing:-.01em;line-height:.82;white-space:nowrap}
+  .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+  .tagline{font-family:var(--m);font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
-  .content {
-    position: relative; z-index: 1; height: 100%;
-    padding: 92px 90px 84px; display: flex; flex-direction: column;
-  }
-  .brand { display: flex; align-items: center; gap: 15px; }
-  .brand .mark { height: 42px; width: auto; color: #2563eb; display: block; }
-  .brand .url {
-    font-family: 'Geist Mono', monospace; font-size: 22px;
-    letter-spacing: .01em; color: #52525b;
-  }
-
-  .middle { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .headline {
-    font-size: 106px; font-weight: 700; letter-spacing: -.035em; line-height: .98;
-  }
-  .headline .dot { color: #a1a1aa; }
-  .tagline {
-    margin-top: 28px; font-size: 34px; font-weight: 400;
-    letter-spacing: -.012em; color: #52525b;
-  }
-
-  .foot { display: flex; flex-direction: column; gap: 16px; }
-  .foot .rule { width: 68px; height: 4px; border-radius: 2px; background: #2563eb; }
-  .foot .line {
-    font-family: 'Geist Mono', monospace; font-size: 22px;
-    letter-spacing: .01em; color: #71717a;
-  }
+  /* project card — text left, cover right */
+  .proj{flex:1;display:grid;grid-template-columns:1fr 440px;gap:52px;align-items:center;padding-top:30px}
+  .ptext{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .ptitle{font-weight:800;font-stretch:104%;font-size:66px;line-height:1.02;letter-spacing:-.035em;display:inline}
+  .psub{font-family:var(--v);font-style:italic;font-size:30px;line-height:1.18;color:var(--ink);opacity:.78}
+  .shot{width:440px;height:400px;border-radius:24px;overflow:hidden;background:var(--rule)}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .hidden{display:none!important}
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="glow"></div>
-    <div class="watermark">
-      <svg viewBox="62 122 232 180" fill="currentColor">
-        <g transform="matrix(1,0,0,1,59,17)">
-          <path transform="translate(0.817517,276.85898)" d="M 85.203125 -166.125 C 98.578125 -166.125 110.195312 -164.050781 120.0625 -159.90625 C 129.9375 -155.757812 137.570312 -149.507812 142.96875 -141.15625 C 148.363281 -132.8125 151.0625 -122.414062 151.0625 -109.96875 L 151.0625 0 L 109.96875 0 L 109.96875 -16.875 C 100.195312 -9.039062 91.066406 -3.691406 82.578125 -0.828125 C 74.097656 2.023438 66.03125 3.453125 58.375 3.453125 C 48.132812 3.453125 39.234375 1.652344 31.671875 -1.9375 C 24.109375 -5.53125 18.253906 -10.738281 14.109375 -17.5625 C 9.960938 -24.382812 7.890625 -32.59375 7.890625 -42.1875 C 7.890625 -50.125 9.316406 -57.066406 12.171875 -63.015625 C 15.035156 -68.960938 19.046875 -74.144531 24.203125 -78.5625 C 29.367188 -82.988281 35.457031 -86.816406 42.46875 -90.046875 C 49.476562 -93.273438 57.085938 -96.046875 65.296875 -98.359375 L 109.96875 -111.078125 C 109.601562 -117.628906 107.132812 -122.632812 102.5625 -126.09375 C 98 -129.550781 91.753906 -131.28125 83.828125 -131.28125 C 77.648438 -131.28125 71.351562 -130.3125 64.9375 -128.375 C 58.53125 -126.4375 52.375 -123.804688 46.46875 -120.484375 C 40.570312 -117.160156 35.363281 -113.378906 30.84375 -109.140625 L 10.921875 -139.984375 C 22.171875 -149.117188 34.160156 -155.757812 46.890625 -159.90625 C 59.617188 -164.050781 72.390625 -166.125 85.203125 -166.125 Z M 71.9375 -29.46875 C 78.382812 -29.46875 84.789062 -31.101562 91.15625 -34.375 C 97.519531 -37.644531 103.789062 -41.957031 109.96875 -47.3125 L 109.96875 -77.734375 L 76.359375 -66.953125 C 68.796875 -64.554688 63.171875 -61.789062 59.484375 -58.65625 C 55.796875 -55.519531 53.953125 -51.226562 53.953125 -45.78125 C 53.953125 -40.707031 55.539062 -36.71875 58.71875 -33.8125 C 61.90625 -30.914062 66.3125 -29.46875 71.9375 -29.46875 Z"/>
-          <path transform="translate(149.319859,276.85898)" d="M 28.5 0 L 28.5 -50.359375 L 78.4375 -50.359375 L 78.4375 0 Z"/>
-        </g>
+<div class="card">
+  <div class="top">
+    <span class="brand">
+      <svg viewBox="0 0 1098 552" fill="currentColor" style="color:var(--ink)">
+        <path d="M240 552Q189 552 145 545Q101 538 68.5 520.5Q36 503 18 472.5Q0 442 0 394Q0 331 33.5 294.5Q67 258 129 240.5Q191 223 276.5 218Q362 213 467 213V202Q467 175 453 158.5Q439 142 413.5 134.5Q388 127 353 127Q332 127 306 130.5Q280 134 261 143.5Q242 153 242 172V176H14Q13 172 13 169.5Q13 167 13 163Q13 116 52.5 79Q92 42 170 21Q248 0 362 0Q467 0 540.5 17.5Q614 35 652.5 73Q691 111 691 175V372Q691 388 699 399.5Q707 411 723 411H778V532Q760 539 725.5 545.5Q691 552 653 552Q599 552 565 542.5Q531 533 513 517Q495 501 487 482H479Q450 503 414.5 519Q379 535 336 543.5Q293 552 240 552ZM307 426Q322 426 348 422.5Q374 419 401.5 410Q429 401 448 386Q467 371 467 347V314Q380 314 325.5 322.5Q271 331 246 346Q221 361 221 382Q221 401 233.5 410.5Q246 420 266 423Q286 426 307 426Z"/>
+        <circle cx="963" cy="405" r="135" fill="var(--accent)"/>
       </svg>
-    </div>
-
-    <div class="content">
-      <div class="brand">
-        <svg class="mark" viewBox="62 122 232 180" fill="currentColor">
-          <g transform="matrix(1,0,0,1,59,17)">
-            <path transform="translate(0.817517,276.85898)" d="M 85.203125 -166.125 C 98.578125 -166.125 110.195312 -164.050781 120.0625 -159.90625 C 129.9375 -155.757812 137.570312 -149.507812 142.96875 -141.15625 C 148.363281 -132.8125 151.0625 -122.414062 151.0625 -109.96875 L 151.0625 0 L 109.96875 0 L 109.96875 -16.875 C 100.195312 -9.039062 91.066406 -3.691406 82.578125 -0.828125 C 74.097656 2.023438 66.03125 3.453125 58.375 3.453125 C 48.132812 3.453125 39.234375 1.652344 31.671875 -1.9375 C 24.109375 -5.53125 18.253906 -10.738281 14.109375 -17.5625 C 9.960938 -24.382812 7.890625 -32.59375 7.890625 -42.1875 C 7.890625 -50.125 9.316406 -57.066406 12.171875 -63.015625 C 15.035156 -68.960938 19.046875 -74.144531 24.203125 -78.5625 C 29.367188 -82.988281 35.457031 -86.816406 42.46875 -90.046875 C 49.476562 -93.273438 57.085938 -96.046875 65.296875 -98.359375 L 109.96875 -111.078125 C 109.601562 -117.628906 107.132812 -122.632812 102.5625 -126.09375 C 98 -129.550781 91.753906 -131.28125 83.828125 -131.28125 C 77.648438 -131.28125 71.351562 -130.3125 64.9375 -128.375 C 58.53125 -126.4375 52.375 -123.804688 46.46875 -120.484375 C 40.570312 -117.160156 35.363281 -113.378906 30.84375 -109.140625 L 10.921875 -139.984375 C 22.171875 -149.117188 34.160156 -155.757812 46.890625 -159.90625 C 59.617188 -164.050781 72.390625 -166.125 85.203125 -166.125 Z M 71.9375 -29.46875 C 78.382812 -29.46875 84.789062 -31.101562 91.15625 -34.375 C 97.519531 -37.644531 103.789062 -41.957031 109.96875 -47.3125 L 109.96875 -77.734375 L 76.359375 -66.953125 C 68.796875 -64.554688 63.171875 -61.789062 59.484375 -58.65625 C 55.796875 -55.519531 53.953125 -51.226562 53.953125 -45.78125 C 53.953125 -40.707031 55.539062 -36.71875 58.71875 -33.8125 C 61.90625 -30.914062 66.3125 -29.46875 71.9375 -29.46875 Z"/>
-            <path transform="translate(149.319859,276.85898)" d="M 28.5 0 L 28.5 -50.359375 L 78.4375 -50.359375 L 78.4375 0 Z"/>
-          </g>
-        </svg>
-      </div>
-
-      <div class="middle">
-        <div class="headline">Arthur Ottevaere<span class="dot">.</span></div>
-        <div class="tagline">Business Engineering · Business Analytics</div>
-      </div>
-
-      <div class="foot">
-        <div class="rule"></div>
-        <div class="line">Portfolio · Data projects · Tournai, BE</div>
-      </div>
-    </div>
+      <span id="brandUrl">arthurottevaere.github.io</span>
+    </span>
+    <span class="kicker" id="kicker"></span>
   </div>
+
+  <div class="site" id="site">
+    <div class="l1"><span class="first" id="first">ARTHUR</span><span class="dot"></span></div>
+    <div class="last" id="last">OTTEVAERE</div>
+  </div>
+
+  <div class="proj hidden" id="proj">
+    <div class="ptext">
+      <div><span class="ptitle" id="ptitle"></span><span class="dot" style="display:inline-block;vertical-align:baseline"></span></div>
+      <div class="psub" id="psub"></div>
+    </div>
+    <div class="shot"><img id="shot" alt=""/></div>
+  </div>
+
+  <div class="bottom">
+    <span class="tagline" id="tagline"></span>
+    <span class="kicker" id="foot"></span>
+  </div>
+</div>
+
+<script>
+// Fill the card, then shrink the title until it fits its box (long project
+// names must not push the cover off the card).
+window.setCard = function(o){
+  document.getElementById('kicker').textContent  = o.kicker || '';
+  document.getElementById('tagline').textContent = o.tagline || '';
+  document.getElementById('foot').textContent    = o.foot || '';
+  const site = document.getElementById('site'), proj = document.getElementById('proj');
+  if (o.mode === 'project'){
+    site.classList.add('hidden'); proj.classList.remove('hidden');
+    const t = document.getElementById('ptitle');
+    t.textContent = o.title || '';
+    document.getElementById('psub').textContent = o.subtitle || '';
+    const img = document.getElementById('shot');
+    if (o.image) img.src = o.image; else img.parentElement.style.display = 'none';
+    const box = t.parentElement.parentElement;              // .ptext
+    let size = 66;
+    t.style.fontSize = size + 'px';
+    while (box.scrollHeight > 400 && size > 30){ size -= 2; t.style.fontSize = size + 'px'; }
+  } else {
+    proj.classList.add('hidden'); site.classList.remove('hidden');
+    document.getElementById('first').textContent = (o.first || 'ARTHUR').toUpperCase();
+    const last = document.getElementById('last');
+    last.textContent = (o.last || 'OTTEVAERE').toUpperCase();
+    let size = 150;                                          // fit the last name to the card
+    last.style.fontSize = size + 'px';
+    while (last.scrollWidth > 1072 && size > 60){ size -= 2; last.style.fontSize = size + 'px'; }
+    document.getElementById('first').style.fontSize = size + 'px';
+  }
+};
+</script>
 </body>
 </html>

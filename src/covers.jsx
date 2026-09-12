@@ -51,7 +51,7 @@ const Cover = {
       <circle cx="240" cy="70" r="50" fill="#dc2626" opacity="0.18"/>
       <circle cx="240" cy="70" r="22" fill="#dc2626" opacity="0.55"/>
       <text x="20" y="44" fill="#ffffff" fontFamily="Geist Mono,monospace" fontSize="10" letterSpacing="2" opacity="0.7">SEASON · 2025</text>
-      <text x="20" y="116" fill="#ffffff" fontFamily="Geist,sans-serif" fontWeight="600" fontSize="34" letterSpacing="-1.2">F1 Tracker</text>
+      <text x="20" y="116" fill="#ffffff" fontFamily="Archivo,sans-serif" fontWeight="600" fontSize="34" letterSpacing="-1.2">F1 Tracker</text>
     </svg>
   ),
 

@@ -53,7 +53,9 @@
        { label: "Report", url: "https://…" },
      ],
 
-     // Big numbers band, right after the first section. Skipped if absent.
+     // Big numbers. NOT displayed in the current design — the giant-number
+     // band was dropped on purpose. The values are kept here (harmless) in
+     // case they ever come back somewhere quieter.
      metrics: [
        { value: "900+", label: "reviews scraped" },
        { value: "6",    label: "models compared" },
@@ -120,6 +122,17 @@ window.PORTFOLIO_DATA = {
     location:       "Tournai, BE",
     birth:          "2004-06-24",   // ISO date of birth — age is computed live from this
 
+    /* Home page — the small labels around your name.
+         role      — the line in the top-left corner.
+         heroNote  — the short sentence beside your first name. Keep it short:
+                     it sits in the gap next to "ARTHUR".
+         heroPhoto — null for now. Drop a path here (e.g. "/assets/images/me.jpg")
+                     and a small portrait appears next to the name; no code
+                     to touch, and nothing shows while it stays null. */
+    role:      "Business Engineering — Analytics",
+    heroNote:  "Master's student turning messy data into things you can act on.",
+    heroPhoto: null,
+
     /* About — small status line under your name/location. Leave "" to hide
        it entirely; only fill it in while it's actually true, e.g.
        "Looking for a Fall 2026 internship" or "Open to freelance work". */
@@ -133,8 +146,11 @@ window.PORTFOLIO_DATA = {
       "I'm going on a semester abroad in Rotterdam in Fall '26, excited to meet new people and get a fresh perspective on things!",
     ],
 
-    /* Short description shown under your name on the home page */
-    tagline:  "Master's student in Business Engineering. I love turning messy data into things you can act on like dashboards, models, the occasional weekend project about Formula 1.",
+    /* The intro of the home page — the text that fills in, word by word, on
+       the orange screen. Words wrapped in *asterisks* are set in the italic
+       serif, the "voice" of the charter. Use it once, on the phrase that
+       matters most. */
+    tagline:  "Master's student in Business Engineering. I love turning messy data into *things you can act on* like dashboards, models, the occasional weekend project about Formula 1.",
 
     photo:    "/assets/images/avatar.png",    // Set to an image URL, or null for initials avatar
 
@@ -213,6 +229,16 @@ window.PORTFOLIO_DATA = {
       { icon: "Stock",    label: "Stock Market" },
       { icon: "Plane",    label: "Travel" },
     ],
+  },
+
+  /* ── Page copy ──────────────────────────────────────────────────
+     The few lines that aren't project content. Delete a key (or the whole
+     block) and the site falls back to the default sentence. */
+  copy: {
+    introCta:    "The rest of the story — the path, the toolkit, the person.",
+    workLede:    "A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.",
+    contactLede: "Internships, freelance, coffee chats — all welcome. Usually reply within a day.",
+    aboutCta:    "Got an internship, a project, or just a question?",
   },
 
   /* ── Projects ───────────────────────────────────────────────── */
@@ -1346,12 +1372,11 @@ window.PORTFOLIO_DATA = {
     },
   ],
 
-  /* ── Home page "fanning deck" ───────────────────────────────────
-     Pick exactly which project cards appear in the fanned deck on the
-     home page, and in what order, by listing their `id`s below.
-     The FIRST id lands centred/on top of the fan; the rest fan out
-     alternating right, left, right, left... around it.
+  /* ── Home page — the "Selected work" grid ───────────────────────
+     Which projects show on the home page, and in what order. The grid
+     holds FOUR (two by two), so only the first four ids below are used —
+     the rest of the list is just a handy shortlist you can reorder.
      Leave the array empty ([]) to fall back to the automatic pick
-     (featured project first, then the first few others). */
+     (the featured project first, then the most recent). */
   homeDeck: ["f1","recommender_system", "chwapi", "quantitative_decision_making", "ai_gesture_recognition", "dash"],
 };

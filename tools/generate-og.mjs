@@ -1,73 +1,122 @@
 // =============================================================================
-//  generate-og.mjs  —  Build the social "link preview" image (Open Graph image)
+//  generate-og.mjs — the images people see when a link is shared
 // =============================================================================
 //
 //  WHAT THIS IS
 //  ------------
-//  When you paste your site link into iMessage, WhatsApp, LinkedIn, Discord, …
-//  those apps show a preview card with an image. That image is
-//      assets/images/og-image.jpg
-//  and this script renders it from tools/og-template.html using a headless
-//  browser — so it uses the *real* "a." logo and the site's own Geist fonts,
-//  and looks pixel-identical to the site.
+//  Paste a link in iMessage, WhatsApp or LinkedIn and it shows a preview card.
+//  This renders those cards from tools/og-template.html with a real browser, so
+//  they use the site's own type and colours:
+//
+//      assets/og/site.jpg      the site card (home, work, about, contact)
+//      assets/og/<id>.jpg      one per project — its title and its cover
 //
 //  HOW TO RUN
-//  ----------
-//      node tools/generate-og.mjs
+//      npm run og          (then npm run build, so the pages point at them)
 //
-//  Needs Playwright's chromium (already used by this repo's tooling). If it's
-//  missing:  npx playwright install chromium
+//  Needs a Chromium: Playwright's own (npx playwright install chromium) or the
+//  Google Chrome already on the machine — it tries both.
 //
-//  WANT A COMPLETELY CUSTOM IMAGE INSTEAD?
-//  --------------------------------------
-//  You can ignore this script and just drop your own 1200×630 PNG/JPG at
-//  assets/images/og-image.jpg. To tweak text/colours, edit og-template.html.
-//
-//  NOTE: messaging apps cache previews per-URL. After deploying a new image an
-//  old preview can stick around — bump the ?v= number on the og:image URL in
-//  index.html, or use LinkedIn's Post Inspector to force a refresh.
+//  NOTE: messaging apps cache previews per URL. After deploying new images,
+//  bump the ?v= number in tools/build.mjs (const SITE … `?v=1`).
 // =============================================================================
 
 import { chromium } from 'playwright';
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import path from 'node:path';
+import vm from 'node:vm';
 
-const W = 1200, H = 630, SCALE = 2;   // render at 2× then downscale for crisp text
+const W = 1200, H = 630, SCALE = 2;
 const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.join(here, '..');
 const template = pathToFileURL(path.join(here, 'og-template.html')).href;
-// JPEG keeps the file ~60 KB (vs ~420 KB as PNG) — small enough that WhatsApp /
-// iMessage reliably fetch it, and visually identical at preview size.
-const output = path.join(here, '..', 'assets', 'images', 'og-image.jpg');
+const outDir = path.join(root, 'assets', 'og');
 
-const browser = await chromium.launch();
+async function loadData(){
+  const code = await readFile(path.join(root, 'data.js'), 'utf8');
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(code, ctx);
+  return ctx.window.PORTFOLIO_DATA || {};
+}
+const dateLabel = p => {
+  const s = String(p.date || '').trim();
+  if (/^\d{4}-\d{2}(-\d{2})?$/.test(s)){
+    const d = new Date(s.length === 7 ? s + '-01' : s);
+    return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  }
+  return p.year || '';
+};
+
+async function launch(){
+  try { return await chromium.launch(); }
+  catch (e) { return await chromium.launch({ channel: 'chrome' }); }
+}
+
+const D = await loadData();
+const P = D.profile || {};
+const projects = D.projects || [];
+await mkdir(outDir, { recursive: true });
+
+const browser = await launch();
 try {
-  // 1. Render the template at 2× resolution.
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: SCALE });
+  const shrink = await browser.newPage({ viewport: { width: W, height: H } });
+  await shrink.setContent(`<body style="margin:0"><canvas id="c" width="${W}" height="${H}"></canvas></body>`);
+
+  // Render at 2× then downscale to an exact 1200×630 JPEG — crisper text, and
+  // ~90 KB instead of ~500 KB, which is what WhatsApp and iMessage will fetch.
+  async function shoot(file){
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(180);
+    const hi = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: W, height: H } });
+    const dataUrl = await shrink.evaluate(async ({ b64, w, h }) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+      const c = document.getElementById('c'), ctx = c.getContext('2d');
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.fillStyle = '#F6F4EF'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      return c.toDataURL('image/jpeg', .84);   // ~100 KB: small enough that every chat app fetches it
+    }, { b64: hi.toString('base64'), w: W, h: H });
+    await writeFile(path.join(outDir, file), Buffer.from(dataUrl.split(',')[1], 'base64'));
+    console.log('✓ assets/og/' + file);
+  }
+
   await page.goto(template, { waitUntil: 'networkidle' });
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(150);
-  const hi = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: W, height: H } });
 
-  // 2. Downscale the 2× shot to an exact 1200×630 JPEG (crisper than a 1× render).
-  const shot = await browser.newPage({ viewport: { width: W, height: H } });
-  await shot.setContent('<body style="margin:0"><canvas id="c" width="' + W + '" height="' + H + '"></canvas></body>');
-  const dataUrl = await shot.evaluate(async ({ b64, w, h }) => {
-    const img = new Image();
-    img.src = 'data:image/png;base64,' + b64;
-    await img.decode();
-    const c = document.getElementById('c');
-    const ctx = c.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.fillStyle = '#ffffff';               // flatten (JPEG has no alpha)
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w, h);
-    return c.toDataURL('image/jpeg', 0.92);
-  }, { b64: hi.toString('base64'), w: W, h: H });
+  // 1 · the site card
+  const parts = String(P.name || 'Arthur Ottevaere').trim().split(/\s+/);
+  await page.evaluate(o => window.setCard(o), {
+    mode: 'site',
+    first: parts.shift(),
+    last: parts.join(' '),
+    kicker: P.location || '',
+    tagline: (P.role || 'Business Engineering — Analytics'),
+    foot: 'Portfolio',
+  });
+  await shoot('site.jpg');
 
-  const { writeFile } = await import('fs/promises');
-  await writeFile(output, Buffer.from(dataUrl.split(',')[1], 'base64'));
-  console.log('✓ Wrote', path.normalize(output), `(${W}x${H})`);
+  // 2 · one card per project
+  for (const p of projects){
+    if (!p || !p.id) continue;
+    const cover = p.cover && p.cover.startsWith('/') && existsSync(path.join(root, p.cover.slice(1)))
+      ? pathToFileURL(path.join(root, p.cover.slice(1))).href
+      : (p.cover && /^https?:/.test(p.cover) ? p.cover : '');
+    const dash = String(p.title).split(/\s+[—–]\s+/);
+    await page.evaluate(o => window.setCard(o), {
+      mode: 'project',
+      title: dash[0],
+      subtitle: dash.length > 1 ? dash.slice(1).join(' — ') : (p.subtitle || ''),
+      kicker: [p.cat, dateLabel(p)].filter(Boolean).join(' · '),
+      tagline: P.name || 'Arthur Ottevaere',
+      foot: 'arthurottevaere.github.io/work',
+      image: cover,
+    });
+    if (cover) await page.evaluate(() => { const i = document.getElementById('shot'); return i && i.complete ? null : new Promise(r => { i.onload = r; i.onerror = r; }); });
+    await shoot(p.id + '.jpg');
+  }
 } finally {
   await browser.close();
 }
