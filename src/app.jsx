@@ -124,7 +124,7 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
       <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
       <nav className="nav-links" aria-label="Primary">
         <span className="nav-active" aria-hidden="true" style={{
-          transform: 'translateX(calc(' + Math.max(0, activeIndex) + ' * (100% + 2px)))',
+          transform: 'translateX(calc(' + Math.max(0, activeIndex) * 100 + '% + ' + Math.max(0, activeIndex) * 2 + 'px))',
           opacity: activeIndex < 0 ? 0 : 1,
         }}/>
         {NAV.map(n => (
@@ -456,7 +456,7 @@ function App(){
       <Progress/>
       <Nav route={loc.route} theme={theme} toggle={toggle} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
       <Menu open={menuOpen} route={loc.route} close={() => setMenuOpen(false)} theme={theme} toggle={toggle}/>
-      <main id="main" className="page-wrap" key={loc.route + '/' + loc.sub}>
+      <main id="main" className={'page-wrap' + (loc.route === 'home' ? ' page-home' : '')} key={loc.route + '/' + loc.sub}>
         {Page}
       </main>
       <Footer/>
