@@ -26,24 +26,44 @@ function About(){
 /* ── Act 1 · the bio, filling in ───────────────────────────────────────── */
 function AboutIntro({ narrow }){
   const P = PROFILE();
-  const animated = !reduceMotion() && !narrow;
+  const animated = !reduceMotion();
   const sceneRef = useRef(null);
+  const bioRef   = useRef(null);
   const wordRefs = useRef([]);
 
   const paras = [P.bio && P.bio[0], P.bio && P.bio[1]].filter(Boolean).map(t => t.split(/\s+/).filter(Boolean));
   const offsets = []; { let acc = 0; paras.forEach(w => { offsets.push(acc); acc += w.length; }); }
   const total = offsets.length ? offsets[offsets.length - 1] + paras[paras.length - 1].length : 0;
 
+  /* Two ways to measure the same gesture. On desktop the scene is pinned and
+     its scroll runway IS the progress. On phones nothing is pinned — the block
+     just scrolls by — so the fill tracks the bio's own travel up the screen.
+     The branch has to be the breakpoint, not `runway > 0`: on a phone the
+     scene is taller than the screen too, and that runway is only a couple of
+     hundred pixels, so the words would all light up at once. */
   useScrollFrame(() => {
     const spans = wordRefs.current;
     if (!animated){ spans.forEach(s => { if (s) s.style.opacity = 1; }); return; }
-    const el = sceneRef.current; if (!el) return;
-    const r = el.getBoundingClientRect();
-    const runway = r.height - window.innerHeight;
-    const p = runway > 0 ? clamp(-r.top / runway, 0, 1) : clamp((window.innerHeight - r.top) / window.innerHeight, 0, 1);
+    const scene = sceneRef.current; if (!scene) return;
+    const vh = window.innerHeight;
+    let p;
+    if (narrow){
+      // The bio is already on screen when the page loads, so a plain "crossing
+      // a reading line" mapping would land mid-fill. Start where the block
+      // actually is: at the top of the page if it begins above the line,
+      // otherwise the moment it crosses it.
+      const b = (bioRef.current || scene).getBoundingClientRect();
+      const start = Math.max(0, b.top + window.scrollY - vh * .74);
+      const range = Math.max(1, b.height * .6 + vh * .18);
+      p = clamp((window.scrollY - start) / range, 0, 1);
+    } else {
+      const r = scene.getBoundingClientRect();
+      const runway = r.height - vh;
+      p = runway > 0 ? clamp(-r.top / runway, 0, 1) : clamp((vh - r.top) / vh, 0, 1);
+    }
     const spread = 3.4, head = clamp(p / .78, 0, 1) * (total + spread);
     spans.forEach((s, i) => { if (s) s.style.opacity = (.16 + .84 * clamp((head - i) / spread, 0, 1)).toFixed(3); });
-  }, [total, animated]);
+  }, [total, animated, narrow]);
 
   return (
     <section className={'ab-scene' + (animated ? ' is-animated' : '')} ref={sceneRef}>
@@ -54,7 +74,7 @@ function AboutIntro({ narrow }){
               {/* the page needs a heading of its own; the design's is the bio */}
               <h1 className="sr-only">About {P.name}</h1>
               <span className="eyebrow rv rv-fade">About</span>
-              <div className="ab-bio" style={{ marginTop: 18 }}>
+              <div className="ab-bio" ref={bioRef} style={{ marginTop: 18 }}>
                 {paras.map((wa, pi) => (
                   <p key={pi}>
                     {wa.map((w, wi) => {
@@ -121,6 +141,25 @@ function TimelineHead(){
       <span className="eyebrow rv rv-fade">The path</span>
       <Words as="h2" className="sec-title" text="Where I've been" dot/>
     </div>
+  );
+}
+
+/* What a step card says, wherever it is shown. The school's or company's
+   logo rides in the corner of the label row: desaturated and quiet while you
+   are elsewhere on the axis, in its own colours on the step you are on. It
+   sits on negative margins so it never makes the card any taller. */
+function TimelineCardBody({ e }){
+  return (
+    <>
+      <span className="tl-type">
+        {e.type || 'Step'}
+        {e.upcoming ? <span className="pill-up">Upcoming</span> : null}
+        {e.logo ? <img className="tl-logo" src={e.logo} alt="" loading="lazy" decoding="async"/> : null}
+      </span>
+      <span className="tl-title">{e.title}</span>
+      <span className="tl-date">{formatPeriod(e.period)}</span>
+      {e.place ? <span className="tl-place">{e.place}</span> : null}
+    </>
   );
 }
 
@@ -406,10 +445,7 @@ function TimelineTravel({ entries }){
             <span className="tl-today" ref={todayRef}><i/><span>Today</span></span>
             {entries.map((e, i) => (
               <article key={'card' + i} className={'tl-card' + (e.upcoming ? ' up' : '')} ref={el => { cardRefs.current[i] = el; }}>
-                <span className="tl-type">{e.type || 'Step'}{e.upcoming ? <span className="pill-up">Upcoming</span> : null}</span>
-                <span className="tl-title">{e.title}</span>
-                <span className="tl-date">{formatPeriod(e.period)}</span>
-                {e.place ? <span className="tl-place">{e.place}</span> : null}
+                <TimelineCardBody e={e}/>
               </article>
             ))}
           </div>
@@ -445,10 +481,7 @@ function TimelineList({ entries }){
             <li className="tl-v-item" key={i} ref={el => { itemRefs.current[i] = el; }}>
               <span className="tl-v-node" aria-hidden="true"/>
               <div className={'tl-card rv rv-up' + (e.upcoming ? ' up' : '')}>
-                <span className="tl-type">{e.type || 'Step'}{e.upcoming ? <span className="pill-up">Upcoming</span> : null}</span>
-                <span className="tl-title">{e.title}</span>
-                <span className="tl-date">{formatPeriod(e.period)}</span>
-                {e.place ? <span className="tl-place">{e.place}</span> : null}
+                <TimelineCardBody e={e}/>
               </div>
             </li>
           ))}
@@ -478,7 +511,7 @@ function Toolkit(){
               <span className="trow-v">
                 {(g.items || []).map((it, j) => (
                   <span className="titem" key={j}>
-                    {it[2] ? <img src={it[2]} alt="" loading="lazy" decoding="async"/> : null}
+                    {it[2] ? <img className={it[3] ? 'is-mono' : undefined} src={it[2]} alt="" loading="lazy" decoding="async"/> : null}
                     {it[0]}
                   </span>
                 ))}
@@ -489,7 +522,12 @@ function Toolkit(){
             <div className="trow rv rv-up" style={{ '--d': (groups.length * .05) + 's' }}>
               <span className="trow-k">Languages</span>
               <span className="trow-v">
-                {langs.map((l, j) => <span className="titem" key={j}>{l[0]} <em>{l[1]}</em></span>)}
+                {langs.map((l, j) => (
+                  <span className="titem" key={j}>
+                    {l[2] ? <img className="lang-flag" src={l[2]} alt="" loading="lazy" decoding="async"/> : null}
+                    {l[0]} <em>{l[1]}</em>
+                  </span>
+                ))}
               </span>
             </div>
           ) : null}

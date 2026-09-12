@@ -174,10 +174,14 @@ function HeroScene({ ready }){
       <section className={'hero-scene' + (animated ? ' is-animated' : '')} ref={sceneRef}>
         <div className="hero-sticky">
           <div className={'hero' + (ready ? ' in' : '')}>
+            {/* Phones get one label up here, not two: the place and the clock
+                move down to the foot, so the top of the screen is a single
+                quiet line and the name has the whole middle to itself. */}
             <div className="hero-row hero-top">
               <span className="tag">{role}</span>
-              <span className="tag">{place} · <b>{clock}</b></span>
+              {narrow ? null : <span className="tag">{place} · <b>{clock}</b></span>}
             </div>
+            <span className="hero-lead" aria-hidden="true"/>
 
             <h1 className="hero-name" ref={nameRef} aria-label={P.name}>
               <span className="hero-l1">
@@ -191,22 +195,31 @@ function HeroScene({ ready }){
               </span>
               <span className="hero-l2">
                 <span className="mask"><span className="mask-in" style={{ '--i': 1 }}>
+                  {/* The last name always spans the full width, so its resting
+                      width axis is what sets the size of the whole name. Phones
+                      hold it narrower than the desktop's 125 (m0) — same line
+                      length, bigger type, more of the screen used. */}
                   <span className="hero-word hero-fit" aria-hidden="true"
-                        data-w0="125" data-w1="72" data-m0="104" data-m1="72" data-wg="850">{letters(last, 'b')}</span>
+                        data-w0="125" data-w1="72" data-m0="88" data-m1="72" data-wg="850">{letters(last, 'b')}</span>
                 </span></span>
               </span>
             </h1>
 
-            {note && narrow ? <p className="hero-note is-below">{note}</p> : null}
+            {/* The hairline closes the name on phones — the note that used to
+                sit here says the same thing as the intro screen right after. */}
+            <span className="hero-rule" aria-hidden="true"/>
+            <span className="hero-tail" aria-hidden="true"/>
 
             <div className="hero-row hero-bottom">
-              <span className="tag">©{year} — Portfolio</span>
+              <span className="tag">{narrow ? <>{place} · <b>{clock}</b></> : <>©{year} — Portfolio</>}</span>
               <div className="hero-ctas">
                 <Link to="/work/" className="btn btn-ink">View projects <Icon.ArrowUR/></Link>
-                <a href="#contact" className="btn btn-line"
-                   onClick={e => { e.preventDefault(); scrollToEl(document.getElementById('contact'), -60); }}>
-                  Get in touch
-                </a>
+                {narrow ? null : (
+                  <a href="#contact" className="btn btn-line"
+                     onClick={e => { e.preventDefault(); scrollToEl(document.getElementById('contact'), -60); }}>
+                    Get in touch
+                  </a>
+                )}
               </div>
               <ScrollBadge/>
             </div>
