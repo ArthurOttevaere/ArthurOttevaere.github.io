@@ -251,9 +251,11 @@ html.lenis,html.lenis body{height:auto}
   border-radius:999px;background:var(--ink);color:var(--paper);
   box-shadow:0 14px 34px -20px rgba(0,0,0,.55);
   max-width:calc(100vw - 24px);
-  transition:transform .5s var(--ease-expo),opacity .3s ease,background-color .3s ease,color .3s ease;
+  will-change:transform;
+  transition:transform .24s var(--ease-expo),opacity .2s ease,background-color .3s ease,color .3s ease;
 }
-.nav.hidden{transform:translate(-50%,-140%);opacity:0}
+.nav.hidden{transform:translate(-50%,-140%);opacity:0;pointer-events:none}
+.nav.hidden:focus-within{transform:translateX(-50%);opacity:1;pointer-events:auto}
 .nav-logo{display:inline-flex;align-items:center;height:36px;padding:0 12px 0 11px;color:inherit}
 .nav-logo svg{height:16px;width:auto}
 .nav-links{display:flex;align-items:center;gap:2px}
@@ -808,13 +810,13 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .tl-stage{position:relative;flex:1;min-height:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 .tl-track{position:absolute;top:0;bottom:0;left:0;will-change:transform}
 .tl-axis{position:absolute;left:0;right:0;top:var(--axis);height:1px;background:var(--rule-2)}
-.tl-past{right:auto;width:0;background:var(--accent);opacity:.8}
+.tl-past{right:auto;width:0;transform:scaleX(0);transform-origin:left;background:var(--accent);opacity:.8}
 .tl-tick{position:absolute;top:calc(var(--axis) - 3px);width:1px;height:7px;background:var(--rule-2);opacity:.6}
 .tl-tick.is-year{top:calc(var(--axis) - 7px);height:15px;opacity:1}
 .tl-year{position:absolute;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--faint);transform:translateX(-50%)}
 .tl-bar{position:absolute;height:7px;border-radius:4px;background:var(--rule);overflow:hidden}
 .tl-bar.up{background:transparent;border:1px dashed var(--rule-2)}
-.tl-bar-fill{position:absolute;inset:0;width:0;background:var(--accent);border-radius:inherit}
+.tl-bar-fill{position:absolute;inset:0;transform:scaleX(0);transform-origin:left;background:var(--accent);border-radius:inherit}
 .tl-today{position:absolute;top:var(--axis);transform:translate(-50%,-50%);display:grid;place-items:center;z-index:2}
 .tl-today i{width:11px;height:11px;border-radius:50%;border:2px solid var(--accent);background:var(--paper)}
 .tl-today span{
