@@ -7,45 +7,62 @@
   one for the site, one per project. Edit the design here, then run:
       npm run og
   The script fills it through window.setCard({...}); nothing is hard-coded.
+
+  THE CARD IS THE BOOT SPLASH, HELD STILL: the signature orange full-bleed,
+  everything on it in ink. It is the same image as the favicon, so a link and
+  a tab read as one thing — and in a feed of white and grey cards, an orange
+  rectangle is what stops the scroll. Both faces (site and project) share the
+  field, the corners and the type; only the middle changes.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#F6F4EF; --ink:#101014; --muted:#67656C; --rule:#DDD9D0; --accent:#FF4A12;
+    --paper:#F6F4EF; --ink:#101014; --accent:#FF4A12;
     --f:'Archivo',Arial,sans-serif; --v:'Instrument Serif',Georgia,serif; --m:'Geist Mono',monospace;
+    --quiet:.72;              /* the corner labels, one step back from the title */
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:1200px;height:630px}
   body{
     font-family:var(--f);color:var(--ink);
-    background-color:var(--paper);
+    background-color:var(--accent);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .card{width:1200px;height:630px;padding:56px 64px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .card{width:1200px;height:630px;padding:52px 60px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+  /* corners — the same four labels on both faces */
   .top{display:flex;align-items:center;justify-content:space-between;gap:20px}
-  .brand{display:flex;align-items:center;gap:12px;font-family:var(--m);font-size:20px;letter-spacing:.02em;color:var(--muted)}
-  .brand svg{height:22px;width:auto}
-  .kicker{font-family:var(--m);font-size:18px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-
-  /* site card — the hero lockup */
-  .site{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
-  .l1{display:flex;align-items:baseline;line-height:.82}
-  .first{font-weight:850;font-stretch:62%;font-size:150px;letter-spacing:-.01em}
-  .dot{width:26px;height:26px;border-radius:50%;background:var(--accent);margin-left:9px;flex:none}
-  .ptitle + .dot{width:16px;height:16px;margin-left:5px}
-  .last{font-weight:850;font-stretch:125%;font-size:150px;letter-spacing:-.01em;line-height:.82;white-space:nowrap}
+  .brand{display:flex;align-items:center;gap:12px;font-family:var(--m);font-size:19px;letter-spacing:.02em;opacity:var(--quiet)}
+  .brand svg{height:21px;width:auto}
+  .kicker{font-family:var(--m);font-size:17px;letter-spacing:.1em;text-transform:uppercase;opacity:var(--quiet)}
   .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
-  .tagline{font-family:var(--m);font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .tagline{font-family:var(--m);font-size:17px;letter-spacing:.1em;text-transform:uppercase;opacity:var(--quiet)}
 
-  /* project card — text left, cover right */
-  .proj{flex:1;display:grid;grid-template-columns:1fr 440px;gap:52px;align-items:center;padding-top:30px}
+  .dot{border-radius:50%;background:var(--ink);flex:none}
+
+  /* site face — the hero lockup, narrow over wide */
+  .site{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .l1{display:flex;align-items:baseline;line-height:.8}
+  .first{font-weight:850;font-stretch:62%;font-size:132px;letter-spacing:-.012em}
+  .last{font-weight:850;font-stretch:125%;font-size:132px;letter-spacing:-.014em;line-height:.8;white-space:nowrap}
+  .l1 .dot{width:23px;height:23px;margin-left:9px}
+
+  /* project face — text left, cover right */
+  .proj{flex:1;display:grid;grid-template-columns:1fr 430px;gap:52px;align-items:center;padding-top:26px}
   .ptext{display:flex;flex-direction:column;gap:18px;min-width:0}
-  .ptitle{font-weight:800;font-stretch:104%;font-size:66px;line-height:1.02;letter-spacing:-.035em;display:inline}
-  .psub{font-family:var(--v);font-style:italic;font-size:30px;line-height:1.18;color:var(--ink);opacity:.78}
-  .shot{width:440px;height:400px;border-radius:24px;overflow:hidden;background:var(--rule)}
+  .ptitle{font-weight:800;font-stretch:104%;font-size:66px;line-height:1.02;letter-spacing:-.035em}
+  /* the dot rides the last word: on its own it would wrap to a line of its
+     own the moment a title needs two. */
+  .ptitle .tail{white-space:nowrap}
+  .ptitle .dot{width:16px;height:16px;display:inline-block;vertical-align:baseline;margin-left:5px}
+  .psub{font-family:var(--v);font-style:italic;font-size:30px;line-height:1.18;opacity:.82}
+  /* the cover sits in an ink mount: on a saturated field a photo needs a
+     border to stop looking pasted on. */
+  .shot{width:430px;height:392px;border-radius:22px;overflow:hidden;background:rgba(16,16,20,.16);box-shadow:0 0 0 5px var(--ink)}
   .shot img{width:100%;height:100%;object-fit:cover;display:block}
+
   .hidden{display:none!important}
 </style>
 </head>
@@ -53,9 +70,9 @@
 <div class="card">
   <div class="top">
     <span class="brand">
-      <svg viewBox="0 0 1098 552" fill="currentColor" style="color:var(--ink)">
+      <svg viewBox="0 0 1098 552" fill="currentColor">
         <path d="M240 552Q189 552 145 545Q101 538 68.5 520.5Q36 503 18 472.5Q0 442 0 394Q0 331 33.5 294.5Q67 258 129 240.5Q191 223 276.5 218Q362 213 467 213V202Q467 175 453 158.5Q439 142 413.5 134.5Q388 127 353 127Q332 127 306 130.5Q280 134 261 143.5Q242 153 242 172V176H14Q13 172 13 169.5Q13 167 13 163Q13 116 52.5 79Q92 42 170 21Q248 0 362 0Q467 0 540.5 17.5Q614 35 652.5 73Q691 111 691 175V372Q691 388 699 399.5Q707 411 723 411H778V532Q760 539 725.5 545.5Q691 552 653 552Q599 552 565 542.5Q531 533 513 517Q495 501 487 482H479Q450 503 414.5 519Q379 535 336 543.5Q293 552 240 552ZM307 426Q322 426 348 422.5Q374 419 401.5 410Q429 401 448 386Q467 371 467 347V314Q380 314 325.5 322.5Q271 331 246 346Q221 361 221 382Q221 401 233.5 410.5Q246 420 266 423Q286 426 307 426Z"/>
-        <circle cx="963" cy="405" r="135" fill="var(--accent)"/>
+        <circle cx="963" cy="405" r="135"/>
       </svg>
       <span id="brandUrl">arthurottevaere.github.io</span>
     </span>
@@ -69,7 +86,7 @@
 
   <div class="proj hidden" id="proj">
     <div class="ptext">
-      <div><span class="ptitle" id="ptitle"></span><span class="dot" style="display:inline-block;vertical-align:baseline"></span></div>
+      <div class="ptitle" id="ptitle"></div>
       <div class="psub" id="psub"></div>
     </div>
     <div class="shot"><img id="shot" alt=""/></div>
@@ -83,8 +100,10 @@
 
 <script>
 // Fill the card, then shrink the title until it fits its box (long project
-// names must not push the cover off the card).
-window.setCard = function(o){
+// names must not push the cover off the card). The fit has to wait for
+// Archivo: measured against a fallback face, every size comes out wrong.
+window.setCard = async function(o){
+  await document.fonts.ready;
   document.getElementById('kicker').textContent  = o.kicker || '';
   document.getElementById('tagline').textContent = o.tagline || '';
   document.getElementById('foot').textContent    = o.foot || '';
@@ -92,11 +111,16 @@ window.setCard = function(o){
   if (o.mode === 'project'){
     site.classList.add('hidden'); proj.classList.remove('hidden');
     const t = document.getElementById('ptitle');
-    t.textContent = o.title || '';
+    const words = String(o.title || '').split(/\s+/).filter(Boolean);
+    const tail = document.createElement('span'); tail.className = 'tail';
+    tail.textContent = words.pop() || '';
+    tail.appendChild(document.createElement('span')).className = 'dot';
+    t.textContent = words.length ? words.join(' ') + ' ' : '';
+    t.appendChild(tail);
     document.getElementById('psub').textContent = o.subtitle || '';
     const img = document.getElementById('shot');
     if (o.image) img.src = o.image; else img.parentElement.style.display = 'none';
-    const box = t.parentElement.parentElement;              // .ptext
+    const box = t.parentElement;                            // .ptext
     let size = 66;
     t.style.fontSize = size + 'px';
     while (box.scrollHeight > 400 && size > 30){ size -= 2; t.style.fontSize = size + 'px'; }
@@ -105,9 +129,9 @@ window.setCard = function(o){
     document.getElementById('first').textContent = (o.first || 'ARTHUR').toUpperCase();
     const last = document.getElementById('last');
     last.textContent = (o.last || 'OTTEVAERE').toUpperCase();
-    let size = 150;                                          // fit the last name to the card
+    let size = 132;                                          // fit the last name to the card
     last.style.fontSize = size + 'px';
-    while (last.scrollWidth > 1072 && size > 60){ size -= 2; last.style.fontSize = size + 'px'; }
+    while (last.scrollWidth > 1080 && size > 60){ size -= 2; last.style.fontSize = size + 'px'; }
     document.getElementById('first').style.fontSize = size + 'px';
   }
 };

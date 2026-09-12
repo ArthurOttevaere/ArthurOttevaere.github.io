@@ -18,7 +18,8 @@
 //  Google Chrome already on the machine — it tries both.
 //
 //  NOTE: messaging apps cache previews per URL. After deploying new images,
-//  bump the ?v= number in tools/build.mjs (const SITE … `?v=1`).
+//  bump the ?v= number in tools/build.mjs (search `?v=` in imageFor/siteImage),
+//  then run npm run build — otherwise WhatsApp and LinkedIn keep the old card.
 // =============================================================================
 
 import { chromium } from 'playwright';
@@ -76,9 +77,12 @@ try {
       const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
       const c = document.getElementById('c'), ctx = c.getContext('2d');
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-      ctx.fillStyle = '#F6F4EF'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#FF4A12'; ctx.fillRect(0, 0, w, h);   // the card's own field, so no cream edge survives a rounding
       ctx.drawImage(img, 0, 0, w, h);
-      return c.toDataURL('image/jpeg', .84);   // ~100 KB: small enough that every chat app fetches it
+      // A flat field compresses to almost nothing, so we can afford a high
+      // quality here — below ~.9 JPEG rings around black type on saturated
+      // orange. Still well under the ~300 KB that chat apps will fetch.
+      return c.toDataURL('image/jpeg', .92);
     }, { b64: hi.toString('base64'), w: W, h: H });
     await writeFile(path.join(outDir, file), Buffer.from(dataUrl.split(',')[1], 'base64'));
     console.log('✓ assets/og/' + file);
