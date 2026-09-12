@@ -97,6 +97,7 @@ function CvButton(){
 /* ── Nav ───────────────────────────────────────────────────────────────── */
 function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
   const [hidden, setHidden] = useState(false);
+  const activeIndex = NAV.findIndex(n => n.route === route);
   useEffect(() => {
     let raf = 0, lastY = Math.max(0, window.scrollY), travel = 0;
     setHidden(false);
@@ -122,6 +123,10 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
     <header className={'nav' + (hidden && !menuOpen ? ' hidden' : '')}>
       <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
       <nav className="nav-links" aria-label="Primary">
+        <span className="nav-active" aria-hidden="true" style={{
+          transform: 'translateX(calc(' + Math.max(0, activeIndex) + ' * (100% + 2px)))',
+          opacity: activeIndex < 0 ? 0 : 1,
+        }}/>
         {NAV.map(n => (
           <Link key={n.route} to={n.to} className={'nav-link' + (route === n.route ? ' on' : '')}
                 aria-current={route === n.route ? 'page' : undefined}>
