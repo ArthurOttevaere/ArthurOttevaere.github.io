@@ -355,8 +355,9 @@ html.lenis,html.lenis body{height:auto}
 @media (max-width:640px){ .to-top{right:14px;bottom:14px;width:42px;height:42px} }
 
 /* ─── 7 · Page shell + transitions ─────────────────────────────── */
-.page-wrap{transition:opacity .26s ease,transform .26s ease}
-.page-wrap.is-leaving{opacity:0;transform:translateY(-10px)}
+.page-wrap{animation:page-enter .24s var(--ease-expo) both}
+@keyframes page-enter{from{opacity:.65;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.page-wrap{animation:none}}
 .page{padding-bottom:clamp(60px,8vw,120px)}
 .page-head{padding-top:calc(var(--nav-h) + clamp(48px,8vw,116px));display:grid;gap:20px}
 .page-head .lede{margin-top:4px}

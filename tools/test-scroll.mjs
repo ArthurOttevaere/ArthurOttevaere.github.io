@@ -46,7 +46,8 @@ try {
       assert.ok(await page.evaluate(() => scrollY < 500), 'Wheel direction reversal responds');
     }
     for (const route of ['/', '/about/', '/work/', '/contact/']) {
-      await page.evaluate(route => window.__nav(route), route);
+      const immediatePath = await page.evaluate(route => { window.__nav(route); return location.pathname; }, route);
+      assert.equal(immediatePath, route, 'Navigation changes immediately without a timer');
       await page.waitForTimeout(500);
       const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
       for (const y of [max * .25, max * .6, max, max * .5, 0]) await move(y);

@@ -68,7 +68,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
 
 <!-- The charter itself. Everything visual lives in this one file. -->
-<link rel="stylesheet" href="/assets/css/site.css?v=1">
+<link rel="stylesheet" href="/assets/css/site.css?v=dbe8a8e8fc54">
 
 <!-- Runs before the first paint: theme, the .js flag the reveals depend on,
      and the rewrite of old #/work/f1 links to the new /work/f1/ addresses. -->
@@ -96,9 +96,9 @@
 
 <!-- React 18 (production) + Lenis (smooth scroll, vendored so the site owns
      its own copy). The app bundle is compiled from src/*.jsx by npm run build. -->
-<script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-<script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-<script defer src="/assets/vendor/lenis.min.js"></script>
+<script defer src="/assets/vendor/react.production.min.js?v=d949f1c3687a" crossorigin></script>
+<script defer src="/assets/vendor/react-dom.production.min.js?v=35f4f974f4b2" crossorigin></script>
+<script defer src="/assets/vendor/lenis.min.js?v=53195c9797e7"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -147,7 +147,7 @@
 
 <!-- Content — edit data.js to update the portfolio. No rebuild needed for the
      site itself; run npm run build to refresh the per-project share pages. -->
-<script defer src="/data.js"></script>
-<script defer src="/dist/app.js?v=2"></script>
+<script defer src="/data.js?v=4a2e1a38c5ec"></script>
+<script defer src="/dist/app.js?v=951b3d35c15a"></script>
 </body>
 </html>
