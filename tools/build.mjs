@@ -29,6 +29,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { transform } from 'esbuild';
 
 const SITE = 'https://arthurottevaere.github.io';
@@ -188,8 +189,22 @@ async function pages(){
   console.log(`✓ sitemap.xml (${urls.length} urls)`);
 }
 
+// Version local scripts and styles by their bytes so deployments cannot mix
+// a new page with a cached bundle or stylesheet from an earlier release.
+async function versionAssets(){
+  let html = await readFile('index.html', 'utf8');
+  const refs = [...html.matchAll(/(?:src|href)="(\/(?!\/)[^"?]+\.(?:js|css))(?:\?[^" ]*)?"/g)];
+  for (const match of refs){
+    const bytes = await readFile(match[1].slice(1));
+    const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+    html = html.replace(match[0], match[0].split('=')[0] + '="' + match[1] + '?v=' + hash + '"');
+  }
+  await writeFile('index.html', html);
+}
+
 export async function build(){
   await bundle();
+  await versionAssets();
   await pages();
 }
 

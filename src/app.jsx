@@ -328,7 +328,6 @@ function Footer(){
 function App(){
   const [theme, toggle] = useTheme();
   const [loc, setLoc]   = useState(() => parsePath(location.pathname));
-  const [leaving, setLeaving] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const firstCount = useRef(true);
@@ -354,9 +353,8 @@ function App(){
       else window.scrollTo({ top: 0, behavior: reduceMotion() ? 'instant' : 'smooth' });
       return;
     }
-    if (reduceMotion()){ commit(to, true); return; }
-    setLeaving(true);
-    setTimeout(() => { commit(to, true); setLeaving(false); }, 250);
+    // Mount the destination on the click; CSS animates it into place.
+    commit(to, true);
   }, [commit]);
 
   useEffect(() => { window.__nav = navigate; }, [navigate]);
@@ -404,12 +402,12 @@ function App(){
     const boot = document.getElementById('boot');
     if (!boot){ setReady(true); return; }
     const start = window.__bootStart || performance.now();
-    const MIN = 1500;
+    const MIN = 600;
     let dead = false;
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
     (async () => {
-      try { await Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), wait(2200)]); } catch (e) {}
+      try { await Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), wait(900)]); } catch (e) {}
       await wait(Math.max(0, MIN - (performance.now() - start)));
       if (dead) return;
       if (window.__bootStop) window.__bootStop();
@@ -458,7 +456,7 @@ function App(){
       <Progress/>
       <Nav route={loc.route} theme={theme} toggle={toggle} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
       <Menu open={menuOpen} route={loc.route} close={() => setMenuOpen(false)} theme={theme} toggle={toggle}/>
-      <main id="main" className={'page-wrap' + (leaving ? ' is-leaving' : '')} key={loc.route + '/' + loc.sub}>
+      <main id="main" className="page-wrap" key={loc.route + '/' + loc.sub}>
         {Page}
       </main>
       <Footer/>
