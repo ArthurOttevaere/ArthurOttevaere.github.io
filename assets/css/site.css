@@ -266,7 +266,7 @@ html.lenis,html.lenis body{height:auto}
   background:color-mix(in oklab,var(--paper) 14%,var(--ink));
   box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--paper) 10%,transparent);
   pointer-events:none;z-index:-1;
-  transition:transform .24s var(--ease-expo),opacity .18s ease;
+  transition:transform .32s cubic-bezier(.22,.75,.25,1),opacity .18s ease;
 }
 @media (prefers-reduced-motion:reduce){.nav-active{transition:none}}
 .nav-link{
@@ -355,7 +355,10 @@ html.lenis,html.lenis body{height:auto}
 @media (max-width:640px){ .to-top{right:14px;bottom:14px;width:42px;height:42px} }
 
 /* ─── 7 · Page shell + transitions ─────────────────────────────── */
-.page-wrap{animation:page-enter .24s var(--ease-expo) both}
+.page-wrap{animation:page-enter .24s var(--ease-expo) backwards}
+/* The home scene owns its entrance. A transformed ancestor would re-anchor
+   its fixed circle overlay to the page instead of the viewport. */
+.page-wrap.page-home{animation:none}
 @keyframes page-enter{from{opacity:.65;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.page-wrap{animation:none}}
 .page{padding-bottom:clamp(60px,8vw,120px)}
