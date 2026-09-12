@@ -62,6 +62,19 @@ try {
         assert.ok(samples.some(x => x > Math.min(start, target) + 2 && x < Math.max(start, target) - 2), 'Pill visibly travels between tabs rather than jumping');
         assert.ok(Math.abs(samples.at(-1) - target) < 1, 'Pill lands on the active tab');
       }
+      const interrupted = await page.evaluate(async () => {
+        const pill = document.querySelector('.nav-active');
+        const x = () => pill.getBoundingClientRect().x;
+        document.querySelector('.nav-link[href="/contact/"]').click();
+        await new Promise(r => setTimeout(r, 90));
+        const before = x();
+        document.querySelector('.nav-link[href="/about/"]').click();
+        const after = x();
+        await new Promise(r => setTimeout(r, 400));
+        return { before, after, end: x(), target: document.querySelector('.nav-link.on').getBoundingClientRect().x };
+      });
+      assert.ok(Math.abs(interrupted.before - interrupted.after) < 1, 'Changing direction does not teleport the pill');
+      assert.ok(Math.abs(interrupted.end - interrupted.target) < 1, 'Interrupted slide settles on the latest selection');
     }
     await page.evaluate(() => window.__nav('/'));
     await page.waitForSelector('.veil', { state: 'attached' });

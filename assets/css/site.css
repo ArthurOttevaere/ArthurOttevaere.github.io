@@ -263,19 +263,25 @@ html.lenis,html.lenis body{height:auto}
 .nav-links{position:relative;isolation:isolate;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:center;gap:2px}
 .nav-active{
   position:absolute;inset:0 auto 0 0;width:calc((100% - 4px)/3);border-radius:999px;
-  background:color-mix(in oklab,var(--paper) 14%,var(--ink));
-  box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--paper) 10%,transparent);
   pointer-events:none;z-index:-1;
-  transition:transform .32s cubic-bezier(.22,.75,.25,1),opacity .18s ease;
+  will-change:transform;
+  transition:transform .28s cubic-bezier(.32,.72,0,1),opacity .18s ease;
+}
+.nav-active::before{
+  content:"";position:absolute;inset:2px;border-radius:inherit;
+  background:linear-gradient(180deg,color-mix(in oklab,var(--paper) 13%,transparent),color-mix(in oklab,var(--paper) 7%,transparent));
+  box-shadow:inset 0 1px 0 color-mix(in oklab,var(--paper) 16%,transparent),0 2px 5px rgba(0,0,0,.08);
 }
 @media (prefers-reduced-motion:reduce){.nav-active{transition:none}}
 .nav-link{
   position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 13px;
   border-radius:999px;font-size:14.5px;font-weight:500;letter-spacing:-.005em;
   color:color-mix(in oklab,var(--paper) 66%,transparent);
-  transition:color .22s ease,background-color .22s ease;
+  transition:color .18s ease,transform .14s var(--ease-expo);
 }
-.nav-link:hover{color:var(--paper)}
+@media (hover:hover) and (pointer:fine){.nav-link:hover{color:var(--paper)}}
+.nav-link:active{transform:scale(.97)}
+.nav-link:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
 .nav-link.on{color:var(--paper)}
 .nav-sep{width:1px;height:20px;background:color-mix(in oklab,var(--paper) 16%,transparent);margin:0 5px;flex:none}
 .nav-icon{
