@@ -184,36 +184,52 @@ window.PORTFOLIO_DATA = {
        `title` = degree name / internship or job title.
        `place` = school, university, or company.
        `type`  = small label shown above the title (e.g. "Education",
-                 "Internship", "Job") — optional, omit to show nothing. */
+                 "Internship", "Job") — optional, omit to show nothing.
+       `logo`  = OPTIONAL path to the school's or company's logo, e.g.
+                 "/assets/logos/orgs/uclouvain.svg". It shows as a small
+                 desaturated mark in the top-right corner of the card, and
+                 only takes its real colours on the card you are on. Leave
+                 it out and the card simply has no mark. Drop the files in
+                 /assets/logos/orgs/ — SVG for wordmarks, or a PNG with a
+                 transparent background; any width works, the height is
+                 capped. */
     timeline: [
-      { period: "2025-09 — Present", title: "Master in Business Engineering - Business Analytics track",  place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education"},
-      {period: "2026-09 — 2026-12", title: "Erasmus Semester", place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education"},
-      { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",  place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education" },
-      {period: "2025-01 — 2025-02", title: "Business Internship", place: "Global Net Belgium", type: "Internship"},
-      {period: "2027-02 — 2027-05", title: "Data Consultant Internship", place: "EASI", type: "Internship"},
+      { period: "2025-09 — Present", title: "Master in Business Engineering - Business Analytics track", place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg" },
+      { period: "2026-09 — 2026-12", title: "Erasmus Semester",                                          place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education", logo: "/assets/logos/orgs/erasmus-rotterdam.svg" },
+      { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",                          place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg" },
+      { period: "2025-01 — 2025-02", title: "Business Internship",                                       place: "Global Net Belgium", type: "Internship", logo: "/assets/logos/orgs/globalnet.svg" },
+      { period: "2027-02 — 2027-05", title: "Data Consultant Internship",                                place: "EASI",               type: "Internship", logo: "/assets/logos/orgs/easi.svg" },
     ],
 
     /* About — skill tags (flat list, kept for the command palette etc.) */
     tools: ["Python", "R", "SQL", "PowerBI", "Excel", "Canva", "Notion", "Git"],
 
     /* About — skills grouped by category for the "workbench" act.
-       Each item: [name, monogram, logo?].
+       Each item: [name, monogram, logo?, mono?].
          • monogram = 1–3 char badge shown when no logo is set.
          • logo (optional) = image path, e.g. "/assets/logos/python.svg".
            When present, the logo is shown instead of the monogram.
+         • mono (optional) = true for a logo that is a single black mark
+           (Notion, GitHub…). It is then flipped to white in dark mode so
+           it never disappears into the page. Leave it out for logos that
+           carry their own colours.
        Edit freely; falls back to `tools` if removed. */
     toolGroups: [
       { label: "Code",        items: [["Python","Py","/assets/logos/python.png"], ["R","R","/assets/logos/r.png"], ["SQL","SQL","/assets/logos/sql.png"]] },
       { label: "Data & Viz",  items: [["Excel","XL","/assets/logos/excel.png"], ["PowerBI","BI","/assets/logos/powerbi.svg"]] },
-      { label: "Workflow",    items: [["Git","Git"], ["Notion","N"], ["Canva","Ca","/assets/logos/canva.png"]] },
+      { label: "Workflow",    items: [["Git","Git","/assets/logos/git.svg"], ["Notion","N","/assets/logos/notion.png",true], ["Canva","Ca","/assets/logos/canva.png"]] },
     ],
 
 
-    /* About — spoken languages */
+    /* About — spoken languages. Each item: [name, level, flag?].
+       `flag` is an OPTIONAL path to a small flag, drawn in /assets/logos/flags/
+       (SVG, so it stays crisp and looks the same on every machine — emoji flags
+       don't render at all on Windows). Leave it out and the language simply
+       shows without one. */
     languages: [
-      ["French",  "Native"],
-      ["English", "C1 — fluent"],
-      ["Dutch",   "B2 — working"],
+      ["French",  "Native",       "/assets/logos/flags/fr.svg"],
+      ["English", "C1 — fluent",  "/assets/logos/flags/gb.svg"],
+      ["Dutch",   "B2 — working", "/assets/logos/flags/nl.svg"],
     ],
 
     /* About — "What I'm into" looping marquee.

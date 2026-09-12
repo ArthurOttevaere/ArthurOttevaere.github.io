@@ -42,6 +42,14 @@
   --form-fg:#F6F4EF;
   --form-line:rgba(246,244,239,.20);
 
+  /* borrowed logos (schools, companies, tools) are pulled down to one ink
+     silhouette so they never fight the charter; --logo-mono-on is what a
+     logo becomes on the step you are actually on, and --logo-flip is for
+     marks that are already a single black shape, like Notion's. */
+  --logo-mono:grayscale(1) brightness(0);
+  --logo-mono-on:none;
+  --logo-flip:none;
+
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --lift:0 1px 0 rgba(16,16,20,.04), 0 26px 50px -30px rgba(16,16,20,.34);
 
@@ -77,6 +85,12 @@ html[data-theme="dark"]{
   --form-bg:#1C1C21;
   --form-fg:#ECEAE4;
   --form-line:rgba(236,234,228,.18);
+
+  /* on a dark page a navy or black logo would simply vanish, so every mark
+     turns white here — including the one on the step you are on. */
+  --logo-mono:grayscale(1) brightness(0) invert(1);
+  --logo-mono-on:grayscale(1) brightness(0) invert(1);
+  --logo-flip:invert(1);
 
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --lift:0 1px 0 rgba(255,255,255,.03), 0 26px 50px -30px rgba(0,0,0,.85);
@@ -306,7 +320,7 @@ html.lenis,html.lenis body{height:auto}
 }
 .menu.open .menu-link{opacity:1;transform:none;transition:opacity .5s ease calc(120ms + var(--i)*60ms),transform .7s var(--ease-expo) calc(120ms + var(--i)*60ms)}
 .menu-link .n{font-family:var(--f-mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--faint)}
-.menu-link.on{color:var(--accent-ink)}
+.menu-link.on{color:var(--accent)}
 .menu-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:28px}
 .menu-socials{display:flex;gap:8px}
 
@@ -371,8 +385,11 @@ html.lenis,html.lenis body{height:auto}
   font-size:clamp(13px,1.15vw,17px);line-height:1.4;font-weight:500;
   letter-spacing:0;font-stretch:100%;color:var(--muted);text-wrap:pretty;
 }
-/* on phones the note sits under the name instead of beside it */
-.hero-note.is-below{position:static;width:auto;max-width:36ch;margin:16px 0 0;font-size:15px}
+/* Phones only — the name cannot grow any bigger (its width is what sets the
+   size), so the calm comes from where it sits: a wide void above it, a
+   hairline closing it, and a shorter void below. The two spacers are the
+   only honest way to weight that split; they collapse on desktop. */
+.hero-lead,.hero-tail,.hero-rule{display:none}
 .hero-ctas{display:flex;gap:10px;flex:none}
 .hero-badge{width:clamp(74px,7vw,104px);height:auto;aspect-ratio:1;flex:none;color:var(--ink);overflow:visible}
 .hero-badge text{font-family:var(--f-mono);font-size:8.6px;letter-spacing:.08em;fill:currentColor}
@@ -392,13 +409,15 @@ html.lenis,html.lenis body{height:auto}
 }
 
 @media (max-width:860px){
-  .hero{padding-bottom:26px}
-  .hero-note{position:static;width:auto;max-width:34ch;margin:14px 0 0;font-size:15px}
+  .hero{justify-content:flex-start;padding-bottom:26px}
   .hero-l1{flex-wrap:nowrap}
-  .hero-ctas{flex-wrap:wrap}
-  .hero-bottom{flex-direction:column;align-items:flex-start;gap:18px}
+  .hero-name{margin:0}
+  .hero-lead{display:block;flex:2.1 1 0;min-height:16px}
+  .hero-tail{display:block;flex:1 1 0;min-height:16px}
+  .hero-rule{display:block;height:1px;background:var(--rule-2);margin-top:clamp(16px,3.4vh,26px)}
+  .hero-bottom{flex-direction:column;align-items:flex-start;gap:16px}
   .hero-bottom .hero-badge{position:absolute;right:var(--gutter);bottom:calc(var(--gutter) + 6px)}
-  .hero-top .tag:last-child{text-align:right}
+  .hero-ctas{flex-wrap:wrap}
 }
 @media (max-width:520px){
   .hero-bottom .hero-badge{width:64px}
@@ -758,7 +777,9 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
   display:grid;gap:4px;box-shadow:var(--lift);
 }
 .idcard-av{width:56px;height:56px;border-radius:50%;overflow:hidden;margin-bottom:10px;display:grid;place-items:end center;background:color-mix(in oklab,var(--accent) 24%,var(--paper-2))}
-.idcard-av img{width:84%;display:block}
+/* bottom-anchored on purpose — the head rises out of the bubble — but lifted
+   a few pixels so the chin never touches the rim. */
+.idcard-av img{width:70%;display:block;margin-bottom:3px}
 .idcard-n{font-size:17px;font-weight:700;letter-spacing:-.015em}
 .idcard-m{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted)}
 .idcard-s{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:8px 0 12px;text-wrap:pretty}
@@ -775,7 +796,9 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
    pins, so the travel gets the whole screen; a quiet top line keeps the
    context while it does. */
 .tl-scene{position:relative}
-.tl-head{padding:calc(var(--nav-h) + clamp(24px,4vw,56px)) 0 clamp(28px,4.5vw,60px)}
+/* padding-block, NOT the shorthand: this sits on a .shell, and `padding: x 0 y`
+   would wipe out the side gutter and leave the title flush against the screen. */
+.tl-head{padding-block:calc(var(--nav-h) + clamp(24px,4vw,56px)) clamp(28px,4.5vw,60px)}
 .tl-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .tl-top{
   flex:none;display:flex;align-items:baseline;justify-content:space-between;gap:20px;
@@ -816,6 +839,21 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 }
 .tl-stem.is-down{background:linear-gradient(var(--accent),color-mix(in oklab,var(--rule-2) 75%,transparent))}
 .tl-type{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+/* the school / company mark, in the corner of the label row. Two caps, not
+   one: a long wordmark is held by its width, a compact mark by its height,
+   so a six-to-one logotype and a signature end up carrying the same weight.
+   Negative margins keep the mark out of the row's height, so a card with a
+   logo is exactly as tall as one without — the travelling layout measures
+   those heights. */
+.tl-logo{
+  height:auto;width:auto;max-height:24px;max-width:118px;flex:none;
+  margin:-9px 0 -9px auto;object-fit:contain;object-position:right center;
+  filter:var(--logo-mono);opacity:.38;
+  transition:opacity .5s var(--ease),filter .5s var(--ease);
+}
+.tl-card.now .tl-logo,.tl-v-item.lit .tl-logo{opacity:1;filter:var(--logo-mono-on)}
+.is-tight .tl-logo{max-height:20px;max-width:100px}
+@media (max-width:640px){ .tl-logo{max-height:20px;max-width:92px} }
 .pill-up{border:1px solid var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 8px 1px;letter-spacing:.06em}
 .tl-title{font-size:20px;font-weight:650;letter-spacing:-.018em;line-height:1.18;text-wrap:balance}
 .tl-date{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.02em}
@@ -837,6 +875,15 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .tl-v-node{position:absolute;left:-34px;top:22px;width:12px;height:12px;border-radius:50%;background:var(--paper);border:2px solid var(--rule-2);transition:background-color .3s ease,border-color .3s ease}
 .tl-v-item.lit .tl-v-node{background:var(--accent);border-color:var(--accent)}
 .tl-v-item .tl-card{position:static;width:auto}
+/* On a phone the spine used to start exactly on the text margin, so the line
+   and its dots read as glued to the screen edge. Move the whole lane in, and
+   tighten the card's own padding by the same amount so nothing gets narrower.
+   (The node is offset by -34px from the card, so the axis follows the pad.) */
+@media (max-width:860px){
+  .tl-v{padding-left:44px}
+  .tl-v-axis{left:15px}
+  .tl-v .tl-card{padding:19px 20px 21px}
+}
 
 /* toolkit rows */
 .tools-rows{border-top:1px solid var(--rule)}
@@ -850,10 +897,18 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .trow:hover .trow-k::before{width:.2em}
 .trow-v{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px 16px;font-size:15.5px;color:var(--muted);text-align:right}
 .titem{display:inline-flex;align-items:center;gap:7px}
-.titem img{width:0;height:16px;object-fit:contain;opacity:0;transition:width .4s var(--ease),opacity .35s ease}
-.trow:hover .titem img{width:16px;opacity:1}
+/* the mark unrolls with the row. It is the WIDTH that opens, not a square
+   box: a wordmark like Canva keeps its proportions instead of being squeezed
+   into 16×16 with nothing left to read. */
+.titem img{width:auto;height:16px;max-width:0;object-fit:contain;opacity:0;transition:max-width .4s var(--ease),opacity .35s ease}
+.titem img.is-mono{filter:var(--logo-flip)}
+/* a language flag behaves exactly like a tool logo — it unrolls with the row
+   — only smaller, rounded, and on a hairline so the white band of a tricolour
+   still reads against paper. (Drawn, not emoji: Windows shows no flag emoji.) */
+.titem img.lang-flag{height:12px;border-radius:2.5px;box-shadow:0 0 0 1px color-mix(in oklab,var(--ink) 14%,transparent)}
+.trow:hover .titem img{max-width:46px;opacity:1}
 .titem em{font-family:var(--f-voice);font-style:italic;font-size:1.1em;color:var(--ink)}
-@media (max-width:720px){ .trow{flex-direction:column;gap:8px} .trow-v{justify-content:flex-start;text-align:left} .titem img{width:16px;opacity:1} }
+@media (max-width:720px){ .trow{flex-direction:column;gap:8px} .trow-v{justify-content:flex-start;text-align:left} .titem img{max-width:46px;opacity:1} }
 
 /* interests marquee */
 .marquee{overflow:hidden;padding:6px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
