@@ -371,28 +371,64 @@ function useScrollFrame(fn, deps){
 /* ── Small components ──────────────────────────────────────────────────── */
 
 // A title whose words rise out of a mask, with the orange dot as its period.
+// The dot sits OUTSIDE the mask: the mask has to clip (that is what makes the
+// word rise out of nothing) and the dot has to be free to grow — the home
+// hand-off scales it up to catch the orange page. `.wn` keeps the two glued
+// on the same line.
 function Words({ text, className, delay, dot, dotId, as }){
   const Tag = as || 'span';
   const words = String(text || '').split(/\s+/).filter(Boolean);
   return (
     <Tag className={['words rv', className].filter(Boolean).join(' ')} style={{ '--d': (delay || 0) + 's' }}>
-      {words.map((w, i) => (
-        <React.Fragment key={i}>
-          <span className="w">
-            <span className="wi" style={{ '--i': i }}>{w}</span>
-            {dot && i === words.length - 1 ? <span className="dot" id={dotId}/> : null}
-          </span>
-          {i < words.length - 1 ? ' ' : null}
-        </React.Fragment>
-      ))}
+      {words.map((w, i) => {
+        const last = i === words.length - 1;
+        const word = <span className="w"><span className="wi" style={{ '--i': i }}>{w}</span></span>;
+        return (
+          <React.Fragment key={i}>
+            {dot && last
+              ? <span className="wn">{word}<span className="dot" id={dotId}/></span>
+              : word}
+            {last ? null : ' '}
+          </React.Fragment>
+        );
+      })}
     </Tag>
   );
 }
 
+/* ── Photographs ───────────────────────────────────────────────────────────
+   Everything the browser needs to paint a picture without making you wait:
+   the WebP copies written by tools/optimize-images.mjs (a phone downloads
+   the 480 px one, not the 3392 px original) and the real pixel size, so the
+   box is already the right shape before a single byte arrives. With no
+   manifest the original is served on its own — nothing breaks, it is just
+   heavier. */
+function imgSet(src){
+  const m = window.IMG_MANIFEST ? window.IMG_MANIFEST[src] : null;
+  if (!m || !m.v || !m.v.length) return null;
+  return { w: m.w, h: m.h, srcset: m.v.map(v => v[1] + ' ' + v[0] + 'w').join(', ') };
+}
+
+function Img({ src, alt, sizes, eager, priority, onLoad }){
+  const set = imgSet(src);
+  const img = (
+    <img src={src} alt={alt || ''} onLoad={onLoad} decoding="async"
+         width={set ? set.w : undefined} height={set ? set.h : undefined}
+         loading={eager ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : undefined}/>
+  );
+  if (!set) return img;
+  return (
+    <picture>
+      <source type="image/webp" srcSet={set.srcset} sizes={sizes || '100vw'}/>
+      {img}
+    </picture>
+  );
+}
+
 // A project cover: an image path, or one of the SVG artworks in covers.jsx.
-function CoverArt({ cover, title, eager }){
+function CoverArt({ cover, title, eager, priority, sizes }){
   if (isImageCover(cover)) {
-    return <img src={cover} alt={title || ''} loading={eager ? 'eager' : 'lazy'} decoding="async"/>;
+    return <Img src={cover} alt={title || ''} sizes={sizes} eager={eager} priority={priority}/>;
   }
   const Comp = window.Cover ? (window.Cover[cover] || window.Cover.Generic) : null;
   return Comp ? <Comp/> : null;
@@ -414,14 +450,20 @@ function ScrollBadge({ label, className }){
 }
 
 // One project card — the Majd grid unit. `size="sm"` is the Work page.
-function ProjectCard({ p, size, delay, flag }){
+// The two grids are different widths, so each tells the browser which copy of
+// the cover it actually needs.
+const CARD_SIZES = {
+  lg: '(max-width:720px) calc(100vw - 2 * clamp(24px,4.6vw,48px)), (max-width:1360px) 46vw, 610px',
+  sm: '(max-width:560px) calc(100vw - 2 * clamp(24px,4.6vw,48px)), (max-width:980px) 46vw, 400px',
+};
+function ProjectCard({ p, size, delay, flag, eager }){
   const [main, dashSub] = splitTitle(p);
   const small = size === 'sm';
   const sub = dashSub || (small ? p.cat : p.cat + ' · ' + projDateLabel(p));
   return (
     <Link to={projectPath(p.id)} className={'pcard' + (small ? ' sm' : '')} aria-label={p.title}>
       <div className="pcard-media rv rv-media" style={{ '--d': (delay || 0) + 's' }}>
-        <CoverArt cover={p.cover} title={p.title}/>
+        <CoverArt cover={p.cover} title={p.title} eager={eager} sizes={small ? CARD_SIZES.sm : CARD_SIZES.lg}/>
         {flag ? <span className="flag">Featured</span> : null}
       </div>
       <div className="pcard-text rv rv-up" style={{ '--d': ((delay || 0) + .08) + 's' }}>
@@ -449,5 +491,5 @@ Object.assign(window, {
   projSkills, projGallery, projAttachments,
   emphasise, fillWords,
   useReveals, useScrollFrame,
-  Words, CoverArt, ScrollBadge, ProjectCard,
+  Words, Img, CoverArt, ScrollBadge, ProjectCard,
 });

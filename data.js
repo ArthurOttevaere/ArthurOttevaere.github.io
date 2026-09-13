@@ -165,7 +165,6 @@ window.PORTFOLIO_DATA = {
     cv: {
       en: "/assets/cv/arthur-ottevaere-cv-en.pdf",   // English (primary)
       fr: "/assets/cv/arthur-ottevaere-cv-fr.pdf",   // Français
-      nl: "/assets/cv/arthur-ottevaere-cv-nl.pdf",   // Nederlands
     },
     linkedin: "https://www.linkedin.com/in/arthur-ottevaere/",     // e.g. "https://linkedin.com/in/arthur-ottevaere"
     github:   "https://github.com/ArthurOttevaere",

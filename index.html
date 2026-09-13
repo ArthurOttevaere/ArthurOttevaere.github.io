@@ -68,21 +68,20 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
 
 <!-- The charter itself. Everything visual lives in this one file. -->
-<link rel="stylesheet" href="/assets/css/site.css?v=72fbb88d6ca0">
+<link rel="stylesheet" href="/assets/css/site.css?v=a0e1f869d29a">
 
 <!-- Runs before the first paint: theme, the .js flag the reveals depend on,
-     and the rewrite of old #/work/f1 links to the new /work/f1/ addresses. -->
+     the rewrite of old #/work/f1 links to the new /work/f1/ addresses, and the
+     decision of whether this load gets the greeting splash. -->
 <script>
 (function(){
   var d = document.documentElement;
   d.classList.add('js');
-  try {
-    var stored = sessionStorage.getItem('ao-theme');
-    var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    d.setAttribute('data-theme', dark ? 'dark' : 'light');
-    var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', dark ? '#0E0E11' : '#F6F4EF');
-  } catch (e) { d.setAttribute('data-theme', 'light'); }
+
+  // A reload always starts at the top. The splash closes into the dot of the
+  // name, which lives at the top of the page — restoring the old scroll
+  // position would send the orange off the top of the screen instead.
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
 
   // Legacy hash routes (#/work/f1) → real paths (/work/f1/).
   var h = location.hash || '';
@@ -91,6 +90,25 @@
     var to = p ? '/' + p + '/' : '/';
     try { history.replaceState(null, '', to); } catch (e) { location.replace(to); }
   }
+
+  // The splash is the front door: it plays when you arrive at the home page,
+  // not when you open a project from a search result. Everywhere else the
+  // markup below is hidden before it can paint, and removed right after.
+  var path = location.pathname.replace(/index\.html$/, '');
+  window.__splash = path === '/' || path === '';
+  if (!window.__splash) d.classList.add('no-splash');
+
+  try {
+    var stored = sessionStorage.getItem('ao-theme');
+    var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    d.setAttribute('data-theme', dark ? 'dark' : 'light');
+    // On iOS this meta is what paints the strip behind the Dynamic Island, so
+    // it starts on the colour of the splash when there is one; app.jsx keeps
+    // it on whatever is at the top of the screen from there on.
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', window.__splash ? (dark ? '#FF6E40' : '#FF4A12')
+                                                     : (dark ? '#0E0E11' : '#F6F4EF'));
+  } catch (e) { d.setAttribute('data-theme', 'light'); }
 })();
 </script>
 
@@ -117,16 +135,30 @@
 </noscript>
 <script>
 (function(){
+  // Not the home page: no greetings, no splash to close — the page is simply
+  // itself from the first frame.
+  if (!window.__splash){
+    var b0 = document.getElementById('boot');
+    if (b0) b0.remove();
+    return;
+  }
   window.__bootStart = performance.now();
-  var hellos = ["Hello","Bonjour","Hallo","Hola","Ciao","こんにちは","Olá","Hej"];
+  // Three greetings, always — the site opens in the three languages it is
+  // spoken in. __bootHold is how long that takes; app.jsx waits for it
+  // before closing the splash into the dot of the name, so the sequence is
+  // never cut short by a fast connection.
+  var hellos = ["Hello","Bonjour","Hallo"];
+  var STEP = 420;
+  window.__bootHold = hellos.length * STEP;
   var el = document.getElementById('boot-word');
   if (!el) return;
   var i = 0;
   var id = setInterval(function(){
+    if (i >= hellos.length - 1){ clearInterval(id); return; }   // hold the last one
     el.style.transition = 'opacity 130ms ease, transform 130ms ease';
     el.style.opacity = '0'; el.style.transform = 'translateY(-6px)';
     setTimeout(function(){
-      i = (i + 1) % hellos.length;
+      i += 1;
       el.textContent = hellos[i];
       el.style.transition = 'none';
       el.style.opacity = '0'; el.style.transform = 'translateY(7px)';
@@ -135,19 +167,29 @@
         el.style.opacity = '1'; el.style.transform = 'none';
       });
     }, 130);
-  }, 520);
+  }, STEP);
   window.__bootStop = function(){ clearInterval(id); };
   // Safety net: never trap anyone behind the splash if the app fails to mount.
   setTimeout(function(){
     var b = document.getElementById('boot');
-    if (b && !b.classList.contains('closing')) { clearInterval(id); b.classList.add('fade'); setTimeout(function(){ b.remove(); }, 500); }
+    if (b && !b.classList.contains('closing')) {
+      clearInterval(id);
+      if (window.__topUnlock) window.__topUnlock();
+      b.classList.add('fade');
+      setTimeout(function(){ b.remove(); }, 500);
+    }
   }, 12000);
 })();
 </script>
 
+<!-- The WebP copies of every photograph, with their real pixel sizes, so the
+     browser downloads a 30 KB card instead of a 1.5 MB original. Written by
+     npm run images; without it the originals are served as they are. -->
+<script defer src="/assets/opt/manifest.js?v=cc76c1eb3164"></script>
+
 <!-- Content — edit data.js to update the portfolio. No rebuild needed for the
      site itself; run npm run build to refresh the per-project share pages. -->
-<script defer src="/data.js?v=4a2e1a38c5ec"></script>
-<script defer src="/dist/app.js?v=731ce2ef639e"></script>
+<script defer src="/data.js?v=45f3f1396746"></script>
+<script defer src="/dist/app.js?v=bb7866aeec3d"></script>
 </body>
 </html>

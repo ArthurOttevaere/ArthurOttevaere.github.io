@@ -15,10 +15,31 @@ const NAV = [
 ];
 const THEME_KEY = 'ao-theme';
 
+/* ── The strip above the Dynamic Island ────────────────────────────────────
+   iOS cannot put page content under the island: it paints that strip with
+   <meta name="theme-color">. So the meta follows whatever is actually at the
+   top of the screen — orange while the splash or the intro page covers it,
+   paper the rest of the time — and the colour runs under the island instead
+   of stopping at a rectangle of the wrong colour. */
+const TOP_COLOR = { light: ['#F6F4EF', '#FF4A12'], dark: ['#0E0E11', '#FF6E40'] };
+let topAccent = !!window.__splash;          // what the top of the screen shows
+let topLocked = !!window.__splash;          // …and the splash owns it until it leaves
+
+function paintTop(){
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = TOP_COLOR[dark ? 'dark' : 'light'][topAccent ? 1 : 0];
+  if (meta.getAttribute('content') !== next) meta.setAttribute('content', next);
+}
+// The home scene calls this on every frame; it is ignored until the splash
+// lets go, otherwise the first frame at scroll 0 would paint the strip paper
+// while the whole screen is still orange.
+window.__topAccent = on => { if (!topLocked && !!on !== topAccent){ topAccent = !!on; paintTop(); } };
+window.__topUnlock = () => { topLocked = false; topAccent = true; window.__topAccent(false); };
+
 /* ── Theme ─────────────────────────────────────────────────────────────────
-   Follows the system by default; the toggle overrides it for the session and
-   also repaints <meta name="theme-color">, which is what the strip above the
-   Dynamic Island reads. */
+   Follows the system by default; the toggle overrides it for the session. */
 function useTheme(){
   const system = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   const [theme, setTheme] = useState(() => {
@@ -26,8 +47,7 @@ function useTheme(){
   });
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0E0E11' : '#F6F4EF');
+    paintTop();
   }, [theme]);
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -359,6 +379,11 @@ function App(){
 
   useEffect(() => { window.__nav = navigate; }, [navigate]);
 
+  // index.html asks the browser not to restore the old scroll position on a
+  // reload; this is the safety net for the ones that do it anyway. It runs
+  // before the smooth-scroll engine is built, so nothing fights over it.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
     const onPop = () => { setMenuOpen(false); commit(location.pathname + location.hash, false); };
     window.addEventListener('popstate', onPop);
@@ -400,9 +425,11 @@ function App(){
      dot of the name (or the logo's dot elsewhere), then the hero rises. */
   useEffect(() => {
     const boot = document.getElementById('boot');
-    if (!boot){ setReady(true); return; }
+    if (!boot){ setReady(true); window.__topUnlock(); return; }
     const start = window.__bootStart || performance.now();
-    const MIN = 600;
+    // The greeting sequence is the point of the splash, so it always plays in
+    // full — a fast load waits for it rather than cutting it in half.
+    const MIN = window.__bootHold || 600;
     let dead = false;
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -423,6 +450,7 @@ function App(){
 
       if (reduceMotion() || !target || !('clipPath' in boot.style)){
         boot.classList.add('fade');
+        window.__topUnlock();
         setTimeout(finish, 450);
         return;
       }
@@ -434,6 +462,7 @@ function App(){
       void boot.offsetWidth;                                  // commit the start state
       setTimeout(() => {
         boot.classList.add('closing');
+        window.__topUnlock();                 // the top of the screen turns to paper
         boot.style.clipPath = 'circle(' + Math.max(4, r.width / 2).toFixed(0) + 'px at ' + cx.toFixed(0) + 'px ' + cy.toFixed(0) + 'px)';
         setTimeout(() => setReady(true), 620);                 // the name rises as it lands
         setTimeout(finish, 1000);

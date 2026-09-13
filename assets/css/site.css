@@ -62,7 +62,9 @@
   --ease-io:cubic-bezier(.65,0,.35,1);
 
   --shell:1280px;
-  --gutter:clamp(20px,4vw,48px);
+  /* The margin every page keeps from the edge of the screen. The low end is
+     what a phone gets: 20px read as text pinned to the bezel. */
+  --gutter:clamp(24px,4.6vw,48px);
   --nav-h:60px;
 
   color-scheme:light;
@@ -114,13 +116,14 @@ body{
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  overflow-x:hidden;
 }
+html,body{overflow-x:hidden;overflow-x:clip}   /* hidden is the fallback for Safari < 16 */
 ::selection{background:var(--accent);color:var(--on-accent)}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 input,textarea{font:inherit;color:inherit}
 img,svg{display:block;max-width:100%}
+picture{display:contents}
 h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
 ul,ol{margin:0;padding:0;list-style:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
@@ -150,7 +153,10 @@ html.lenis,html.lenis body{height:auto}
 .dot{
   display:inline-block;width:.17em;height:.17em;border-radius:50%;
   background:var(--accent);margin-left:.06em;flex:none;
+  transform-origin:50% 50%;   /* the home hand-off grows it from its centre */
 }
+/* the last word and its dot, kept on one line */
+.words .wn{white-space:nowrap}
 .sec-title{
   font-weight:750;font-stretch:108%;font-size:clamp(38px,5.6vw,86px);
   line-height:.95;letter-spacing:-.04em;text-wrap:balance;
@@ -201,9 +207,9 @@ html.lenis,html.lenis body{height:auto}
 .js .rv-fade{opacity:0}
 .js .rv-fade.in{opacity:1;transition:opacity .9s ease var(--d,0s)}
 .js .rv-media{clip-path:inset(100% 0 0 0 round var(--r,18px))}
-.js .rv-media > img,.js .rv-media > svg{transform:scale(1.12)}
+.js .rv-media img,.js .rv-media svg{transform:scale(1.12)}
 .js .rv-media.in{clip-path:inset(0 0 0 0 round var(--r,18px));transition:clip-path 1.15s var(--ease-expo) var(--d,0s)}
-.js .rv-media.in > img,.js .rv-media.in > svg{transform:none;transition:transform 1.5s var(--ease-expo) var(--d,0s)}
+.js .rv-media.in img,.js .rv-media.in svg{transform:none;transition:transform 1.5s var(--ease-expo) var(--d,0s)}
 
 .words{display:block}
 /* Give descenders and glyph overhangs room inside the reveal mask.
@@ -221,6 +227,9 @@ html.lenis,html.lenis body{height:auto}
 /* ─── 5 · Boot splash ───────────────────────────────────────────────
    Orange screen with the greetings; when the site is ready it closes
    into the dot of the name (or the logo's dot on the other pages). */
+/* Not the home page: the markup is shared by every page, so it is hidden
+   before it can paint and removed by the script right after. */
+.no-splash #boot{display:none}
 #boot{
   position:fixed;inset:0;z-index:100;
   background:var(--accent);color:var(--on-accent);
@@ -504,8 +513,8 @@ html.lenis,html.lenis body{height:auto}
   position:relative;border-radius:18px;overflow:hidden;--r:18px;
   aspect-ratio:16/11;background:var(--rule);
 }
-.pcard-media > img,.pcard-media > svg{width:100%;height:100%;object-fit:cover;transition:transform 1.1s var(--ease-expo)}
-.pcard:hover .pcard-media > img,.pcard:hover .pcard-media > svg{transform:scale(1.035)}
+.pcard-media img,.pcard-media svg{width:100%;height:100%;object-fit:cover;transition:transform 1.1s var(--ease-expo)}
+.pcard:hover .pcard-media img,.pcard:hover .pcard-media svg{transform:scale(1.035)}
 .pcard-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .pcard-title{
   display:flex;align-items:center;gap:10px;
@@ -535,6 +544,39 @@ html.lenis,html.lenis body{height:auto}
 .sec-head .eyebrow{margin-bottom:14px}
 .feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(40px,5vw,66px) clamp(16px,1.8vw,26px)}
 @media (max-width:720px){ .feat-grid{grid-template-columns:1fr;gap:44px} }
+
+/* The way out of the deck: navigation at the scale of the four cards above
+   it, in the same language as the "next project" row on a project page. */
+.all-work{
+  margin-top:clamp(40px,5vw,70px);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;
+  padding:clamp(20px,2.4vw,30px) clamp(20px,2.4vw,30px) clamp(20px,2.4vw,30px) clamp(22px,2.8vw,34px);
+  border:1px solid var(--rule-2);border-radius:clamp(20px,2.2vw,28px);
+  transition:background-color .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease);
+}
+.all-work-text{display:grid;gap:8px;min-width:0}
+.all-work-k{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);transition:color .35s var(--ease);
+}
+.all-work-t{
+  font-size:clamp(26px,3.4vw,46px);font-weight:700;font-stretch:104%;
+  letter-spacing:-.035em;line-height:1;text-wrap:balance;
+}
+.all-work-go{
+  width:clamp(48px,4.6vw,62px);height:clamp(48px,4.6vw,62px);border-radius:50%;flex:none;
+  border:1px solid var(--rule-2);display:grid;place-items:center;
+  transition:background-color .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease),transform .5s var(--ease-expo);
+}
+.all-work-go svg{width:18px;height:18px}
+.all-work:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.all-work:hover .all-work-k{color:color-mix(in oklab,var(--paper) 60%,transparent)}
+.all-work:hover .all-work-go{
+  background:var(--accent);border-color:var(--accent);color:var(--on-accent);
+  transform:translate(4px,-4px);
+}
+.all-work:active{transform:scale(.995)}
+@media (max-width:560px){ .all-work{gap:14px} .all-work-go{width:46px;height:46px} }
 
 /* ─── 12 · Contact ─────────────────────────────────────────────── */
 .contact{padding:clamp(80px,10vw,140px) 0 clamp(60px,8vw,110px)}
@@ -645,8 +687,11 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
 .pp-lead{font-size:clamp(17px,1.5vw,21px);line-height:1.55;color:var(--ink-2);max-width:56ch;text-wrap:pretty}
 .pp-links{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .pp-cover{margin-top:clamp(30px,3.4vw,50px);border-radius:22px;overflow:hidden;--r:22px;aspect-ratio:16/8;background:var(--rule)}
-.pp-cover > img,.pp-cover > svg{width:100%;height:100%;object-fit:cover}
-.pp-body{display:grid;grid-template-columns:250px minmax(0,1fr);gap:clamp(30px,5vw,90px);padding:clamp(50px,6vw,96px) 0 0}
+.pp-cover img,.pp-cover svg{width:100%;height:100%;object-fit:cover}
+/* padding-block, NOT the shorthand: this sits on a .shell, and `padding: x 0 0`
+   would reset the left and right gutter to zero and press the whole page
+   against the edge of the screen. */
+.pp-body{display:grid;grid-template-columns:250px minmax(0,1fr);gap:clamp(30px,5vw,90px);padding-block:clamp(50px,6vw,96px) 0}
 .rail{position:sticky;top:calc(var(--nav-h) + 36px);align-self:start;display:grid;gap:26px}
 .facts{display:grid;border-top:1px solid var(--rule)}
 .fact{display:grid;grid-template-columns:86px minmax(0,1fr);gap:12px;padding:11px 0;border-bottom:1px solid var(--rule)}
@@ -951,13 +996,24 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .ab-sec{padding:clamp(70px,9vw,130px) 0 0}
 
 /* ─── 16 · Footer (kept as it was, in the charter's colours) ───── */
+/* The last thing on the page, and it has to end exactly where the page ends:
+   the safe-area padding puts the home indicator ON the orange instead of
+   below it, and ::after bleeds the same orange into whatever the browser
+   shows past the end of the document (the rubber-band, the strip under the
+   bottom bar). The bleed is painted, never laid out, so it adds no scroll. */
 .foot{
   width:min(1360px,calc(100% - 40px));margin:clamp(90px,12vw,150px) auto 0;
-  padding:0 clamp(18px,3vw,40px);
+  padding:0 clamp(18px,3vw,40px) env(safe-area-inset-bottom,0px);
   border-radius:30px 30px 0 0;position:relative;overflow:visible;
   background:linear-gradient(180deg,var(--accent) 0%,color-mix(in oklab,var(--accent) 88%,#fff) 100%);
   color:var(--on-accent);
   --logo-dot:currentColor;
+}
+.foot::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
+  background:color-mix(in oklab,var(--accent) 88%,#fff);
+  box-shadow:0 0 0 240px color-mix(in oklab,var(--accent) 88%,#fff);
+  clip-path:inset(100% -260px -260px -260px);
 }
 .foot-sheen{position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:inherit;background:radial-gradient(120% 80% at 50% -25%,color-mix(in oklab,#fff 22%,transparent),transparent 60%)}
 .foot-forest{position:absolute;left:0;right:0;top:-112px;height:134px;z-index:2;overflow:hidden;pointer-events:none;color:var(--accent)}

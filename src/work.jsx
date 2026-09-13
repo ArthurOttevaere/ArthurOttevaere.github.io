@@ -62,7 +62,7 @@ function Projects(){
           : (
             <div className="work-grid" key={filter + sort}>
               {list.map((p, i) => (
-                <ProjectCard key={p.id} p={p} size="sm" delay={(i % 3) * .07} flag={p.featured}/>
+                <ProjectCard key={p.id} p={p} size="sm" delay={(i % 3) * .07} flag={p.featured} eager={i < 3}/>
               ))}
             </div>
           )}
@@ -102,7 +102,8 @@ function ProjectPage({ id }){
         </div>
 
         <div className="pp-cover rv rv-media">
-          <CoverArt cover={p.cover} title={p.title} eager/>
+          <CoverArt cover={p.cover} title={p.title} eager priority
+                    sizes="(max-width:1376px) calc(100vw - 2 * clamp(24px,4.6vw,48px)), 1184px"/>
         </div>
       </header>
 
@@ -216,8 +217,8 @@ function Gallery({ items, n, title }){
           <figure className="shot" key={i}>
             <button type="button" className="shot-frame" onClick={() => setZoom(i)}
                     aria-label={'Open image ' + (i + 1) + ' full screen'}>
-              <img src={g.src} alt={g.caption || ''} onLoad={fit}
-                   decoding="async" loading={i < 2 ? 'eager' : 'lazy'}/>
+              <Img src={g.src} alt={g.caption || ''} onLoad={fit} eager={i < 2}
+                   sizes="(max-width:900px) calc(100vw - 2 * clamp(24px,4.6vw,48px)), 860px"/>
             </button>
             <figcaption className="shot-cap">
               <span className="shot-n">{String(i + 1).padStart(2, '0')}</span>
@@ -256,7 +257,7 @@ function Lightbox({ items, index, onIndex, onClose }){
     <div className="lb" role="dialog" aria-modal="true" aria-label={g.caption || 'Image'} onMouseDown={onClose}>
       <button type="button" className="lb-close" onClick={onClose} aria-label="Close"><Icon.Close/></button>
       <figure onMouseDown={e => e.stopPropagation()}>
-        <img src={g.src} alt={g.caption || ''}/>
+        <Img src={g.src} alt={g.caption || ''} eager priority sizes="100vw"/>
         {g.caption ? <figcaption>{g.caption}</figcaption> : null}
       </figure>
       {items.length > 1 ? (
@@ -335,7 +336,7 @@ function Outro({ p }){
         <Link to="/work/" className="pnav-back"><Icon.Arrow/> All projects</Link>
         {next && next.id !== p.id ? (
           <Link to={projectPath(next.id)} className="pnav-next" aria-label={'Next project: ' + next.title}>
-            <span className="pnav-media"><CoverArt cover={next.cover} title={next.title}/></span>
+            <span className="pnav-media"><CoverArt cover={next.cover} title={next.title} sizes="148px"/></span>
             <span className="pnav-text">
               <span className="eyebrow">Next project</span>
               <span className="pnav-t">{splitTitle(next)[0]}</span>
