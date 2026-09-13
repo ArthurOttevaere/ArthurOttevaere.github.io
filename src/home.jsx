@@ -58,6 +58,8 @@ function HeroScene({ ready }){
     const fitEl  = nameEl.querySelector('.hero-fit');
     const hover  = window.matchMedia('(hover: hover)').matches && !reduceMotion();
     let mx = -1e5, my = -1e5, raf = 0, lastPaint = null, settled = false, alive = true;
+    let dotK = 1;                                  // scale currently on the projects dot
+    const HANDOFF = 36;                            // px radius where the dot takes over
     const narrow = () => window.innerWidth <= 860;
 
     // width of every letter: from its rest value to its scrolled value, plus
@@ -109,6 +111,9 @@ function HeroScene({ ready }){
 
       const fd  = document.getElementById('featured-dot');
       const fdr = fd ? fd.getBoundingClientRect() : null;
+      // The dot may already be scaled up by the hand-off below, so read its
+      // real size through that scale. Its centre never moves under a scale.
+      const fdw = fdr ? fdr.width / dotK : 0;
       // scroll position at which the projects heading sits 30% down the screen
       const S1 = fdr ? (y + fdr.top + fdr.height / 2 - .30 * vh) : Infinity;
       const S0 = Math.max(F1 + .08 * vh, S1 - .8 * vh);
@@ -119,7 +124,7 @@ function HeroScene({ ready }){
       const dr = dot.getBoundingClientRect();
       const c0 = { x: dr.left + dr.width / 2, y: dr.top + dr.height / 2, r: dr.width / 2 };
 
-      let show = false, cx = 0, cy = 0, r = 0, t, fade = 1;
+      let show = false, cx = 0, cy = 0, r = 0, t, fade = 1, k = 1;
       if (y > G0 && y < G1){                       // the dot opens
         t = easeIO((y - G0) / (G1 - G0));
         show = true; cx = c0.x; cy = c0.y;
@@ -129,15 +134,29 @@ function HeroScene({ ready }){
       } else if (fdr && y >= S0 && y < S1){        // it closes into the next dot
         t = easeIO((y - S0) / (S1 - S0));
         cx = fdr.left + fdr.width / 2; cy = fdr.top + fdr.height / 2;
-        show = true;
-        r = lerp(coverRadius(cx, cy, vw, vh), fdr.width / 2, t);
+        const dotR = Math.max(1, fdw / 2);
+        r = lerp(coverRadius(cx, cy, vw, vh), dotR, t);
         fade = 1 - clamp(t * 1.8, 0, 1);           // the words leave before the disc does
+        // The last centimetre belongs to the heading's own dot. A fixed
+        // overlay is painted a frame behind a touch scroll, and once the
+        // disc is this small that lag reads as a second dot next to the
+        // first; the dot itself travels with the page and cannot drift.
+        if (r > HANDOFF) show = true;
+        else k = r / dotR;
       }
       // Read geometry before font writes, avoiding a forced layout each frame.
       paint(y / G1, hover && mx > -1e4 && y < G1);
       veil.style.visibility = show ? 'visible' : 'hidden';
       if (show) veil.style.clipPath = 'circle(' + r.toFixed(1) + 'px at ' + cx.toFixed(1) + 'px ' + cy.toFixed(1) + 'px)';
       if (innerRef.current) innerRef.current.style.opacity = fade.toFixed(3);
+      if (fd && Math.abs(k - dotK) > .002){
+        dotK = k;
+        fd.style.transform = k > 1.002 ? 'scale(' + k.toFixed(3) + ')' : '';
+      }
+      // iOS tints the strip behind the Dynamic Island with <meta theme-color>.
+      // Keep it on whatever is actually at the top of the screen, so the
+      // orange runs under the island instead of stopping at a grey bar.
+      if (window.__topAccent) window.__topAccent(show && Math.hypot(cx - vw / 2, cy) < r);
 
       // the intro fills in, word by word
       const f = clamp((y - F0) / (F1 - F0), 0, 1);
@@ -165,6 +184,7 @@ function HeroScene({ ready }){
 
     return () => {
       alive = false;
+      if (window.__topAccent) window.__topAccent(false);
       clearTimeout(t1);
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', relayout);
@@ -302,8 +322,18 @@ function Featured(){
           </Link>
         </header>
         <div className="feat-grid">
-          {list.map((p, i) => <ProjectCard key={p.id} p={p} delay={(i % 2) * .09}/>)}
+          {list.map((p, i) => <ProjectCard key={p.id} p={p} delay={(i % 2) * .09} eager={i < 2}/>)}
         </div>
+        {/* The way out of the deck. The link in the header is for someone
+            already looking for it; this one is for everyone who just read
+            four cards and wants the rest. */}
+        <Link to="/work/" className="all-work rv rv-up">
+          <span className="all-work-text">
+            <span className="all-work-k">Everything else</span>
+            <span className="all-work-t">View all {all.length} projects</span>
+          </span>
+          <span className="all-work-go" aria-hidden="true"><Icon.ArrowUR/></span>
+        </Link>
       </div>
     </section>
   );

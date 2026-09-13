@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Personal portfolio site. Static — served by GitHub Pages. `npm run build` compiles src/*.jsx into dist/app.js (commit it). data.js is loaded directly and needs no build.",
+  "description": "Personal portfolio site. Static \u2014 served by GitHub Pages. `npm run build` compiles src/*.jsx into dist/app.js (commit it). data.js is loaded directly and needs no build.",
   "scripts": {
     "build": "node tools/build.mjs",
     "watch": "node --watch-path=src tools/build.mjs",
+    "images": "node tools/optimize-images.mjs",
     "og": "node tools/generate-og.mjs",
     "icons": "node tools/generate-icons.mjs"
   },
