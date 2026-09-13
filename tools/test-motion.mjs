@@ -26,34 +26,33 @@ try {
       const r = el.getBoundingClientRect();
       return scrollY + r.top + r.height / 2 - innerHeight * .3;
     });
-    // How much bigger than itself the projects dot is drawn. The overlay lets
-    // go of the last 36px of the collapse and the dot finishes it, because a
-    // fixed overlay lags a touch scroll by a frame and at that size the lag
-    // reads as a second dot beside the first.
-    const dotScale = () => page.locator('#featured-dot').evaluate(el => {
-      const m = /scale\(([\d.]+)\)/.exec(el.style.transform || '');
-      return m ? +m[1] : 1;
-    });
+    // The scale on the disc that lives inside the projects heading. The
+    // overlay lets go of the last 56px of the collapse and that disc — its
+    // own compositing layer, travelling with the page — finishes it, because
+    // a fixed overlay both lags a touch scroll and smears when it is
+    // repainted that small while the page moves. 0 means it is off.
+    const catchAt = () => page.locator('#featured-dot').evaluate(el =>
+      parseFloat(el.style.getPropertyValue('--catch') || '0') || 0);
     for (const y of [400, 1000, end - 50, end + 30, end - 50, 1000, 400, 0]) {
       const scene = await sceneAt(y);
-      const scale = await dotScale();
+      const scale = await catchAt();
       assert.ok(Math.abs(scene.y) < 1 && Math.abs(scene.x) < 1, 'Circle overlay stays anchored to viewport while scrolling');
       assert.equal(scene.height, 900, 'Circle overlay uses viewport height, not document height');
       assert.equal(scene.width, scene.viewport);
       if (y <= 162 || y >= end) {
         assert.equal(scene.visible, false, 'Circle is gone outside the scene');
-        assert.equal(scale, 1, 'The dot is its own size outside the scene');
+        assert.equal(scale, 0, 'Nothing is drawn around the dot outside the scene');
       } else {
-        assert.ok(scene.visible || scale > 1, 'Either the overlay or the dot is carrying the collapse');
+        assert.ok(scene.visible || scale > 0, 'Either the overlay or the disc is carrying the collapse');
       }
       if (y === 400) assert.ok(scene.radius > 10 && scene.radius < 900, 'Circle is partially expanded');
       if (y === 1000) assert.ok(scene.radius > scene.viewport / 2, 'Circle expands to cover the intro');
       if (y === end - 50) {
-        assert.equal(scene.visible, false, 'The overlay hands the end of the collapse to the dot');
-        assert.ok(scale > 1, 'The dot itself is drawing the last of the orange');
+        assert.equal(scene.visible, false, 'The overlay hands the end of the collapse to the disc');
+        assert.ok(scale > 0 && scale <= 1, 'The disc draws the last of the orange, never upscaled');
       }
       if (scene.visible && y > 1000) {
-        assert.ok(scene.radius >= 30, 'The overlay never shrinks to dot size — that is what doubled the dot');
+        assert.ok(scene.radius >= 50, 'The overlay never shrinks to dot size — that is what smeared');
       }
     }
     await page.evaluate(() => window.__nav('/work/'));

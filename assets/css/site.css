@@ -153,10 +153,30 @@ html.lenis,html.lenis body{height:auto}
 .dot{
   display:inline-block;width:.17em;height:.17em;border-radius:50%;
   background:var(--accent);margin-left:.06em;flex:none;
-  transform-origin:50% 50%;   /* the home hand-off grows it from its centre */
 }
 /* the last word and its dot, kept on one line */
 .words .wn{white-space:nowrap}
+
+/* The disc that catches the orange page at the end of the home scene, and
+   shrinks into the dot of the projects heading.
+
+   It is a separate, always-composited layer rather than a transform on the
+   dot itself. Scaling the dot means repainting it inside the page's own
+   layer on every frame, and WebKit does not invalidate the previous, larger
+   circle when the page is scrolling at the same time: what is left behind is
+   a comb of orange ring fragments under the dot. Its own layer has nothing
+   to invalidate — the compositor simply rescales a texture that was
+   rasterised once, at the large size, so it also stays crisp all the way
+   down. --catch is the scale, written by home.jsx; 0 is off. */
+#featured-dot{position:relative}
+#featured-dot::after{
+  content:"";position:absolute;left:50%;top:50%;
+  width:120px;height:120px;margin:-60px 0 0 -60px;
+  border-radius:50%;background:var(--accent);pointer-events:none;
+  transform:scale(var(--catch,0));
+  transform-origin:50% 50%;
+  will-change:transform;
+}
 .sec-title{
   font-weight:750;font-stretch:108%;font-size:clamp(38px,5.6vw,86px);
   line-height:.95;letter-spacing:-.04em;text-wrap:balance;
