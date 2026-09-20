@@ -402,9 +402,16 @@ foreground/background pair so it never has to be styled twice:
    inner highlight, the footer's rules and the timeline's stem are built, and it
    is the only way a tint survives the theme switch.
 2. **Orange is a decision, not an accent.** Before making something orange, ask
-   which of its four jobs it is doing: a surface that holds the whole screen, a
-   dot, a fill that tracks progress, or focus. If it is none of those, it is not
-   orange.
+   which of its five jobs it is doing: a surface that holds the whole screen, a
+   dot, a fill that tracks progress, focus, or — once, on the Outside map — a
+   fill the pointer reveals. If it is none of those, it is not orange.
+
+   The fifth was added for `.atlas-on`, and it is the only place a colour
+   answers a hover. It earns it because it adds a *reading* rather than the
+   information: every country visited is already filled in ink at rest, and
+   the pointer simply picks out the one it is over. Nothing is hidden behind
+   the hover, which is why it can be gated on a real pointer and a phone loses
+   nothing. Do not read this as permission for orange hover states elsewhere.
 3. **`--faint` is never a sentence.** It is for numerals and ticks. If a reader
    has to read it, it is `--muted`.
 4. **Small orange text is `--accent-ink`.** Always. `.sec-n`, `.pill-up`,
@@ -599,9 +606,12 @@ below reads as text pinned to the bezel.
 > the whole page against the screen edge. `.pp-body` and `.tl-head` carry an
 > in-file comment about this because it has been the source of a real bug.
 
-The footer is the single deliberate exception: `min(1360px, 100% − 40px)`, wider
-than the shell, so its rounded crown reads as an object under the page rather
-than a block inside it.
+Two blocks deliberately sit wider than the shell, and only two:
+
+| Block | Width | Why |
+|---|---|---|
+| `.foot` | `min(1360px, 100% − 40px)` | Its rounded crown has to read as an object *under* the page, not a block inside it. |
+| `.atlas` (Outside) | `min(1560px, 100% − 2 × clamp(24px, 3vw, 40px))` | A map is a spread, not an illustration in a column. The formula collapses back to the gutter below the shell's own width, so a phone still gets its margins — the gutter rule is bent at desktop scale only, never broken. |
 
 ### Vertical rhythm
 
@@ -629,6 +639,7 @@ token; do not measure the pill.
 | `.contact-grid` | `1fr` + `0.92fr`, gap `clamp(32,5vw,76)` | — | — | — |
 | `.take-grid` | 2 columns | — | 1 column | — |
 | `.ab-grid` (About) | `1fr` + `270px` | — | — | — |
+| `.race-grid` (Outside) | 2 columns, gap `clamp(44,5.6vw,84) / clamp(16,1.8vw,26)`; every second card offset down by `clamp(26,4.4vw,72)` | — | 1 column, no offset | — |
 
 Row gaps are always larger than column gaps in the card grids — roughly 2.5×.
 That is what keeps a grid of cards reading as rows of work rather than a
@@ -1021,13 +1032,16 @@ Everything else is lazy.
 ### Where the content lives
 
 `data.js` — **the only file you edit to change what the site says.** It holds
-`profile`, `copy`, `projects` and `homeDeck`. The stylesheet never mentions a
-project, a date or a name; the components never hard-code a sentence that
-`copy` can override.
+`profile`, `copy`, `projects` and `homeDeck`. `profile.outside` carries the
+Outside page: `pbs`, `races`, `countries`, `supports`. The stylesheet never
+mentions a project, a date or a name; the components never hard-code a sentence
+that `copy` can override.
 
 Editing `data.js` needs **no rebuild** for the site itself. It does need
 `npm run build` to regenerate the per-project share pages, so run it after
-adding or renaming a project.
+adding or renaming a project — and `npm run map` after adding a country, because
+the world is drawn ahead of time from that list. `npm run build` warns if the
+two have drifted apart.
 
 ### Tone
 
@@ -1133,16 +1147,20 @@ global ring · disabled is `opacity .4` + `cursor: not-allowed` (submit only).
 
 ### 10.2 Navigation pill — `.nav`
 
-A fixed, centred dark pill holding the logo, three links, a theme toggle and the
-CV button.
+A fixed, centred dark pill holding the logo, the `NAV` links, a theme toggle and
+the CV button.
 
 **Anatomy** — `fixed; top:14px; left:50%; translateX(-50%)`, `padding: 6px`,
 `radius 999px`, `background: var(--ink)`, `color: var(--paper)`,
 `max-width: 100vw − 24px`, shadow `0 14px 34px -20px rgba(0,0,0,.55)`.
 
 **The sliding indicator.** `.nav-active` is an absolutely positioned pill at
-`width: calc((100% - 4px) / 3)`, translated by
-`calc(index * 100% + index * 2px)` (the `2px` is the grid gap). Its visible
+`width: calc((100% - (var(--nav-n) - 1) * 2px) / var(--nav-n))`, translated by
+`calc(index * 100% + index * 2px)` (the `2px` is the grid gap). **`--nav-n` is
+`NAV.length`, written inline by `Nav`.** It used to be a literal `/ 3`, which
+made the indicator the wrong width and put it under the wrong label the day a
+fourth tab was added — the count must never be typed into the stylesheet
+again. Its visible
 surface is `::before` at `inset: 2px` — a vertical `color-mix` highlight plus an
 inset 1px top light. It sits at `z-index: -1` inside an `isolate` container, so
 it slides *behind* the labels. Transition `.28s cubic-bezier(.32,.72,0,1)`;
@@ -1352,7 +1370,8 @@ readout at the bottom.
 
 Four set pieces. Each is a single continuous gesture, each has a
 reduced-motion twin, and each is the reason the system exists — read these
-before changing anything they touch.
+before changing anything they touch. The Outside page is deliberately *not*
+one of them: see 11.5.
 
 ### 11.1 The splash — `#boot`
 
@@ -1445,6 +1464,52 @@ The bottom half of the site's arc — the night sky is the top half.
   own colour, clipped to below the document, so the browser's overscroll area
   and the strip under an iOS home bar are orange too. `env(safe-area-inset-bottom)`
   keeps the home indicator *on* the orange rather than below it.
+
+---
+
+### 11.5 The Outside page — the one with no gesture
+
+`/outside/` is the exception that proves the rule above: it is the only page
+with no set piece. It has the reveals every page has and nothing else — no pin,
+no scrub, no hand-off. That is the point. The work pages earn their staging;
+the personal one would look like it was trying if it had any.
+
+What carries it instead is register. Same palette, same faces, same dot — but
+the numbers are set at display size and the grid steps down the page instead of
+sitting square:
+
+| Part | What it is |
+|---|---|
+| `.pbs` | The records, as a printed table: ruled top and bottom, one cell per distance, cells divided by hairlines, `--pbn` columns (the count, inline). Each cell is the distance at `clamp(16,1.6vw,20)/600` in `--ink` — **Archivo, not mono**: here the distance *names* the record rather than tagging it, the same reasoning that makes `.trow-k` a real size in the toolkit — then a `.tabular` time at `clamp(25,2.7vw,37)`, then the pace. **The pace is computed from the distance and the clock, never typed** (`pace()` in `outside.jsx`) — one less number that can drift out of true. The block announces itself by structure, not by size; a board of huge figures would make this a results page. |
+| `.race` | A race. The box holds, in order: the photograph; or the time at `clamp(38,5.4vw,76)`; or the distance at `clamp(21,2.4vw,34)`. With none of the three there is **no box** — `.race.bare` is a hairline and its text. This chain is what lets a race exist before its photograph does without ever showing a placeholder. The pace rides against the time wherever the time lands — under it inside the box, beside it on the line below a photograph — so the pairing reads the same here as in `.pbs`. |
+| `.tally` | Two figures beside the map's title, in the slot `.sec-head` already keeps free. `column-reverse`, so the number reads first. |
+| `.atlas` | **A plate, not two blocks of colour.** The world is line work: every border a hairline at `--ink` 15% over a `--ink` 5% wash. The countries visited are the only filled thing on it — solid `--ink` at 92%, cut apart from one another by a `--paper` hairline, without which the eight in western Europe merge into one shapeless blot. The **single country under the pointer** turns `--accent` (§2, the fifth job). Every stroke is `vector-effect="non-scaling-stroke"`, set on the path, so a hairline is one *screen* pixel at any size rather than fattening with the viewBox. |
+| `.atlas-on.tiny` | Below `TINY` (20 px² on the map — Luxembourg is 1.4, Slovenia 17.6, Belgium 28) a paper hairline would rub the country out entirely, so it keeps its own ink instead and is allowed to merge with its neighbours. Being visible beats being separate. The same threshold widens its pointer target. |
+| `.atlas-hit` | A second, invisible copy of each outline, `pointer-events:all`. **It must declare a `fill`** — an SVG path without one paints black, and this one sits over the country it listens for. `.wide` gives only the `TINY` countries a 9px transparent stroke: a halo on every country would eat its neighbours' edges, which cost Belgium most of its target the first time round. Countries are drawn largest first so the small ones sit on top and win the overlap. |
+| Phones | Under 720px a country is a few pixels across and a paper separator would eat most of one. Separation gives way to legibility: the countries take their own ink and are allowed to touch. The hover is gated on `(hover:hover) and (pointer:fine)` per the house rule and costs a phone nothing, because the resting fill already carries the whole message. |
+
+| `.sup-av` | The 56px circle on an allegiance row: a portrait at `fit:"cover"`, a crest at `fit:"contain"` (10px of padding on the image, so `object-fit` centres the artwork in what is left). With no image the row falls back to its `icon` in a `.row-ico` of the same footprint, so the list never changes shape. **The image is positioned, not laid out:** `Img` renders a `<picture>`, whose box is sized by its own child, and a percentage height inside a grid slot does not resolve — together they left both avatars ratio-locked and overflowing the circle, invisibly, because `overflow:hidden` cropped the evidence. `display:contents` on the picture plus `position:absolute` on the image gives 100% something definite to mean. Only `fit:"cover"` means fill; anything else means fit, so a near miss in `data.js` lands on the behaviour a crest wants instead of silently cropping it. |
+
+**Where the map comes from.** `tools/build-map.mjs` reads Natural Earth 1:110m
+(public domain, vendored at `tools/data/world-110m.json`), decodes the TopoJSON,
+projects through Robinson, splits every ring that crosses the antimeridian —
+without that, Russia is drawn with a streak across the Pacific — simplifies with
+Douglas–Peucker at `0.28px`, and writes `assets/map/world.js`: the land, one
+path per visited country, and their areas in px² (which is what lets the page
+order them for hit-testing). The tolerance is deliberately low — the map is
+drawn as line work, and a coastline flattened into polygons shows immediately.
+It costs 72 KB, and only the visited countries getting their own path is what
+keeps it to that. It is **not** in the bundle: `useWorldMap()` injects the
+script the first time the section mounts, and the frame holds its aspect ratio
+until it lands.
+
+Antarctica is dropped — a cartographic convention, not an oversight. Natural
+Earth counts the overseas departments as France, which would light up South
+America on a map of where someone has been; `CLIP` in the generator keeps only
+the rings whose centre falls in a given lon/lat box, for the countries that need
+it. It clips the *visited* layer only — French Guiana is still part of the
+background world, as it should be. The list is one line long and should stay
+short: it is a fix for a dataset quirk, not a way to edit geography.
 
 ---
 

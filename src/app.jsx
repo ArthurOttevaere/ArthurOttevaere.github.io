@@ -11,6 +11,7 @@ const { useState, useEffect, useCallback, useRef } = React;
 const NAV = [
   { label: 'Work',    to: '/work/',    route: 'work' },
   { label: 'About',   to: '/about/',   route: 'about' },
+  { label: 'Outside', to: '/outside/', route: 'outside' },
   { label: 'Contact', to: '/contact/', route: 'contact' },
 ];
 const THEME_KEY = 'ao-theme';
@@ -142,7 +143,7 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
   return (
     <header className={'nav' + (hidden && !menuOpen ? ' hidden' : '')}>
       <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
-      <nav className="nav-links" aria-label="Primary">
+      <nav className="nav-links" aria-label="Primary" style={{ '--nav-n': NAV.length }}>
         <span className="nav-active" aria-hidden="true" style={{
           transform: 'translateX(calc(' + Math.max(0, activeIndex) * 100 + '% + ' + Math.max(0, activeIndex) * 2 + 'px))',
           opacity: activeIndex < 0 ? 0 : 1,
@@ -413,6 +414,7 @@ function App(){
     if (loc.route === 'work' && loc.sub){ const p = projById(loc.sub); t = (p ? p.title : 'Project') + ' · ' + base; }
     else if (loc.route === 'work')    t = 'Projects · ' + base;
     else if (loc.route === 'about')   t = 'About · ' + base;
+    else if (loc.route === 'outside') t = 'Outside · ' + base;
     else if (loc.route === 'contact') t = 'Contact · ' + base;
     else if (loc.route === '404')     t = 'Not found · ' + base;
     document.title = t;
@@ -475,6 +477,7 @@ function App(){
   let Page;
   if (loc.route === 'work')         Page = loc.sub ? <ProjectPage id={loc.sub}/> : <Projects/>;
   else if (loc.route === 'about')   Page = <About/>;
+  else if (loc.route === 'outside') Page = <Outside/>;
   else if (loc.route === 'contact') Page = <Contact/>;
   else if (loc.route === '404')     Page = <NotFound/>;
   else                              Page = <Home ready={ready}/>;

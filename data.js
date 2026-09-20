@@ -244,6 +244,88 @@ window.PORTFOLIO_DATA = {
       { icon: "Stock",    label: "Stock Market" },
       { icon: "Plane",    label: "Travel" },
     ],
+
+    /* ── Outside — the /outside/ page ──────────────────────────────
+       Everything here is optional and everything degrades: a field
+       left as "" simply does not render, so you can add a race now
+       and its photo, time or date whenever you have them. Nothing
+       shows a placeholder and nothing shows "coming soon".
+
+       After editing this block:
+         • adding or renaming a COUNTRY → `npm run map` (it redraws
+           the world with the new shape) then `npm run build`
+         • adding a race, a time, a date → nothing. Reload the page.
+         • adding a PHOTO → drop the file in assets/images/races/,
+           run `npm run images`, then put its path below. */
+    outside: {
+
+      /* The thin line under the title. Put only the distances you
+         have actually raced — a record row with a gap in it reads
+         as an omission. Order is the order shown. */
+      pbs: [
+        { distance: "5K",            time: "18:32" },
+        { distance: "10K",           time: "37:24" },
+        { distance: "Half marathon", time: "1:19:27" },
+      ],
+
+      /* The races, newest first — but you do not have to keep them
+         in order: anything with a `date` is sorted by it automatically,
+         and the ones still missing a date stay where you put them,
+         after the dated ones. Fill a date in and the card moves itself.
+
+           name      the race, as it is actually called
+           place     "City, CC" — shown in the italic serif
+           date      "YYYY-MM-DD". Drop it and the card simply has no date.
+           distance  free text: "Half marathon", "10K", "Trail · 21 km"…
+           time      "1:19:27" or "37:24". This is the card's payoff,
+                     set large in tabular figures.
+           photo     a path under /assets/images/races/. WITHOUT one the
+                     card falls back to a typographic panel with the time
+                     set big — that is a real design, not a hole, so an
+                     empty photo is perfectly fine to ship.
+           note      one short line, if the race deserves one. Optional. */
+      races: [
+        { name: "Rotterdam Half Marathon", place: "Rotterdam, NL", date: "2026-09-20",
+          distance: "Half marathon", time: "1:19:27", photo: "/assets/images/races/rotterdam-2026.jpg", note: "" },
+
+        { name: "Semi-marathon de Mons",   place: "Mons, BE", date: "",
+          distance: "Half marathon", time: "", photo: "/assets/images/races/mons-half-marathon.jpg", note: "" },
+      ],
+
+      /* Countries visited. Spelling must match Natural Earth, which is
+         where the map comes from — "Czechia", not "Czech Republic";
+         "United States of America", not "USA". `npm run map` prints a
+         warning naming anything it could not draw.
+
+         A plain string puts the dot at the country's own centre. To
+         move it somewhere you actually went, use the long form:
+           { name: "Russia", at: [37.6, 55.8] }   // [lon, lat] */
+      countries: [
+        "Austria", "Belgium", "Czechia", "France", "Germany", "Greece",
+        "Hungary", "Italy", "Luxembourg", "Netherlands", "Russia",
+        "Slovenia", "Spain", "Switzerland", "Turkey", "United Kingdom",
+        "Mexico", "United States of America",
+      ],
+
+      /* The two allegiances. `kind` is the mono label, `name` the thing,
+         `note` the one line that says why. `icon` is a key from
+         src/icons.jsx. Drop the whole array and the section disappears. */
+      supports: [
+        /* `image` is the picture in the round slot on the left — a portrait for
+           a person, a crest for a club. Drop the file in
+           assets/images/supports/, run `npm run images`, then put its path
+           here. Leave it "" and the slot falls back to the `icon` glyph, so
+           the row is complete either way.
+             fit: "cover"   fills the circle and crops — for a face
+             fit: "contain" sits whole inside it — for a crest or a logo */
+        { kind: "Formula 1", icon: "F1", name: "Max Verstappen",
+          image: "/assets/images/supports/max-verstappen.jpg", fit: "cover",
+          note: "The way he drives, and the fact that he says exactly what he thinks. For me, one of the best there has ever been." },
+        { kind: "Football", icon: "Football", name: "RSC Anderlecht",
+          image: "/assets/images/supports/anderlecht.png", fit: "contain",
+          note: "Inherited. My dad has supported them since I was small, and it came down to me." },
+      ],
+    },
   },
 
   /* ── Page copy ──────────────────────────────────────────────────
@@ -254,6 +336,7 @@ window.PORTFOLIO_DATA = {
     workLede:    "A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.",
     contactLede: "Internships, freelance, coffee chats — all welcome. Usually reply within a day.",
     aboutCta:    "Got an internship, a project, or just a question?",
+    outsideLede: "Away from the spreadsheets. The races I've run, the places I've been, and the two teams I can't be objective about.",
   },
 
   /* ── Projects ───────────────────────────────────────────────── */
