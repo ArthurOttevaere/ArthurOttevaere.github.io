@@ -8,6 +8,7 @@
     "build": "node tools/build.mjs",
     "watch": "node --watch-path=src tools/build.mjs",
     "images": "node tools/optimize-images.mjs",
+    "map": "node tools/build-map.mjs",
     "og": "node tools/generate-og.mjs",
     "icons": "node tools/generate-icons.mjs"
   },
