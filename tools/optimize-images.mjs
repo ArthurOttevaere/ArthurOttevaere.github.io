@@ -67,6 +67,7 @@ async function main(){
   if (!existsSync(SRC_DIR)) return;
   const files = (await walk(SRC_DIR)).sort();
   const manifest = {};
+  const skipped = [];
   let written = 0, kept = 0, bytesIn = 0, bytesOut = 0;
 
   for (const file of files){
@@ -83,20 +84,36 @@ async function main(){
       .sort((a, b) => a - b);
 
     const srcStat = await stat(file);
-    bytesIn += srcStat.size;
     const variants = [];
+    let failed = null;
     for (const width of widths){
       const out = `${base}-${width}.webp`;
       const fresh = !ALL && existsSync(out) && (await stat(out)).mtimeMs > srcStat.mtimeMs;
       if (fresh) kept++;
       else {
-        await run('cwebp', ['-quiet', '-q', String(QUALITY), '-m', '6', '-sharp_yuv',
-                            '-resize', String(width), '0', file, '-o', out]);
-        written++;
+        try {
+          await run('cwebp', ['-quiet', '-q', String(QUALITY), '-m', '6', '-sharp_yuv',
+                              '-resize', String(width), '0', file, '-o', out]);
+          written++;
+        } catch (err) {
+          /* One file the encoder cannot read used to abort the whole run, so a
+             single bad download left every image after it unprocessed — and
+             the originals being served raw is invisible until someone looks at
+             the network tab. Skip it, name it at the end, keep going.
+             Nearly always a file saved from a browser with a lying extension:
+             an AVIF called .png, a WebP called .jpg. `file <name>` tells you. */
+          failed = err;
+          break;
+        }
       }
       bytesOut += (await stat(out)).size;
       variants.push([width, '/' + out]);
     }
+    if (failed || !variants.length){
+      skipped.push(file);
+      continue;                      // no manifest entry: <Img> serves the original
+    }
+    bytesIn += srcStat.size;
     manifest[src] = { w, h, v: variants };
   }
 
@@ -106,8 +123,12 @@ async function main(){
   await writeFile(path.join(OUT_DIR, 'manifest.js'), js);
 
   const mb = n => (n / 1048576).toFixed(1) + ' MB';
-  console.log(`✓ ${files.length} images · ${written} encoded, ${kept} already current`);
+  console.log(`✓ ${files.length - skipped.length} images · ${written} encoded, ${kept} already current`);
   console.log(`  originals ${mb(bytesIn)} → webp set ${mb(bytesOut)} (all widths together)`);
+  if (skipped.length){
+    console.warn(`⚠ could not encode ${skipped.length}, served at full size until fixed:`);
+    for (const f of skipped) console.warn(`    ${f}   — check its real type with \`file ${f}\``);
+  }
 }
 
 main().catch(err => {

@@ -545,8 +545,15 @@ function Interests(){
   return (
     <section className="ab-sec">
       <div className="shell">
-        <span className="eyebrow rv rv-fade">Beyond the data</span>
-        <Words as="h2" className="sec-title" text="What I'm into" dot/>
+        <header className="sec-head">
+          <div>
+            <span className="eyebrow rv rv-fade">Beyond the data</span>
+            <Words as="h2" className="sec-title" text="What I'm into" dot/>
+          </div>
+          <Link to="/outside/" className="link-arrow rv rv-fade" style={{ '--d': '.12s' }}>
+            The rest of it <Icon.ArrowUR/>
+          </Link>
+        </header>
       </div>
       <div style={{ marginTop: 'clamp(28px,3.5vw,50px)' }}>
         <MarqueeRow items={items} dir={-1} variant="wide"/>
