@@ -289,7 +289,7 @@ window.PORTFOLIO_DATA = {
           distance: "Half marathon", time: "1:19:27", photo: "/assets/images/races/rotterdam-2026.jpg", note: "" },
 
         { name: "Semi-marathon de Mons",   place: "Mons, BE", date: "",
-          distance: "Half marathon", time: "", photo: "/assets/images/races/mons-half-marathon.jpg", note: "" },
+          distance: "Half marathon", time: "1:26:06", photo: "/assets/images/races/mons-half-marathon.jpg", note: "" },
       ],
 
       /* Countries visited. Spelling must match Natural Earth, which is
