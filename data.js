@@ -263,7 +263,7 @@ window.PORTFOLIO_DATA = {
          have actually raced — a record row with a gap in it reads
          as an omission. Order is the order shown. */
       pbs: [
-        { distance: "5K",            time: "18:32" },
+        { distance: "5K",            time: "18:10" },
         { distance: "10K",           time: "37:24" },
         { distance: "Half marathon", time: "1:19:27" },
       ],
