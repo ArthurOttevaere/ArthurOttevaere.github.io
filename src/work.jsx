@@ -5,7 +5,7 @@
 //  block simply disappears when its field is empty.
 // =============================================================================
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } = React;
 
 /* ── Index ─────────────────────────────────────────────────────────────── */
 function Projects(){
@@ -27,7 +27,40 @@ function Projects(){
     return l;
   }, [filter, sort, projects]);
 
+  // A filter is pressed again and again, so it does not stage anything: the
+  // cards stay in place, keep their images, and the grid only fades across.
+  const gridRef = useRef(null);
+  const filtered = useRef(false);
+  useLayoutEffect(() => {
+    if (!filtered.current){ filtered.current = true; return; }
+    const grid = gridRef.current;
+    if (!grid) return;
+    settleReveals(grid);
+    grid.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
+  }, [filter, sort]);
+
   useReveals(rootRef, [filter, sort]);
+
+  // The dot belongs to the row, not to a filter, so it can travel between them
+  // the way the nav's pill does. It takes its place before it learns to move.
+  const filtersRef = useRef(null);
+  const dotRef = useRef(null);
+  useLayoutEffect(() => {
+    const box = filtersRef.current, dot = dotRef.current;
+    if (!box || !dot) return;
+    const place = () => {
+      const on = box.querySelector('.filter.on');
+      if (on) dot.style.transform = 'translate(' + on.offsetLeft + 'px,' + (on.offsetTop + on.offsetHeight / 2) + 'px)';
+    };
+    place();
+    const ro = new ResizeObserver(place);           // a wrap, or the font landing
+    box.querySelectorAll('.filter').forEach(el => ro.observe(el));
+    return () => ro.disconnect();
+  }, [filter]);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => { if (dotRef.current) dotRef.current.classList.add('live'); });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const count = c => c === 'All' ? projects.length : projects.filter(p => p.cat === c).length;
 
@@ -41,7 +74,8 @@ function Projects(){
         </header>
 
         <div className="work-bar">
-          <div className="filters">
+          <div className="filters" ref={filtersRef}>
+            <span className="filter-dot" ref={dotRef} aria-hidden="true"/>
             {cats.map(c => (
               <button key={c} type="button" aria-pressed={filter === c}
                       className={'filter' + (filter === c ? ' on' : '')}
@@ -60,7 +94,7 @@ function Projects(){
         {list.length === 0
           ? <p className="empty">Nothing in this bucket yet.</p>
           : (
-            <div className="work-grid" key={filter + sort}>
+            <div className="work-grid" ref={gridRef}>
               {list.map((p, i) => (
                 <ProjectCard key={p.id} p={p} size="sm" delay={(i % 3) * .07} flag={p.featured} eager={i < 3}/>
               ))}
@@ -204,10 +238,33 @@ function Section({ s, n }){
    column of evidence under the text. Portrait shots keep a sane width. ─── */
 function Gallery({ items, n, title }){
   const [zoom, setZoom] = useState(-1);
+  const [thumb, setThumb] = useState(null);
+  const closing = useRef(false);
   const fit = e => {
     const img = e.currentTarget, fig = img.closest('.shot');
     if (fig && img.naturalHeight > img.naturalWidth * 1.02) fig.classList.add('is-tall');
   };
+  const frame = i => document.querySelectorAll('.shot-frame')[i];
+  // The screenshot on the page opens into the lightbox, and is shown behind the
+  // full-size file until that lands, so the picture never goes blank mid-gesture.
+  const open = (i, e) => {
+    const img = e.currentTarget.querySelector('img');
+    closing.current = false;
+    morph(() => { setThumb({ i, src: img.currentSrc || img.src }); setZoom(i); },
+          e.currentTarget, () => document.querySelector('.lb img'));
+  };
+  // …and closes onto the one you ended on, wherever that is on the page.
+  const close = useCallback(() => {
+    if (closing.current) return;
+    closing.current = true;
+    morph(() => setZoom(-1), document.querySelector('.lb img'), () => {
+      const el = frame(zoom);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) jumpTo(window.scrollY + r.top - (window.innerHeight - r.height) / 2);
+      return el;
+    });
+  }, [zoom]);
   return (
     <section className="sec rv rv-up">
       <div className="sec-n">{String(n).padStart(2, '0')}</div>
@@ -215,7 +272,7 @@ function Gallery({ items, n, title }){
       <div className="shots">
         {items.map((g, i) => (
           <figure className="shot" key={i}>
-            <button type="button" className="shot-frame" onClick={() => setZoom(i)}
+            <button type="button" className="shot-frame" onClick={e => open(i, e)}
                     aria-label={'Open image ' + (i + 1) + ' full screen'}>
               <Img src={g.src} alt={g.caption || ''} onLoad={fit} eager={i < 2}
                    sizes="(max-width:900px) calc(100vw - 2 * clamp(24px,4.6vw,48px)), 860px"/>
@@ -227,16 +284,121 @@ function Gallery({ items, n, title }){
           </figure>
         ))}
       </div>
-      {zoom >= 0 ? <Lightbox items={items} index={zoom} onIndex={setZoom} onClose={() => setZoom(-1)}/> : null}
+      {zoom >= 0 ? <Lightbox items={items} index={zoom} thumb={thumb} onIndex={setZoom} onClose={close}/> : null}
     </section>
   );
 }
 
+/* A finger on the lightbox: sideways changes the picture, down puts it away.
+   It works on the element directly, a frame at a time, with no React in the
+   loop. A quick flick counts as much as a long drag (velocity in px/ms, Emil
+   Kowalski's .11), the first and last pictures resist instead of stopping dead,
+   and a second finger or a zoomed page hands the gesture back to the browser. */
+function useLightboxGestures(rootRef, figRef, scrimRef, { index, count, onIndex, onClose }){
+  useEffect(() => {
+    const lb = rootRef.current, fig = figRef.current, scrim = scrimRef.current;
+    if (!lb || !fig) return;
+    let id = null, axis = '', x0 = 0, y0 = 0, t0 = 0, dx = 0, dy = 0, busy = false;
+    const settle = (transform, ms, then) => {
+      fig.style.transition = reduceMotion() ? 'none' : 'transform ' + ms + 'ms var(--ease-pill)';
+      fig.style.transform = transform;
+      if (then) setTimeout(then, reduceMotion() ? 0 : ms);
+    };
+    const release = () => { settle('', 280); scrim.style.transition = ''; scrim.style.opacity = ''; };
+    const down = e => {
+      if (e.pointerType === 'mouse' || id !== null || busy || e.target.closest('button')) return;
+      if (window.visualViewport && window.visualViewport.scale > 1.01) return;
+      id = e.pointerId; axis = ''; dx = dy = 0;
+      x0 = e.clientX; y0 = e.clientY; t0 = performance.now();
+      fig.style.transition = scrim.style.transition = 'none';       // the finger leads
+    };
+    const move = e => {
+      if (e.pointerId !== id) return;
+      dx = e.clientX - x0; dy = e.clientY - y0;
+      if (!axis){
+        if (Math.hypot(dx, dy) < 8) return;
+        axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        lb.setPointerCapture(id);
+      }
+      if (axis === 'x'){
+        const edge = (dx > 0 && index === 0) || (dx < 0 && index === count - 1);
+        fig.style.transform = 'translateX(' + (edge ? dx * .25 : dx) + 'px)';
+      } else {
+        const d = dy > 0 ? dy : dy * .25, pull = Math.max(d, 0);
+        fig.style.transform = 'translateY(' + d + 'px) scale(' + (1 - Math.min(pull / 1600, .12)) + ')';
+        scrim.style.opacity = 1 - Math.min(pull / 420, .7);
+      }
+    };
+    const up = e => {
+      if (e.pointerId !== id) return;
+      id = null;
+      if (!axis) return;
+      const moved = axis === 'x' ? dx : dy;
+      const fast = Math.abs(moved) / Math.max(1, performance.now() - t0) > .11;
+      if (e.type === 'pointercancel'){ release(); return; }
+      if (axis === 'y'){
+        if (dy > 0 && (dy > 120 || fast)) onClose(); else release();
+        return;
+      }
+      const dir = dx < 0 ? 1 : -1, next = index + dir, w = lb.clientWidth;
+      if (next < 0 || next >= count || !(Math.abs(dx) > w * .25 || fast)){ release(); return; }
+      busy = true;
+      settle('translateX(' + (-dir * w) + 'px)', 180, () => {
+        fig.style.transition = 'none';
+        fig.style.transform = 'translateX(' + (dir * w * .3) + 'px)';
+        ReactDOM.flushSync(() => onIndex(next));
+        void fig.offsetWidth;                                  // commit the start state
+        settle('', 280);
+      });
+    };
+    lb.addEventListener('pointerdown', down);
+    lb.addEventListener('pointermove', move);
+    lb.addEventListener('pointerup', up);
+    lb.addEventListener('pointercancel', up);
+    return () => {
+      lb.removeEventListener('pointerdown', down);
+      lb.removeEventListener('pointermove', move);
+      lb.removeEventListener('pointerup', up);
+      lb.removeEventListener('pointercancel', up);
+    };
+  }, [index, count, onIndex, onClose]);
+}
+
 // Portalled to <body> so it escapes any transformed ancestor.
-function Lightbox({ items, index, onIndex, onClose }){
+function Lightbox({ items, index, thumb, onIndex, onClose }){
+  const rootRef = useRef(null), figRef = useRef(null), scrimRef = useRef(null), closeRef = useRef(null);
+  useLightboxGestures(rootRef, figRef, scrimRef, { index, count: items.length, onIndex, onClose });
+
+  // A dialog takes the focus with it and gives it back. preventScroll, because
+  // the page underneath must not move: the close already handles where it lands.
+  useEffect(() => {
+    const before = document.activeElement;
+    closeRef.current.focus({ preventScroll: true });
+    return () => { if (before && before.focus) before.focus({ preventScroll: true }); };
+  }, []);
+
+  // The neighbours are fetched ahead, so a swipe lands on a picture.
+  useEffect(() => {
+    [index - 1, index + 1].forEach(i => {
+      const g = items[i], set = g ? imgSet(g.src) : null;
+      if (!g) return;
+      const next = new Image();
+      next.sizes = '100vw';
+      if (set) next.srcset = set.srcset;
+      next.src = g.src;
+    });
+  }, [index, items]);
+
   useEffect(() => {
     function onKey(e){
       if (e.key === 'Escape')     onClose();
+      if (e.key === 'Tab'){
+        // the page behind is out of reach while this is open
+        const stops = Array.from(rootRef.current.querySelectorAll('button:not(:disabled)'));
+        const at = stops.indexOf(document.activeElement);
+        e.preventDefault();
+        stops[(at + (e.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
+      }
       if (e.key === 'ArrowRight') onIndex(Math.min(index + 1, items.length - 1));
       if (e.key === 'ArrowLeft')  onIndex(Math.max(index - 1, 0));
     }
@@ -254,10 +416,12 @@ function Lightbox({ items, index, onIndex, onClose }){
   const g = items[index];
   if (!g) return null;
   return ReactDOM.createPortal((
-    <div className="lb" role="dialog" aria-modal="true" aria-label={g.caption || 'Image'} onMouseDown={onClose}>
-      <button type="button" className="lb-close" onClick={onClose} aria-label="Close"><Icon.Close/></button>
-      <figure onMouseDown={e => e.stopPropagation()}>
-        <Img src={g.src} alt={g.caption || ''} eager priority sizes="100vw"/>
+    <div className="lb" ref={rootRef} role="dialog" aria-modal="true" aria-label={g.caption || 'Image'} onMouseDown={onClose}>
+      <div className="lb-scrim" ref={scrimRef} aria-hidden="true"/>
+      <button type="button" className="lb-close" ref={closeRef} onClick={onClose} aria-label="Close"><Icon.Close/></button>
+      <figure ref={figRef} onMouseDown={e => e.stopPropagation()}>
+        <Img key={g.src} src={g.src} alt={g.caption || ''} eager priority sizes="100vw"
+             style={thumb && thumb.i === index ? { background: 'center / cover url("' + thumb.src + '")' } : undefined}/>
         {g.caption ? <figcaption>{g.caption}</figcaption> : null}
       </figure>
       {items.length > 1 ? (

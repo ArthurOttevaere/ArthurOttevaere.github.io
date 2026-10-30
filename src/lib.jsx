@@ -4,7 +4,7 @@
 //  other files (home / work / about / contact / app) can use it directly.
 // =============================================================================
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } = React;
 
 /* ── Data ──────────────────────────────────────────────────────────────── */
 const DATA    = () => window.PORTFOLIO_DATA || {};
@@ -65,7 +65,7 @@ const projectPath = id => '/work/' + id + '/';
 
 // An <a> that navigates in-app on a plain left click, and behaves like a
 // normal link for everything else (new tab, middle click, crawlers).
-function Link({ to, children, className, onClick, ...rest }){
+function Link({ to, children, className, onClick, grow, ...rest }){
   return (
     <a href={to} className={className} {...rest}
        onClick={e => {
@@ -74,7 +74,7 @@ function Link({ to, children, className, onClick, ...rest }){
          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
          if (rest.target === '_blank') return;
          e.preventDefault();
-         if (window.__nav) window.__nav(to);
+         if (window.__nav) window.__nav(to, grow ? e.currentTarget : null);
        }}>
       {children}
     </a>
@@ -88,6 +88,15 @@ function scrollToEl(el, offset){
   if (window.__lenis) { window.__lenis.scrollTo(el, { offset: off, duration: 1.1 }); return; }
   const y = el.getBoundingClientRect().top + window.scrollY + off;
   window.scrollTo({ top: y, behavior: reduceMotion() ? 'instant' : 'smooth' });
+}
+// The same, with no travel at all: the page is simply there.
+function jumpTo(y){
+  if (window.__lenis){
+    window.__lenis.resize();          // the page may have just changed height
+    window.__lenis.scrollTo(y, { immediate: true, force: true });
+  } else {
+    window.scrollTo(0, y);
+  }
 }
 
 /* ── Time ──────────────────────────────────────────────────────────────── */
@@ -334,18 +343,155 @@ function fillWords(text){
 /* ── Reveals ───────────────────────────────────────────────────────────────
    Anything with .rv gets .in the first time it enters the viewport; the CSS
    does the rest. With reduced motion (or no observer) everything is shown at
-   once — the page never depends on the animation to be readable. */
+   once — the page never depends on the animation to be readable.
+
+   Once a block has arrived its variant goes. `.js .rv-up.in` outranks any
+   component, so left in place it would keep the reveal's slow transition for
+   good and swallow the hover and the press of whatever carries it (`.btn`,
+   `.all-work`, a card's cover). `.words` stays: nothing you can press wears it.
+
+   It runs in a layout effect so that a page that must not stage itself again
+   (`.is-back`, on the way back through history) is settled before it paints. */
+const REVEAL_END = { 'rv-up': 'transform', 'rv-fade': 'opacity', 'rv-media': 'clip-path' };
+const REVEAL_VARIANTS = Object.keys(REVEAL_END);
+function arrive(el){
+  el.classList.add('in');
+  const variant = REVEAL_VARIANTS.find(c => el.classList.contains(c));
+  if (!variant) return;
+  // A cover's image settles after its clip has opened, so the image has the last word.
+  const media = variant === 'rv-media' ? el.querySelector('img,svg') : null;
+  const target = media || el;
+  const prop = media ? 'transform' : REVEAL_END[variant];
+  const end = e => {
+    if (e.target !== target || e.propertyName !== prop) return;
+    el.removeEventListener('transitionend', end);
+    el.classList.remove(variant);
+  };
+  el.addEventListener('transitionend', end);
+}
+// Skips to the arrived state, with nothing left to animate.
+function settleReveal(el){
+  el.classList.add('in');
+  el.classList.remove(...REVEAL_VARIANTS);
+}
+function settleReveals(root){ root.querySelectorAll('.rv').forEach(settleReveal); }
+
+/* ── Morph ─────────────────────────────────────────────────────────────────
+   One picture becomes the next on the same page: a screenshot opens into the
+   lightbox. `update` changes the page, and `findTo` says where the picture
+   lands once it has. Browsers without View Transitions, and reduced motion,
+   simply get the update. Going to another page is `fly()`, below.
+
+   A morph only makes sense if you can see both ends, so a picture that is off
+   screen stays out of it and the page crossfades on its own. The name is set
+   for the length of the morph only: names must be unique on a page. */
+const onScreen = el => {
+  const r = el.getBoundingClientRect();
+  return r.bottom > 0 && r.top < window.innerHeight;
+};
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── Flight ────────────────────────────────────────────────────────────────
+   A cover leaving one page for the next. It is not a View Transition, because
+   those animate a size on the main thread, at the very moment the next page is
+   mounting and starting its reveals: the same click could be smooth on one card
+   and stutter on another. Here a copy of the picture is the only thing moving,
+   and it moves by transform and opacity alone, so the compositor keeps it going
+   whatever the page underneath is doing.
+
+   It always plays the same way, wherever the card sits and wherever the cover
+   lands: the page lets go around a picture that stays perfectly still, the next
+   page mounts behind that, and the picture travels and dissolves into its place
+   in one stroke. It must not move before the mount: a page can take a moment
+   to build, and a picture that has started moving would be seen to wait for it.
+   Dissolving is what makes the landing dependable, because a cover below the
+   fold on a short screen has no visible place to land on. */
+const LET_GO = 110, FLIGHT = 380;
+const FLIGHT_EASE = 'cubic-bezier(.32,.72,0,1)';
+let flying = false;
+
+function fly(update, from, findTo){
+  // A cover just under the fold still flies, so a short screen plays the same
+  // gesture; one scrolled far away would have to cross the whole page to arrive.
+  const near = el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight * 1.25; };
+  if (flying || !from || reduceMotion() || !near(from)){ update(); return; }
+  flying = true;
+  const a = from.getBoundingClientRect();
+  const radius = parseFloat(getComputedStyle(from).borderTopLeftRadius) || 0;
+
+  // The copy is drawn at about its largest size and scaled down, so it stays
+  // sharp as it grows. Its corners are drawn to be right at the start.
+  const w = Math.max(a.width, Math.min(1184, window.innerWidth));
+  const h = w * a.height / a.width;
+  const k = a.width / w;
+  const copy = from.cloneNode(true);
+  copy.className = 'fly';
+  copy.querySelectorAll('.flag').forEach(el => el.remove());
+  copy.querySelectorAll('img').forEach(el => { el.loading = 'eager'; el.decoding = 'sync'; });
+  copy.style.cssText = 'left:' + (a.left + a.width / 2 - w / 2) + 'px;top:' + (a.top + a.height / 2 - h / 2) + 'px;'
+    + 'width:' + w + 'px;height:' + h + 'px;border-radius:' + (radius / k) + 'px;transform:scale(' + k + ')';
+  document.body.appendChild(copy);
+  from.style.visibility = 'hidden';
+
+  const start = 'scale(' + k + ')';
+  const page = () => [document.getElementById('main'), document.querySelector('.foot')].filter(Boolean);
+  const leaving = page().map(el => el.animate({ opacity: [1, 0] }, { duration: LET_GO, easing: 'ease-out', fill: 'forwards' }));
+
+  wait(LET_GO).then(() => {
+    ReactDOM.flushSync(update);
+    leaving.forEach(an => an.cancel());
+    page().forEach(el => el.animate({ opacity: [0, 1] }, { duration: 280, easing: 'ease-out' }));
+
+    const to = findTo();
+    let end = start;
+    if (to){
+      settleReveal(to);
+      const b = to.getBoundingClientRect();
+      const dx = b.left + b.width / 2 - (a.left + a.width / 2);
+      const dy = b.top + b.height / 2 - (a.top + a.height / 2);
+      end = 'translate(' + dx + 'px,' + dy + 'px) scale(' + b.width / w + ')';
+      to.animate({ opacity: [0, 0, 1], offset: [0, .5, 1] }, { duration: FLIGHT });
+    }
+    // A tab that stops drawing mid-flight never finishes its animations, so the
+    // copy also has a deadline: it can never be left lying over the page.
+    const land = () => { copy.remove(); flying = false; };
+    copy.animate({ transform: [start, end] }, { duration: FLIGHT, easing: FLIGHT_EASE, fill: 'forwards' });
+    copy.animate({ opacity: [1, 1, 0], offset: [0, .55, 1] }, { duration: FLIGHT, fill: 'forwards' })
+      .finished.catch(() => {}).then(land);
+    setTimeout(land, FLIGHT + 300);
+  });
+}
+
+function morph(update, from, findTo){
+  if (!from || !document.startViewTransition || reduceMotion() || !onScreen(from)){ update(); return; }
+  from.style.viewTransitionName = 'cover';
+  let to = null;
+  const vt = document.startViewTransition(async () => {
+    ReactDOM.flushSync(update);
+    from.style.viewTransitionName = '';
+    to = findTo();
+    if (!to || !onScreen(to)){ to = null; return; }
+    settleReveal(to);
+    to.style.viewTransitionName = 'cover';
+    // Give a picture that is not ready a moment, but never hold the page for it.
+    const img = to.matches('img') ? to : to.querySelector('img');
+    if (img && img.decode) await Promise.race([img.decode().catch(() => {}), wait(220)]);
+  });
+  vt.ready.catch(() => {});
+  vt.finished.catch(() => {}).then(() => { if (to) to.style.viewTransitionName = ''; });
+}
+
 function useReveals(rootRef, deps){
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = (rootRef && rootRef.current) || document.body;
     const els = Array.prototype.slice.call(root.querySelectorAll('.rv:not(.in)'));
     if (!els.length) return;
-    if (reduceMotion() || typeof IntersectionObserver === 'undefined'){
-      els.forEach(el => el.classList.add('in'));
+    if (reduceMotion() || typeof IntersectionObserver === 'undefined' || root.closest('.is-back')){
+      settleReveals(root);
       return;
     }
     const io = new IntersectionObserver(entries => {
-      entries.forEach(en => { if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+      entries.forEach(en => { if (en.isIntersecting){ arrive(en.target); io.unobserve(en.target); } });
     }, { rootMargin: '0px 0px -10% 0px', threshold: 0 });
     els.forEach(el => io.observe(el));
     return () => io.disconnect();
@@ -410,10 +556,10 @@ function imgSet(src){
   return { w: m.w, h: m.h, srcset: m.v.map(v => v[1] + ' ' + v[0] + 'w').join(', ') };
 }
 
-function Img({ src, alt, sizes, eager, priority, onLoad }){
+function Img({ src, alt, sizes, eager, priority, onLoad, style }){
   const set = imgSet(src);
   const img = (
-    <img src={src} alt={alt || ''} onLoad={onLoad} decoding="async"
+    <img src={src} alt={alt || ''} onLoad={onLoad} decoding="async" style={style}
          width={set ? set.w : undefined} height={set ? set.h : undefined}
          loading={eager ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : undefined}/>
   );
@@ -462,7 +608,7 @@ function ProjectCard({ p, size, delay, flag, eager }){
   const small = size === 'sm';
   const sub = dashSub || (small ? p.cat : p.cat + ' · ' + projDateLabel(p));
   return (
-    <Link to={projectPath(p.id)} className={'pcard' + (small ? ' sm' : '')} aria-label={p.title}>
+    <Link to={projectPath(p.id)} grow className={'pcard' + (small ? ' sm' : '')} aria-label={p.title}>
       <div className="pcard-media rv rv-media" style={{ '--d': (delay || 0) + 's' }}>
         <CoverArt cover={p.cover} title={p.title} eager={eager} sizes={small ? CARD_SIZES.sm : CARD_SIZES.lg}/>
         {flag ? <span className="flag">Featured</span> : null}
@@ -483,7 +629,7 @@ function ProjectCard({ p, size, delay, flag, eager }){
 Object.assign(window, {
   DATA, PROFILE, PROJS, COPY,
   clamp, lerp, smooth, easeIO, easeOut, coverRadius, reduceMotion, useMedia,
-  parsePath, pathFor, projectPath, Link, scrollToEl,
+  parsePath, pathFor, projectPath, Link, scrollToEl, jumpTo, morph, fly,
   brusselsTime, useClock, computeAge,
   parseProjDate, projDateLabel, projDateKey, projectYears,
   formatPeriod, periodStartKey, periodEndKey, timelineEntries,
@@ -491,6 +637,6 @@ Object.assign(window, {
   isImageCover, projById, splitTitle, projLinks, linkKind, projSections,
   projSkills, projGallery, projAttachments,
   emphasise, fillWords,
-  useReveals, useScrollFrame,
-  Words, Img, CoverArt, ScrollBadge, ProjectCard,
+  useReveals, settleReveals, useScrollFrame,
+  Words, Img, imgSet, CoverArt, ScrollBadge, ProjectCard,
 });

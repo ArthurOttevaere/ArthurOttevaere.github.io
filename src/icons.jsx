@@ -69,7 +69,7 @@ const Icon = {
   ),
   Check: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <path d="m4 12 5 5L20 6" />
+      <path d="m4 12 5 5L20 6" pathLength="1" />
     </svg>
   ),
   Dot: (p) => (
