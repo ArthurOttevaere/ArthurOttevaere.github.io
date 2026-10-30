@@ -6,7 +6,7 @@
 //  file for each of them.
 // =============================================================================
 
-const { useState, useEffect, useCallback, useRef } = React;
+const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;
 
 const NAV = [
   { label: 'Work',    to: '/work/',    route: 'work' },
@@ -46,7 +46,7 @@ function useTheme(){
   const [theme, setTheme] = useState(() => {
     try { return sessionStorage.getItem(THEME_KEY) || system(); } catch (e) { return system(); }
   });
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     paintTop();
   }, [theme]);
@@ -59,14 +59,33 @@ function useTheme(){
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
+  // The whole page crossfades as one piece. Left alone, the body would flip at
+  // once while the nav took its own .3s to follow.
   const toggle = useCallback(() => {
-    setTheme(t => {
+    const flip = () => setTheme(t => {
       const next = t === 'light' ? 'dark' : 'light';
       try { sessionStorage.setItem(THEME_KEY, next); } catch (e) {}
       return next;
     });
+    if (!document.startViewTransition || reduceMotion()){ flip(); return; }
+    const root = document.documentElement;
+    root.classList.add('theme-shift');
+    const vt = document.startViewTransition(() => ReactDOM.flushSync(flip));
+    vt.ready.catch(() => {});
+    vt.finished.catch(() => {}).then(() => root.classList.remove('theme-shift'));
   }, []);
   return [theme, toggle];
+}
+
+// Two icons in one place, the second taking over from the first the way SF
+// Symbols' Replace does: both are always there, so the swap can be interrupted.
+function Swap({ first, A, B }){
+  return (
+    <span className="swap">
+      <A className={first ? 'on' : undefined}/>
+      <B className={first ? undefined : 'on'}/>
+    </span>
+  );
 }
 
 function ThemeButton({ theme, toggle, className }){
@@ -102,15 +121,14 @@ function CvButton(){
       <button type="button" className="nav-cv" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         CV <Icon.Download/>
       </button>
-      {open ? (
-        <span className="cv-pop" role="menu">
-          {links.map(c => (
-            <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => setOpen(false)}>
-              <span className="lang mono">{c.lang.toUpperCase()}</span><span>{c.label}</span>
-            </a>
-          ))}
-        </span>
-      ) : null}
+      <span className={'cv-pop' + (open ? ' open' : '')} role="menu" aria-hidden={!open}>
+        {links.map(c => (
+          <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer" role="menuitem"
+             tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
+            <span className="lang mono">{c.lang.toUpperCase()}</span><span>{c.label}</span>
+          </a>
+        ))}
+      </span>
     </span>
   );
 }
@@ -119,6 +137,14 @@ function CvButton(){
 function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
   const [hidden, setHidden] = useState(false);
   const activeIndex = NAV.findIndex(n => n.route === route);
+  // The pill slides between tabs, but it only ever fades in and out: arriving
+  // from a page with no tab, it opens where it belongs instead of gliding over
+  // from the first one, and leaving, it stays where it was.
+  const pill = useRef(Math.max(0, activeIndex));
+  const gone = useRef(activeIndex < 0);
+  const opening = gone.current && activeIndex >= 0;
+  if (activeIndex >= 0) pill.current = activeIndex;
+  useEffect(() => { gone.current = activeIndex < 0; }, [activeIndex]);
   useEffect(() => {
     let raf = 0, lastY = Math.max(0, window.scrollY), travel = 0;
     setHidden(false);
@@ -145,8 +171,9 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
       <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
       <nav className="nav-links" aria-label="Primary" style={{ '--nav-n': NAV.length }}>
         <span className="nav-active" aria-hidden="true" style={{
-          transform: 'translateX(calc(' + Math.max(0, activeIndex) * 100 + '% + ' + Math.max(0, activeIndex) * 2 + 'px))',
+          transform: 'translateX(calc(' + pill.current * 100 + '% + ' + pill.current * 2 + 'px))',
           opacity: activeIndex < 0 ? 0 : 1,
+          transition: opening ? 'opacity .18s ease' : undefined,
         }}/>
         {NAV.map(n => (
           <Link key={n.route} to={n.to} className={'nav-link' + (route === n.route ? ' on' : '')}
@@ -161,7 +188,7 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
         <CvButton/>
         <button type="button" className="nav-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
-          {menuOpen ? <Icon.Close/> : <Icon.Menu/>}
+          <Swap first={!menuOpen} A={Icon.Menu} B={Icon.Close}/>
         </button>
       </span>
     </header>
@@ -329,7 +356,7 @@ function Footer(){
                  target={s.ext && !disabled ? '_blank' : undefined}
                  rel="noopener noreferrer"
                  onClick={e => { if (disabled){ e.preventDefault(); return; } if (isMail) copyMail(e); }}>
-                {isMail && copied ? <Icon.Check/> : <Glyph/>}
+                {isMail && copied ? <Icon.Check className="draw"/> : <Glyph/>}
                 {isMail && copied ? <span className="foot-tile-toast">Copied ✓</span> : null}
               </a>
             );
@@ -346,25 +373,67 @@ function Footer(){
 }
 
 /* ── App ───────────────────────────────────────────────────────────────── */
+// The addresses already seen since this page load. A page stages itself in
+// full once; after that it only has to show up (see `.is-again`, `.is-back`).
+const seen = new Set();
+
+// Where you were on each history entry, so going back puts you there again. It
+// lives in memory on purpose: a reload forgets it and starts at the top, where
+// the splash needs the dot of the name to be.
+const scrollAt = new Map();
+const newEntry = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+let entry = (history.state && history.state.id) || newEntry();
+history.replaceState(Object.assign({}, history.state, { id: entry }), '');
+let here = location.pathname;
+
+const coverOf = path => document.querySelector('a.pcard[href="' + path + '"] .pcard-media');
+
 function App(){
   const [theme, toggle] = useTheme();
-  const [loc, setLoc]   = useState(() => parsePath(location.pathname));
+  const [loc, setLoc]   = useState(() => { seen.add(location.pathname); return parsePath(location.pathname); });
   const [menuOpen, setMenuOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const firstCount = useRef(true);
 
-  const commit = useCallback((to, push) => {
+  const commit = useCallback((to, push, grown) => {
     const url = new URL(to, location.origin);
-    if (push) history.pushState({}, '', url.pathname + url.search + url.hash);
-    setLoc(parsePath(url.pathname));
-    if (window.__lenis) window.__lenis.scrollTo(0, { immediate: true, force: true });
-    window.scrollTo(0, 0);
-    if (url.hash){
+    scrollAt.set(entry, window.scrollY);
+    if (push){
+      entry = newEntry();
+      history.pushState({ id: entry }, '', url.pathname + url.search + url.hash);
+    } else {
+      entry = (history.state && history.state.id) || newEntry();
+    }
+    here = url.pathname;
+    const visit = !push ? 'back' : seen.has(url.pathname) ? 'again' : '';
+    const saved = push ? 0 : scrollAt.get(entry) || 0;
+    seen.add(url.pathname);
+    setLoc(Object.assign(parsePath(url.pathname), { visit, saved, grown }));
+    if (push){
+      if (window.__lenis) window.__lenis.scrollTo(0, { immediate: true, force: true });
+      window.scrollTo(0, 0);
+    }
+    if (url.hash && !saved){
       setTimeout(() => { const el = document.querySelector(url.hash); if (el) scrollToEl(el, -60); }, 140);
     }
   }, []);
 
-  const navigate = useCallback(to => {
+  // Back where you were, before the page paints. A page that measures itself
+  // after mounting (About's timeline) is not tall enough yet on the first try.
+  useLayoutEffect(() => {
+    if (loc.visit !== 'back') return;
+    jumpTo(loc.saved);
+    let tries = 0, raf = 0;
+    const settle = () => {
+      if (Math.abs(window.scrollY - loc.saved) < 2 || ++tries > 40) return;
+      jumpTo(loc.saved);
+      raf = requestAnimationFrame(settle);
+    };
+    raf = requestAnimationFrame(settle);
+    return () => cancelAnimationFrame(raf);
+  }, [loc]);
+
+  const navigate = useCallback((to, card) => {
     setMenuOpen(false);
     const url = new URL(to, location.origin);
     if (url.pathname === location.pathname){
@@ -374,8 +443,10 @@ function App(){
       else window.scrollTo({ top: 0, behavior: reduceMotion() ? 'instant' : 'smooth' });
       return;
     }
-    // Mount the destination on the click; CSS animates it into place.
-    commit(to, true);
+    // Mount the destination on the click; CSS animates it into place. A card
+    // goes further: its cover grows into the project's.
+    const media = card ? card.querySelector('.pcard-media') : null;
+    fly(() => commit(to, true, !!media), media, () => document.querySelector('.pp-cover'));
   }, [commit]);
 
   useEffect(() => { window.__nav = navigate; }, [navigate]);
@@ -386,7 +457,19 @@ function App(){
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   useEffect(() => {
-    const onPop = () => { setMenuOpen(false); commit(location.pathname + location.hash, false); };
+    const onPop = e => {
+      setMenuOpen(false);
+      const left = here;
+      const update = () => commit(location.pathname + location.hash, false);
+      // A swipe back on iOS has already slid the page across under the finger,
+      // and playing a morph on top of it would show the same move twice.
+      const native = e.hasUAVisualTransition === undefined
+        ? window.matchMedia('(pointer: coarse)').matches
+        : e.hasUAVisualTransition;
+      if (native || location.pathname === left){ update(); return; }
+      const from = document.querySelector('.pp-cover') || coverOf(location.pathname);
+      fly(update, from, () => coverOf(left) || document.querySelector('.pp-cover'));
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [commit]);
@@ -488,7 +571,7 @@ function App(){
       <Progress/>
       <Nav route={loc.route} theme={theme} toggle={toggle} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
       <Menu open={menuOpen} route={loc.route} close={() => setMenuOpen(false)} theme={theme} toggle={toggle}/>
-      <main id="main" className={'page-wrap' + (loc.route === 'home' ? ' page-home' : '')} key={loc.route + '/' + loc.sub}>
+      <main id="main" className={'page-wrap' + (loc.route === 'home' ? ' page-home' : '') + (loc.visit ? ' is-' + loc.visit : '') + (loc.grown ? ' is-grown' : '')} key={loc.route + '/' + loc.sub}>
         {Page}
       </main>
       <Footer/>

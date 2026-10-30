@@ -172,9 +172,9 @@ rounded:
   circle: 50%
 
 spacing:
-  gutter: "clamp(24px, 4.6vw, 48px)"  # every page's margin from the screen edge
+  gutter: "max(clamp(24px, 4.6vw, 48px), safe areas)"  # every page's margin from the screen edge
   shell: 1280px                        # max content width
-  nav-h: 60px                          # the reservation the fixed nav pill gets
+  nav-h: "60px + safe-area-inset-top"  # the reservation the fixed nav pill gets
   # vertical rhythm — section padding, fluid
   section-sm: "clamp(38px, 4.5vw, 64px)"
   section-md: "clamp(70px, 9vw, 130px)"
@@ -184,8 +184,13 @@ motion:
   ease: "cubic-bezier(.2,.7,.2,1)"      # the default — most transitions
   ease-expo: "cubic-bezier(.16,1,.3,1)" # arrivals: reveals, big movement
   ease-io: "cubic-bezier(.65,0,.35,1)"  # a shape closing on itself (the splash)
-  ease-pill: "cubic-bezier(.32,.72,0,1)" # the nav's active pill only
+  ease-pill: "cubic-bezier(.32,.72,0,1)" # a selection sliding: the nav pill, the filter dot
   ease-pop: "cubic-bezier(.34,1.56,.64,1)" # overshoot — footer tiles only
+  press: 90ms
+  pressScale: 0.97
+  pressScaleSmall: 0.95
+  pressScaleLarge: 0.985
+  pressFade: 0.6
   instant: 140ms
   quick: 220ms
   base: 350ms
@@ -569,10 +574,10 @@ All uppercase with positive tracking. The size ladder is deliberately narrow:
 | `.idcard-m` | 11.5 | 0.04em | `--muted` |
 | `.all-work-k` | 11 | 0.1em | `--muted` |
 | `.pnav-m`, `.shot-n`, `.count`, `.filter .n` | 11 | 0.06–0.08em | `--muted` / `--faint` |
-| `.fact dt`, `.rail-h`, `.row-kind`, `.tl-type`, `.tl-today span` | 10.5 | 0.08em | `--muted` |
+| `.fact dt`, `.rail-h`, `.row-kind`, `.tl-type`, `.tl-today span` | 10.5 (11 ≤860) | 0.08em | `--muted` |
 | `.flag` | 10.5 | 0.08em | `--ink` |
-| `.foot-eyebrow` | 10 | 0.12em | on-accent @ 62% |
-| `.foot-note-label` | 10 | 0.14em | on-accent @ 60% |
+| `.foot-eyebrow` | 10 (11 ≤860) | 0.12em | on-accent @ 62% |
+| `.foot-note-label` | 10 (11 ≤860) | 0.14em | on-accent @ 60% |
 | `.hero-badge text` | 8.6 | 0.08em | `currentColor` |
 
 **The tracking law, inverted:** the smaller the mono label, the wider the
@@ -599,6 +604,12 @@ Every page's content sits in a `.shell`. **The gutter is the one number that
 protects the whole site from touching the screen edge:**
 `clamp(24px, 4.6vw, 48px)`. The low end (24px) is what a phone gets — 20px and
 below reads as text pinned to the bezel.
+
+**Safe areas.** The page runs under the hardware (`viewport-fit=cover`), so nothing
+that can be pressed or read may sit on it. `--gutter` and `--nav-h` both include
+`env(safe-area-inset-*)`, which is what protects a turned iPhone from the Dynamic
+Island. Anything fixed to an edge (`.nav`, `.to-top`, `.lb-close`, `.lb-nav`,
+`.menu`, `.boot-meta`) writes `max(its own offset, the inset)`.
 
 > **The `.shell` padding trap.** Several blocks that live on a `.shell` need
 > vertical padding. They **must** use `padding-block`, never the `padding`
@@ -663,8 +674,10 @@ a named reason. Do not add one without a reason you can write in a sentence.
 | `560px` | Work grid → 1 column · `.all-work` tightens |
 | `520px` | Hero badge 64px · hero buttons 42px |
 
-Plus `@media (hover: hover) and (pointer: fine)` — hover styling is gated on a
-real pointer so a phone never gets a stuck hover state.
+Plus `@media (hover: hover) and (pointer: fine)` — every `:hover` rule is gated
+on a real pointer so a phone never gets a stuck hover state. A new hover rule
+goes inside that query. The one exception is `.fir:hover`: a tree that gusts
+under a finger is not a control, so nothing can look stuck.
 
 ### Stacking (`z-index`)
 
@@ -678,6 +691,7 @@ without adding a row here.**
 | `70` | `.progress`, `.cv-pop` |
 | `60` | `.nav` |
 | `59` | `.menu` — deliberately *under* the nav, so the pill stays clickable while the menu is open |
+| `58` | `.fly` — the copy of a cover in flight, over the page and under the nav |
 | `55` | `.to-top` |
 | `40` | `.veil` — the intro page |
 | `0–6` | In-component stacking (footer trees and tiles, timeline cards and stems, the card's "Featured" flag). All scoped inside a positioned parent. |
@@ -735,7 +749,7 @@ list stays closed.
 
 The exceptions, all four of them, are deliberate and complete:
 
-- **`backdrop-filter: blur(10px)`** appears exactly once, on `.lb` — a
+- **`backdrop-filter: blur(10px)`** appears exactly once, on `.lb-scrim` — a
   full-screen scrim that has to sit over arbitrary page content.
 - **Gradients** are a closed list of six: the footer's warm vertical lift
   (accent → accent+12% white), the footer's radial sheen, the nav pill's inner
@@ -848,18 +862,25 @@ Nothing loops except three things, each for a reason:
 | `--ease` | `cubic-bezier(.2,.7,.2,1)` | The default. Hovers, gaps opening, small transforms. |
 | `--ease-expo` | `cubic-bezier(.16,1,.3,1)` | **Arrivals.** Anything entering the viewport or travelling a long distance. Fast out of the gate, long settle. |
 | `--ease-io` | `cubic-bezier(.65,0,.35,1)` | Symmetric in-out. Used once: the splash closing into the dot — a shape collapsing on itself needs to accelerate and decelerate equally. |
-| `cubic-bezier(.32,.72,0,1)` | — | The nav's active pill only. Slightly snappier than `--ease-expo`; the pill must arrive before the label's colour finishes changing. |
+| `--ease-pill` | `cubic-bezier(.32,.72,0,1)` | A selection sliding: the nav's active pill and the Work page's filter dot. Slightly snappier than `--ease-expo`; the pill must arrive before the label's colour finishes changing. |
 | `cubic-bezier(.34,1.56,.64,1)` | — | Overshoot. Used once: the footer tiles, which are physical objects. **Do not use overshoot anywhere else.** |
 
 ### The duration ladder
 
 | Band | Range | Use |
 |---|---|---|
-| Instant | `140–220ms` | Colour, opacity, a small state flip |
-| Quick | `250–350ms` | Hover transforms, background swaps, the nav pill |
+| Instant | `140–220ms` | Colour, opacity, a small state flip, every hover nudge and arrow |
+| Quick | `250–350ms` | Background swaps, the nav pill, a picture letting go of its hover |
 | Base | `400–600ms` | A panel opening, a menu clipping in, a card's stem |
 | Arrival | `800–1150ms` | Reveals, word masks, image scale-down |
 | Cinematic | `1.5s` | The single slowest: `.rv-media` image settling from `scale(1.12)` |
+
+**Hover stays under `.25s`.** It answers a pointer, it is not a scene, and it only
+ever moves `transform` and `opacity`. Animating `padding`, `gap` or `width` on hover
+reflows the row and can re-wrap its text. The one exception is `.titem img`, which
+opens `max-width` on purpose (§8). A picture is allowed one slow gesture: it eases
+into its hover over `.7s --ease-expo` and lets go in `.35s`, so leaving is always
+faster than arriving.
 
 **Rule:** the further a thing travels, the longer it takes, and the more it
 should use `--ease-expo`. A 3px hover nudge at 800ms feels broken; a 26px
@@ -883,6 +904,23 @@ seconds) and **`--i`** is the word index inside a title. Card grids stagger by
 column: `(i % 2) * .09s` on the home grid, `(i % 3) * .07s` on the work grid, so
 a *row* arrives together.
 
+**A reveal runs once, then leaves.** `arrive()` in `lib.jsx` removes `.rv-up`,
+`.rv-fade` and `.rv-media` when the arrival ends, because the reveal's rules outrank
+any component's and would otherwise keep their slow transition for good.
+
+**A page stages itself once.** `App` remembers the addresses seen since the page
+loaded, and `<main>` carries the result:
+
+| State | When | What happens |
+|---|---|---|
+| none | First visit | The full reveal |
+| `.is-again` | Back to a page by a link | One quick arrival: `.4s`, no delays, no stagger |
+| `.is-back` | Back or forward through history | Nothing: `settleReveals()` shows it all before it paints |
+
+A reload starts over. Filtering works the same way: it settles the grid and fades
+it across in `220ms`, and never replays a reveal, because a filter is pressed again
+and again.
+
 > **The `.js` gate.** Every hidden state is written as `.js .rv-up { … }`. The
 > `js` class is added to `<html>` by the inline script in `index.html:79` before
 > first paint. With JavaScript off, no hidden state exists and the page is fully
@@ -894,6 +932,59 @@ a *row* arrives together.
 > `overflow:hidden` mask; the negative margins give the spacing and line
 > wrapping back. Remove either half and either the `g` clips or the heading's
 > rhythm breaks.
+
+### Continuity
+
+Going somewhere and coming back should feel like one place, not two pages.
+
+**Back restores your place.** `App` keeps the scroll position of each history
+entry in a `Map` in memory (`scrollAt` in `app.jsx`), and `<main>` lands there in a
+layout effect, before it paints. Back and forward both do this. It is in memory on
+purpose: a reload forgets it and starts at the top, where the splash needs the dot
+of the name to be. A page that measures itself after mounting, such as About's
+timeline, is retried for a few frames until it is tall enough.
+
+**A cover flies to the next page.** `fly(update, from, findTo)` in `lib.jsx` takes
+a card's cover to the project's, and back. It is deliberately not a View Transition:
+those animate a size on the main thread, at the moment the next page is mounting and
+starting its reveals, so the same click could be smooth on one card and stutter on
+another. Here a copy of the picture (`.fly`) is the only thing moving, by `transform`
+and `opacity` alone, so the compositor keeps it going whatever the page is doing.
+
+| Step | Time | What happens |
+|---|---|---|
+| Let go | `110ms` | The page fades out around a copy that stays perfectly still |
+| Swap | — | The next page mounts behind that. The copy must not have moved yet: a page can take a moment to build, and a picture already in motion would be seen to wait for it |
+| Flight | `380ms`, `--ease-pill` | The copy travels and scales. It dissolves from `55%` on as the real picture fades in from `50%`, and the page fades in over `280ms` |
+
+**It plays the same from anywhere.** The dissolve is what makes the landing
+dependable: a cover below the fold on a short screen has no visible place to land on,
+so the picture never relies on arriving. The copy keeps the shape it left with,
+because scaling is uniform, and the dissolve covers the change of crop. A cover just
+under the fold still flies (`1.25 ×` the viewport). One scrolled far away does not,
+because it would have to cross the page. Reduced motion gets the plain update. A swipe
+back on iOS has already slid the page, so `hasUAVisualTransition` skips it there.
+
+**A screenshot opens into the lightbox.** `morph(update, from, findTo)` is a View
+Transition with one element named `cover` at each end, which is safe here because the
+page does not change: `.shot-frame` to `.lb img`, closing onto the screenshot you
+ended on, and scrolling to it if needed. The picture travels for `.42s` on
+`--ease-pill`, the nav sits out, and it waits at most `220ms` for the full-size file,
+with the thumbnail shown behind it until then. Browsers without View Transitions, and
+reduced motion, get the plain update.
+
+### Small state changes
+
+Each of these answers one action, and each is interruptible or short enough not to
+need to be.
+
+| Moment | Gesture |
+|---|---|
+| Theme | The whole page crossfades over `.2s` as one picture (`.theme-shift`). Every component's own transition stands down, or the nav would lag behind the body |
+| Burger ↔ close | `Swap` in `app.jsx`: both icons are always there, and the outgoing one leaves at `scale(.8)`, `blur(2px)` and `opacity 0` over `.2s`. This is SF Symbols' Replace. Reduced motion keeps the fade. The theme's sun and moon stay out of it on purpose: they change with the page |
+| CV menu | Grows from `top right`, the button that opened it, in `.18s`, and leaves in `.12s`. Transitions rather than keyframes, so a second click can turn it around. It stays mounted, with `visibility` and `tabIndex` closing it |
+| Send | Each state replaces the last with `.24s` of `opacity`, `blur(2px)` and `translateY(3px)` (`.send-label`), so two words never read as two objects |
+| A check | `.draw` strokes the check on in `.32s`, in the form and on the footer's mail tile. `pathLength="1"` on `Icon.Check` is what lets one value fit any size. Reduced motion shows it whole |
 
 ### Scroll
 
@@ -907,8 +998,8 @@ a *row* arrives together.
   needs, then writes font variations and clip paths, so no frame forces a
   synchronous layout.
 - **Composite, don't repaint.** `will-change: transform` is declared on exactly
-  five elements: `.nav`, `.nav-active`, `.tl-track`, `.marquee-track`, and
-  `#featured-dot::after`. `will-change: clip-path` on `#boot` and `.veil`. That
+  five permanent elements: `.nav`, `.nav-active`, `.tl-track`, `.marquee-track`, and
+  `#featured-dot::after`, plus `.fly`, which only exists for the half second of a flight. `will-change: clip-path` on `#boot` and `.veil`. That
   list is the budget — a `will-change` on every hover target costs more than it
   saves.
 
@@ -930,6 +1021,35 @@ scene has a non-animated form that is not a degraded one:
 
 JS respects it too: `reduceMotion()` in `lib.jsx` gates Lenis, the hero's
 pointer tracking, the marquee loop and the splash's clip-path hand-off.
+
+### The press
+
+Motion here is staging, with one exception: the press is pure feedback, and it
+is the same everywhere. Section 19 of `site.css` holds the whole list, last in
+the file so a press always beats the hover it interrupts.
+
+| Group | Press | Who |
+|---|---|---|
+| `--press` `.97` | Scale | `.btn`, `.nav-link`, `.nav-cv`, `.veil-cta`, `.topic`, `.send` |
+| `--press-sm` `.95` | Scale, because a small target needs more travel to read | `.nav-icon`, `.nav-burger`, `.nav-logo`, `.soc`, `.to-top`, `.lb-close`, `.lb-nav button` |
+| `--press-lg` `.985` | Scale, because a large surface moves further at its edges | `.pcard`, `.all-work`, `.pnav-next`, `.shot-frame` |
+| `--press-fade` `.6` | Opacity, because text and ruled rows have nothing to scale | `.filter`, `.sort`, `.back`, `.pnav-back`, `.link-arrow`, `.contact-mail`, `.cv-pop a`, `.foot-note-text a`, `a.row`, `.menu-link` |
+
+**The timing is asymmetric.** Going in takes `--press-t` (`90ms`), so the
+interface answers before the finger has finished arriving. Coming back uses the
+component's own transition, around `.18s`. A new control joins one list and adds
+`transform` and `opacity` to its own `transition`, or the release snaps.
+
+Under reduced motion the scales go to `1` and `--press-o` goes to `.7`: the
+movement is replaced by a dim, so a press still answers. `.foot-tile` keeps its
+own press because it is fanned: on a real pointer it settles part of the way back
+from its hover, under a finger it gives by `--press`, and both keep their rotation.
+
+**Why the reveal classes are removed.** `.js .rv-up.in` outranks any component, so
+it used to hold the reveal's slow transition forever and swallow the hover and
+press of whatever carried it. `arrive()` in `lib.jsx` now removes `.rv-up` and
+`.rv-fade` when the block has finished arriving. `.words` and `.rv-media` keep
+theirs, because nothing pressable wears them.
 
 ---
 
@@ -1132,7 +1252,7 @@ system's primary-action gesture and it should not be redefined.
 
 **Size** — `.btn-sm`: `38px` tall, `0 15px`, `13.5px`, `gap 7px`, `13px` icon.
 
-**States** — `:active { transform: scale(.98) }` · `:focus-visible` gets the
+**States** — `:active` scales to `--press` (§7) · `:focus-visible` gets the
 global ring · disabled is `opacity .4` + `cursor: not-allowed` (submit only).
 
 **Rules**
@@ -1165,6 +1285,9 @@ surface is `::before` at `inset: 2px` — a vertical `color-mix` highlight plus 
 inset 1px top light. It sits at `z-index: -1` inside an `isolate` container, so
 it slides *behind* the labels. Transition `.28s cubic-bezier(.32,.72,0,1)`;
 `opacity: 0` when no nav item is active (home, 404, a project page).
+
+The pill slides between tabs but only ever fades in and out. Coming from a page
+with no tab it opens in place, so it never glides over from the first tab.
 
 **Auto-hide.** The pill hides on sustained downward scroll and returns on any
 upward move (`app.jsx:121–141`). Three guards make it feel deliberate rather
@@ -1230,8 +1353,8 @@ column.
 ` — `, the part after the dash becomes the subtitle. Otherwise: `cat` on the
 small card, `cat · date` on the large one.
 
-**States** — hover scales the cover `1.035` over `1.1s --ease-expo` and fades in
-the `ArrowUR` from `translate(-7px, 7px)`. Both are on `.pcard:hover`, so the
+**States** — hover scales the cover `1.035` over `.7s --ease-expo`, lets go in `.35s`,
+and fades in the `ArrowUR` from `translate(-7px, 7px)`. Both are on `.pcard:hover`, so the
 whole card is one target. The card is a single `<a>` with `aria-label={title}`.
 
 **Reveal** — the media is `.rv-media`, the text is `.rv-up` at `+.08s`. The
@@ -1292,11 +1415,19 @@ field → message field with a live counter → submit → a note.
 | `.count` | Mono 11px at `opacity .5`, live `n / 600` |
 | `.send` | `52px`, `radius 12px`, `--form-fg` on `--form-bg` inverted; hover turns orange; disabled `opacity .4` |
 
-**States** — the submit is disabled until the email matches
-`/^[^\s@]+@[^\s@]+\.[^\s@]+$/` **and** the message is longer than 6 characters.
+**States** — the submit looks disabled until the email matches
+`/^[^\s@]+@[^\s@]+\.[^\s@]+$/` **and** the message is longer than 6 characters, but
+it is `aria-disabled`, not `disabled`: it still answers a press, and what it answers
+with is the reason. `.form-note` becomes `.is-hint` for as long as there is one, and
+focus goes to the field in question. An email is judged once you have left the field,
+never while you are typing it. `noValidate` keeps the browser's own bubbles out.
 Then: `Send` → `Sending…` → `Sent — talk soon` (orange, with a check) → resets
 after `3.6s`. On failure, `.form-note` is replaced by `.form-err` naming the
 direct email address.
+
+**Fields** — `autocomplete="email"` and `enterkeyhint="next"` on the email, and
+Return there moves on to the message. Fields go to `16px` under `(pointer: coarse)`,
+because Safari on iPhone zooms the page into anything smaller.
 
 **Delivery** — POSTs JSON to `profile.formspree`. With no endpoint it stays in
 demo mode and confirms locally. There is no third state.
@@ -1309,13 +1440,13 @@ The system's list primitive. Used for attachments, takeaways and the toolkit. It
 is deliberately **not a card** — content that is a list should read as a list.
 
 `border-top` on the container, `border-bottom` on each row, `18px` vertical
-padding. The hover gesture is `padding-left: 0 → 12px` over `.4–.45s --ease` —
-the row steps forward rather than lighting up. On a link row the icon tile picks
+padding. The hover gesture is `translateX(12px)` on the icon and the text, over
+`.22s --ease` — the row steps forward rather than lighting up, and nothing reflows. On a link row the icon tile picks
 up `--accent-ink` and the trailing `ArrowUR` translates `(2px,-2px)`; on a
 download row it translates `(0, 2px)` instead.
 
-`.trow` (toolkit) adds a dot that *opens* on hover — `.trow-k::before` animates
-`width: 0 → .2em` — and unrolls each item's logo by animating `max-width`.
+`.trow` (toolkit) adds a dot that *opens* on hover — `.trow-k::before` scales
+`0 → 1`, and a negative margin cancels its width so it takes no room — and unrolls each item's logo by animating `max-width`.
 
 ---
 
@@ -1340,11 +1471,19 @@ destination, not a footnote.*
 
 ### 10.9 Lightbox — `.lb`
 
-`fixed; inset:0; z-index:90`, scrim of `paper @ 92%` plus `backdrop-filter:
+`fixed; inset:0; z-index:90`, a separate `.lb-scrim` of `paper @ 92%` plus `backdrop-filter:
 blur(10px)` — the **only** blur in the site. Portalled to `<body>` so it escapes
 any transformed ancestor. Image capped at `78vh` with `--lift`; caption centred
 at 70ch; a 44px close circle top-right; prev/next with a mono `n / total`
 readout at the bottom.
+
+**Gestures, touch only.** `useLightboxGestures` in `work.jsx` works on the figure
+directly, with no React in the loop. Sideways changes the picture, and the first
+and last ones resist at a quarter of the finger's travel. Down puts it away while
+the scrim fades, which is why the scrim is its own layer. A flick counts as much as
+a long drag (`.11 px/ms`). `touch-action: pinch-zoom` leaves pinching to the
+browser, and a zoomed page or a second finger hands the gesture back. The neighbours
+are fetched ahead. Mouse and keyboard keep the arrows, and `Escape` still closes.
 
 ---
 
@@ -1354,8 +1493,8 @@ readout at the bottom.
 |---|---|
 | `.eyebrow` | Mono `11.5px / .09em / uppercase`, `--muted`. Opens most sections. |
 | `.tag` | Mono `12px / .075em / uppercase`, `--muted`; `<b>` inside goes `--ink` without changing weight (used for the live clock). |
-| `.link-arrow` | `15px / 550` on a `--rule-2` underline; hover darkens the line and opens the gap `8px → 12px`. |
-| `.filter` | `16px / 500`, `--muted` → `--ink`; active grows a 7px orange dot before it; a mono count follows in `--faint`. |
+| `.link-arrow` | `15px / 550` on a `--rule-2` underline; hover darkens the line and the arrow takes the `(3px,-3px)` step. |
+| `.filter` | `16px / 500`, `--muted` → `--ink`; every filter keeps `15px` for a single 7px orange dot (`.filter-dot`), which slides to the active one over `.28s --ease-pill`, so no label moves; a mono count follows in `--faint`. |
 | `.sort` | Mono `11.5px`; `.asc` rotates its arrow 180°. |
 | `.soc` | `48 × 48`, `radius 13px`, `--paper-2` on `--rule`; hover inverts to `--ink` and lifts `3px`. |
 | `.to-top` | `46px` circle (42 ≤640), `--lift`, appears past `1.1 × viewport height`, `tabIndex -1` while hidden. |
@@ -1611,6 +1750,18 @@ WCAG 2.1 ratios, computed from the tokens. Normal text needs 4.5 : 1; large text
 | `--ok` on `--paper` | **11.06 : 1** | AAA |
 | `--faint` on `--paper` | **2.92 : 1** | Decorative only |
 
+**Increase Contrast** (`prefers-contrast: more`)
+
+| Pair | Light | Dark |
+|---|---|---|
+| `--muted` on `--paper` | **8.19 : 1** | **10.15 : 1** |
+| `--muted` on `--paper-2` | **8.69 : 1** | **9.41 : 1** |
+| `--faint` on `--paper` | **6.18 : 1** | **7.46 : 1** |
+| `--rule-2` on `--paper` | **3.12 : 1** | **3.83 : 1** |
+
+Only these four tokens and `--rule` change. `prefers-reduced-transparency` makes the
+lightbox scrim solid.
+
 **The two knowing exceptions**
 
 - **`--faint`** (2.29 : 1 / 2.92 : 1) carries *only* redundant decoration:
@@ -1632,6 +1783,17 @@ One global ring, and it is never removed:
 override is inside the nav pill (`outline-offset: -3px`) so the ring stays
 within the pill's radius. **There is no `outline: none` anywhere in this
 stylesheet, and there must never be one.**
+
+A lightbox takes the focus when it opens, keeps `Tab` inside itself, and gives the
+focus back when it closes.
+
+### Touch targets
+
+Apple asks for 44 × 44 pt by default and 28 × 28 pt at the very least. A control
+here keeps its drawn size and grows an invisible `::after` up to about 44px
+(`site.css` §19), stopping short of its neighbours. `.cv-pop a` is the exception:
+its rows touch, so the row itself grows to 44px under `(pointer: coarse)`. A new
+small control joins that list.
 
 ### Keyboard and structure
 
@@ -1803,8 +1965,8 @@ the bottom, and never imports.
    it? Most of the time, yes.
 2. Name it in the site's vocabulary — `.pcard`, `.tl-card`, `.foot-tile`. Short
    prefix, no BEM, no utility soup.
-3. Add it to the right numbered section of `site.css` (there are 17, and they
-   are ordered by where they appear in the site).
+3. Add it to the right numbered section of `site.css` (there are 19, ordered by
+   where they appear in the site, with §19 holding the press and touch rules).
 4. Use only tokens.
 5. Give it a `.rv` variant if it enters the viewport.
 6. Give it a reduced-motion form if it moves.

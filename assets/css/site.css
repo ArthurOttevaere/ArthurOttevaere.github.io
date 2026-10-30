@@ -60,12 +60,24 @@
   --ease:cubic-bezier(.2,.7,.2,1);
   --ease-expo:cubic-bezier(.16,1,.3,1);
   --ease-io:cubic-bezier(.65,0,.35,1);
+  --ease-pill:cubic-bezier(.32,.72,0,1);
+
+  /* a press: how far a thing gives under the finger, by its size, and how
+     fast it gets there. Text has nothing to scale, so it dims instead.
+     --press-o stays 1 until reduced motion trades the movement for a dim. */
+  --press:.97;
+  --press-sm:.95;
+  --press-lg:.985;
+  --press-fade:.6;
+  --press-o:1;
+  --press-t:90ms;
 
   --shell:1280px;
   /* The margin every page keeps from the edge of the screen. The low end is
-     what a phone gets: 20px read as text pinned to the bezel. */
-  --gutter:clamp(24px,4.6vw,48px);
-  --nav-h:60px;
+     what a phone gets: 20px read as text pinned to the bezel. On a turned
+     iPhone the Dynamic Island is wider than that, so the safe area wins. */
+  --gutter:max(clamp(24px,4.6vw,48px),env(safe-area-inset-left,0px),env(safe-area-inset-right,0px));
+  --nav-h:calc(60px + env(safe-area-inset-top,0px));
 
   color-scheme:light;
 }
@@ -99,6 +111,12 @@ html[data-theme="dark"]{
 
   color-scheme:dark;
 }
+/* Increase Contrast: the two quietest inks and the two hairlines step up, and
+   --faint becomes something you can read. Ratios are in DESIGN.md §13. */
+@media (prefers-contrast:more){
+  :root{--muted:#4A4850;--faint:#5C5A61;--rule:#B8B3A8;--rule-2:#8F8A80}
+  html[data-theme="dark"]{--muted:#BDBBC3;--faint:#A2A0A8;--rule:#4A4A54;--rule-2:#6E6E7A}
+}
 
 /* ─── 2 · Base ──────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box}
@@ -121,6 +139,7 @@ html,body{overflow-x:hidden;overflow-x:clip}   /* hidden is the fallback for Saf
 ::selection{background:var(--accent);color:var(--on-accent)}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a,button{-webkit-tap-highlight-color:transparent}
 input,textarea{font:inherit;color:inherit}
 img,svg{display:block;max-width:100%}
 picture{display:contents}
@@ -192,10 +211,13 @@ html.lenis,html.lenis body{height:auto}
 .link-arrow{
   display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:550;
   padding-bottom:4px;border-bottom:1px solid var(--rule-2);
-  transition:border-color .25s ease,gap .35s var(--ease),color .25s ease;
+  transition:border-color .25s ease,color .25s ease,opacity .18s ease;
 }
-.link-arrow svg{width:14px;height:14px}
-.link-arrow:hover{border-color:var(--ink);gap:12px}
+.link-arrow svg{width:14px;height:14px;transition:transform .2s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .link-arrow:hover{border-color:var(--ink)}
+  .link-arrow:hover svg{transform:translate(3px,-3px)}
+}
 
 /* buttons */
 .btn{
@@ -203,17 +225,18 @@ html.lenis,html.lenis body{height:auto}
   height:46px;padding:0 20px;border-radius:999px;
   font-size:15px;font-weight:550;letter-spacing:-.005em;
   border:1px solid transparent;white-space:nowrap;
-  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .18s var(--ease);
+  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .18s var(--ease),opacity .18s ease;
 }
-.btn svg{width:15px;height:15px;transition:transform .35s var(--ease)}
-.btn:active{transform:scale(.98)}
+.btn svg{width:15px;height:15px;transition:transform .2s var(--ease)}
 .btn-ink{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.btn-ink:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.btn-ink:hover svg{transform:translate(3px,-3px)}
+@media (hover:hover) and (pointer:fine){
+  .btn-ink:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  .btn-ink:hover svg{transform:translate(3px,-3px)}
+}
 .btn-line{border-color:var(--rule-2);color:var(--ink)}
-.btn-line:hover{border-color:var(--ink);background:var(--paper-2)}
+@media (hover:hover) and (pointer:fine){.btn-line:hover{border-color:var(--ink);background:var(--paper-2)}}
 .btn-accent{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-.btn-accent:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+@media (hover:hover) and (pointer:fine){.btn-accent:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}}
 .btn-sm{height:38px;padding:0 15px;font-size:13.5px;gap:7px}
 .btn-sm svg{width:13px;height:13px}
 
@@ -244,6 +267,13 @@ html.lenis,html.lenis body{height:auto}
   }
 }
 
+/* A page stages itself once. On the way back through history it is simply
+   there (settleReveals in lib.jsx does the rest, before it paints), and on a
+   second visit by link it shortens to one quick arrival. */
+.page-wrap.is-back{animation:none}
+.js .is-back .words.in .wi{transition:none}
+.js .is-again :is(.rv-up.in,.rv-fade.in,.rv-media.in,.rv-media.in img,.rv-media.in svg,.words.in .wi){transition-duration:.4s;transition-delay:0s}
+
 /* ─── 5 · Boot splash ───────────────────────────────────────────────
    Orange screen with the greetings; when the site is ready it closes
    into the dot of the name (or the logo's dot on the other pages). */
@@ -266,7 +296,7 @@ html.lenis,html.lenis body{height:auto}
 }
 .boot-hello .bd{display:inline-block;width:.17em;height:.17em;border-radius:50%;background:var(--on-accent);margin-left:.06em}
 .boot-meta{
-  position:absolute;left:var(--gutter);right:var(--gutter);bottom:22px;
+  position:absolute;left:var(--gutter);right:var(--gutter);bottom:max(22px,env(safe-area-inset-bottom,0px));
   display:flex;justify-content:space-between;gap:16px;
   font-family:var(--f-mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;
   opacity:.66;transition:opacity .18s ease;
@@ -277,17 +307,18 @@ html.lenis,html.lenis body{height:auto}
 
 /* ─── 6 · Nav ───────────────────────────────────────────────────── */
 .nav{
-  position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;
+  position:fixed;top:max(14px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:60;
   display:flex;align-items:center;gap:4px;padding:6px;
   border-radius:999px;background:var(--ink);color:var(--paper);
   box-shadow:0 14px 34px -20px rgba(0,0,0,.55);
   max-width:calc(100vw - 24px);
   will-change:transform;
+  view-transition-name:nav;
   transition:transform .24s var(--ease-expo),opacity .2s ease,background-color .3s ease,color .3s ease;
 }
 .nav.hidden{transform:translate(-50%,-140%);opacity:0;pointer-events:none}
 .nav.hidden:focus-within{transform:translateX(-50%);opacity:1;pointer-events:auto}
-.nav-logo{display:inline-flex;align-items:center;height:36px;padding:0 12px 0 11px;color:inherit}
+.nav-logo{display:inline-flex;align-items:center;height:36px;padding:0 12px 0 11px;color:inherit;transition:transform .18s var(--ease),opacity .18s ease}
 .nav-logo svg{height:16px;width:auto}
 .nav-links{position:relative;isolation:isolate;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:center;gap:2px}
 /* The travelling pill is exactly one tab wide. That width has to come from the
@@ -298,7 +329,7 @@ html.lenis,html.lenis body{height:auto}
   width:calc((100% - (var(--nav-n,3) - 1) * 2px) / var(--nav-n,3));
   pointer-events:none;z-index:-1;
   will-change:transform;
-  transition:transform .28s cubic-bezier(.32,.72,0,1),opacity .18s ease;
+  transition:transform .28s var(--ease-pill),opacity .18s ease;
 }
 .nav-active::before{
   content:"";position:absolute;inset:2px;border-radius:inherit;
@@ -310,54 +341,77 @@ html.lenis,html.lenis body{height:auto}
   position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 13px;
   border-radius:999px;font-size:14.5px;font-weight:500;letter-spacing:-.005em;
   color:color-mix(in oklab,var(--paper) 66%,transparent);
-  transition:color .18s ease,transform .14s var(--ease-expo);
+  transition:color .18s ease,transform .14s var(--ease-expo),opacity .18s ease;
 }
 @media (hover:hover) and (pointer:fine){.nav-link:hover{color:var(--paper)}}
-.nav-link:active{transform:scale(.97)}
 .nav-link:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
 .nav-link.on{color:var(--paper)}
 .nav-sep{width:1px;height:20px;background:color-mix(in oklab,var(--paper) 16%,transparent);margin:0 5px;flex:none}
 .nav-icon{
   width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:inherit;
-  transition:background-color .22s ease;
+  transition:background-color .22s ease,transform .18s var(--ease),opacity .18s ease;
 }
-.nav-icon:hover{background:color-mix(in oklab,var(--paper) 12%,transparent)}
+@media (hover:hover) and (pointer:fine){.nav-icon:hover{background:color-mix(in oklab,var(--paper) 12%,transparent)}}
 .nav-cv-wrap{position:relative;display:inline-flex}
 .nav-cv{
   height:36px;padding:0 15px;border-radius:999px;background:var(--accent);color:var(--on-accent);
   font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
-  transition:background-color .22s ease,color .22s ease;
+  transition:background-color .22s ease,color .22s ease,transform .18s var(--ease),opacity .18s ease;
 }
-.nav-cv svg{width:14px;height:14px;transition:transform .25s var(--ease)}
-.nav-cv:hover{background:var(--paper);color:var(--ink)}
-.nav-cv:hover svg{transform:translateY(2px)}
+.nav-cv svg{width:14px;height:14px;transition:transform .2s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .nav-cv:hover{background:var(--paper);color:var(--ink)}
+  .nav-cv:hover svg{transform:translateY(2px)}
+}
 .cv-pop{
   position:absolute;top:calc(100% + 10px);right:0;z-index:70;min-width:170px;padding:6px;
   display:grid;gap:2px;border-radius:16px;background:var(--paper-2);color:var(--ink);
   border:1px solid var(--rule);box-shadow:var(--lift);
-  animation:pop .18s var(--ease) both;
+  /* it grows out of the button that opened it, and leaves faster than it came.
+     Transitions, not keyframes, so a second click can turn it around midway. */
+  transform-origin:top right;
+  visibility:hidden;opacity:0;transform:translateY(-6px) scale(.97);
+  transition:opacity .12s ease,transform .12s ease,visibility 0s linear .12s;
 }
-@keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
-.cv-pop a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:11px;font-size:14px;transition:background-color .16s ease}
-.cv-pop a:hover{background:color-mix(in oklab,var(--ink) 7%,transparent)}
+.cv-pop.open{
+  visibility:visible;opacity:1;transform:none;
+  transition:opacity .18s var(--ease),transform .18s var(--ease);
+}
+@media (prefers-reduced-motion:reduce){.cv-pop{transform:none}}
+.cv-pop a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:11px;font-size:14px;transition:background-color .16s ease,opacity .18s ease}
+@media (hover:hover) and (pointer:fine){.cv-pop a:hover{background:color-mix(in oklab,var(--ink) 7%,transparent)}}
 .cv-pop .lang{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:22px}
 .nav-burger{display:none}
 
 /* mobile: the pill keeps the logo + CV and opens a full-screen menu */
 @media (max-width:860px){
-  .nav{left:12px;right:12px;transform:none;max-width:none;justify-content:space-between;gap:8px}
+  .nav{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));transform:none;max-width:none;justify-content:space-between;gap:8px}
   .nav.hidden{transform:translateY(-140%)}
   .nav-links,.nav-sep,.nav-theme{display:none}
-  .nav-burger{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:inherit}
-  .nav-burger:hover{background:color-mix(in oklab,var(--paper) 12%,transparent)}
+  .nav-burger{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:inherit;transition:background-color .22s ease,transform .18s var(--ease),opacity .18s ease}
   .nav-burger svg{width:19px;height:19px}
 }
+@media (max-width:860px) and (hover:hover) and (pointer:fine){
+  .nav-burger:hover{background:color-mix(in oklab,var(--paper) 12%,transparent)}
+}
 .nav-right{display:flex;align-items:center;gap:4px}
+
+/* one icon taking over from another (Swap in app.jsx) */
+.swap{display:grid;place-items:center}
+.swap>svg{grid-area:1/1;transition:opacity .2s ease,transform .2s var(--ease),filter .2s ease}
+.swap>svg:not(.on){opacity:0;transform:scale(.8);filter:blur(2px)}
+@media (prefers-reduced-motion:reduce){.swap>svg:not(.on){transform:none;filter:none}}
+
+/* a check that draws itself, stroke first. pathLength="1" on Icon.Check is what
+   lets one number fit any size. */
+.draw path{stroke-dasharray:1 2;stroke-dashoffset:1;animation:draw .32s var(--ease) .08s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.draw path{animation:none;stroke-dashoffset:0}}
 
 .menu{
   position:fixed;inset:0;z-index:59;background:var(--paper);
   display:flex;flex-direction:column;justify-content:center;gap:6px;
-  padding:calc(var(--nav-h) + 40px) var(--gutter) 40px;
+  padding:calc(var(--nav-h) + 40px) var(--gutter) max(40px,env(safe-area-inset-bottom,0px));
   clip-path:inset(0 0 100% 0);transition:clip-path .6s var(--ease-expo);
 }
 .menu.open{clip-path:inset(0 0 0 0)}
@@ -382,16 +436,16 @@ html.lenis,html.lenis body{height:auto}
 }
 .progress.at-top{opacity:0}
 .to-top{
-  position:fixed;right:20px;bottom:20px;z-index:55;
+  position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));z-index:55;
   width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
   background:var(--paper-2);color:var(--ink);border:1px solid var(--rule);box-shadow:var(--lift);
   opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;
   transition:opacity .3s ease,transform .4s var(--ease-expo),background-color .25s ease,color .25s ease;
 }
 .to-top.show{opacity:1;transform:none;pointer-events:auto}
-.to-top:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+@media (hover:hover) and (pointer:fine){.to-top:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}}
 .to-top svg{width:17px;height:17px;transform:rotate(180deg)}
-@media (max-width:640px){ .to-top{right:14px;bottom:14px;width:42px;height:42px} }
+@media (max-width:640px){ .to-top{right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));width:42px;height:42px} }
 
 /* ─── 7 · Page shell + transitions ─────────────────────────────── */
 .page-wrap{animation:page-enter .24s var(--ease-expo) backwards}
@@ -400,6 +454,26 @@ html.lenis,html.lenis body{height:auto}
 .page-wrap.page-home{animation:none}
 @keyframes page-enter{from{opacity:.65;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.page-wrap{animation:none}}
+/* A cover leaving for the next page (fly() in lib.jsx). The copy sits under the
+   nav and over everything else, and only ever moves by transform and opacity. */
+.page-wrap.is-grown{animation:none}
+.fly{position:fixed;z-index:58;margin:0;overflow:hidden;pointer-events:none;background:var(--rule);will-change:transform,opacity}
+.fly img,.fly svg{display:block;width:100%;height:100%;object-fit:cover;transform:none}
+/* A screenshot opening into the lightbox (morph() in lib.jsx). The picture
+   travels on the same curve as the nav pill, and the page crossfades under it.
+   The nav sits out: it is the one thing on screen that does not change. Without
+   View Transitions none of this applies. */
+::view-transition-group(cover){animation-duration:.42s;animation-timing-function:var(--ease-pill)}
+::view-transition-old(cover),::view-transition-new(cover){width:100%;height:100%;object-fit:cover;animation-duration:.24s}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
+/* The theme is the one change the nav is part of. Everything flips as a single
+   picture over .2s, so every component's own colour transition has to stand down. */
+.theme-shift .nav{view-transition-name:none}
+.theme-shift *{transition:none!important}
+.theme-shift::view-transition-old(root),.theme-shift::view-transition-new(root){animation-duration:.2s}
+::view-transition-group(nav){animation:none}
+::view-transition-old(nav){display:none}
+::view-transition-new(nav){animation:none}
 .page{padding-bottom:clamp(60px,8vw,120px)}
 .page-head{padding-top:calc(var(--nav-h) + clamp(48px,8vw,116px));display:grid;gap:20px}
 .page-head .lede{margin-top:4px}
@@ -513,16 +587,17 @@ html.lenis,html.lenis body{height:auto}
   height:clamp(56px,5vw,68px);padding:0 10px 0 clamp(22px,2.2vw,30px);
   border-radius:999px;background:var(--on-accent);color:var(--accent);
   font-size:clamp(17px,1.5vw,21px);font-weight:600;font-stretch:104%;letter-spacing:-.02em;
-  transition:gap .4s var(--ease),transform .35s var(--ease),background-color .25s ease;
+  transition:transform .18s var(--ease),background-color .25s ease,opacity .18s ease;
 }
 .veil-cta-i{
   width:clamp(38px,3.4vw,46px);height:clamp(38px,3.4vw,46px);border-radius:50%;
   display:grid;place-items:center;background:var(--accent);color:var(--on-accent);flex:none;
-  transition:transform .5s var(--ease-expo);
+  transition:transform .22s var(--ease);
 }
 .veil-cta-i svg{width:16px;height:16px}
-.veil-cta:hover{gap:22px}
-.veil-cta:hover .veil-cta-i{transform:translate(3px,-3px)}
+@media (hover:hover) and (pointer:fine){
+  .veil-cta:hover .veil-cta-i{transform:translate(3px,-3px)}
+}
 @media (max-width:640px){
   .veil-cta-note{flex-basis:100%}
   .veil-cta{width:100%;justify-content:space-between}
@@ -532,20 +607,20 @@ html.lenis,html.lenis body{height:auto}
 .intro-static{background:var(--accent);color:var(--on-accent);padding:clamp(80px,12vw,160px) 0}
 
 /* ─── 10 · Project cards (the Majd grid) ───────────────────────── */
-.pcard{display:grid;gap:16px;align-content:start}
+.pcard{display:grid;gap:16px;align-content:start;transition:transform .18s var(--ease),opacity .18s ease}
 .pcard-media{
   position:relative;border-radius:18px;overflow:hidden;--r:18px;
   aspect-ratio:16/11;background:var(--rule);
 }
-.pcard-media img,.pcard-media svg{width:100%;height:100%;object-fit:cover;transition:transform 1.1s var(--ease-expo)}
-.pcard:hover .pcard-media img,.pcard:hover .pcard-media svg{transform:scale(1.035)}
+.pcard-media img,.pcard-media svg{width:100%;height:100%;object-fit:cover;transition:transform .35s var(--ease)}
+@media (hover:hover) and (pointer:fine){.pcard:hover .pcard-media img,.pcard:hover .pcard-media svg{transform:scale(1.035);transition:transform .7s var(--ease-expo)}}
 .pcard-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .pcard-title{
   display:flex;align-items:center;gap:10px;
   font-size:clamp(23px,2.3vw,33px);font-weight:550;letter-spacing:-.025em;line-height:1.06;
 }
-.pcard-title svg{width:.62em;height:.62em;flex:none;opacity:0;transform:translate(-7px,7px);transition:opacity .3s ease,transform .45s var(--ease)}
-.pcard:hover .pcard-title svg{opacity:1;transform:none}
+.pcard-title svg{width:.62em;height:.62em;flex:none;opacity:0;transform:translate(-7px,7px);transition:opacity .18s ease,transform .22s var(--ease)}
+@media (hover:hover) and (pointer:fine){.pcard:hover .pcard-title svg{opacity:1;transform:none}}
 .pcard-sub{margin-top:7px;font-size:16px;line-height:1.35;color:var(--muted)}
 .pcard-date{
   font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
@@ -576,12 +651,12 @@ html.lenis,html.lenis body{height:auto}
   display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;
   padding:clamp(20px,2.4vw,30px) clamp(20px,2.4vw,30px) clamp(20px,2.4vw,30px) clamp(22px,2.8vw,34px);
   border:1px solid var(--rule-2);border-radius:clamp(20px,2.2vw,28px);
-  transition:background-color .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease);
+  transition:background-color .22s var(--ease),color .22s var(--ease),border-color .22s var(--ease),transform .18s var(--ease),opacity .18s ease;
 }
 .all-work-text{display:grid;gap:8px;min-width:0}
 .all-work-k{
   font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);transition:color .35s var(--ease);
+  color:var(--muted);transition:color .22s var(--ease);
 }
 .all-work-t{
   font-size:clamp(26px,3.4vw,46px);font-weight:700;font-stretch:104%;
@@ -590,16 +665,17 @@ html.lenis,html.lenis body{height:auto}
 .all-work-go{
   width:clamp(48px,4.6vw,62px);height:clamp(48px,4.6vw,62px);border-radius:50%;flex:none;
   border:1px solid var(--rule-2);display:grid;place-items:center;
-  transition:background-color .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease),transform .5s var(--ease-expo);
+  transition:background-color .22s var(--ease),color .22s var(--ease),border-color .22s var(--ease),transform .22s var(--ease);
 }
 .all-work-go svg{width:18px;height:18px}
-.all-work:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.all-work:hover .all-work-k{color:color-mix(in oklab,var(--paper) 60%,transparent)}
-.all-work:hover .all-work-go{
-  background:var(--accent);border-color:var(--accent);color:var(--on-accent);
-  transform:translate(4px,-4px);
+@media (hover:hover) and (pointer:fine){
+  .all-work:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .all-work:hover .all-work-k{color:color-mix(in oklab,var(--paper) 60%,transparent)}
+  .all-work:hover .all-work-go{
+    background:var(--accent);border-color:var(--accent);color:var(--on-accent);
+    transform:translate(4px,-4px);
+  }
 }
-.all-work:active{transform:scale(.995)}
 @media (max-width:560px){ .all-work{gap:14px} .all-work-go{width:46px;height:46px} }
 
 /* ─── 12 · Contact ─────────────────────────────────────────────── */
@@ -613,12 +689,12 @@ html.lenis,html.lenis body{height:auto}
 .soc{
   width:48px;height:48px;border-radius:13px;display:grid;place-items:center;
   border:1px solid var(--rule);background:var(--paper-2);color:var(--ink);
-  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .35s var(--ease);
+  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .2s var(--ease),opacity .18s ease;
 }
-.soc:hover{background:var(--ink);color:var(--paper);border-color:var(--ink);transform:translateY(-3px)}
+@media (hover:hover) and (pointer:fine){.soc:hover{background:var(--ink);color:var(--paper);border-color:var(--ink);transform:translateY(-3px)}}
 .soc svg{width:19px;height:19px}
-.contact-mail{font-family:var(--f-mono);font-size:13px;color:var(--muted);transition:color .2s ease}
-.contact-mail:hover{color:var(--ink)}
+.contact-mail{font-family:var(--f-mono);font-size:13px;color:var(--muted);transition:color .2s ease,opacity .18s ease}
+@media (hover:hover) and (pointer:fine){.contact-mail:hover{color:var(--ink)}}
 .form{
   background:var(--form-bg);color:var(--form-fg);border-radius:22px;
   padding:clamp(18px,2.2vw,28px);display:grid;gap:16px;align-content:start;
@@ -626,9 +702,9 @@ html.lenis,html.lenis body{height:auto}
 .topics{display:flex;flex-wrap:wrap;gap:6px}
 .topic{
   border:1px solid var(--form-line);border-radius:999px;padding:7px 13px;
-  font-size:13.5px;opacity:.72;transition:background-color .2s ease,color .2s ease,opacity .2s ease,border-color .2s ease;
+  font-size:13.5px;opacity:.72;transition:background-color .2s ease,color .2s ease,opacity .2s ease,border-color .2s ease,transform .18s var(--ease);
 }
-.topic:hover{opacity:1}
+@media (hover:hover) and (pointer:fine){.topic:hover{opacity:1}}
 .topic.on{background:var(--form-fg);color:var(--form-bg);border-color:var(--form-fg);opacity:1}
 .field{display:grid;gap:8px}
 .field-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
@@ -642,17 +718,29 @@ html.lenis,html.lenis body{height:auto}
 .input::placeholder{color:var(--form-fg);opacity:.4}
 .input:focus{border-color:var(--accent);background:color-mix(in oklab,var(--form-fg) 5%,transparent)}
 textarea.input{resize:vertical;min-height:132px;line-height:1.5}
+/* Safari on iPhone zooms the whole page into any field under 16px */
+@media (pointer:coarse){ .input{font-size:16px} }
 .send{
   height:52px;border-radius:12px;background:var(--form-fg);color:var(--form-bg);
   font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:background-color .25s ease,color .25s ease,opacity .25s ease;
+  transition:background-color .25s ease,color .25s ease,opacity .25s ease,transform .18s var(--ease);
 }
-.send svg{width:15px;height:15px;transition:transform .35s var(--ease)}
-.send:not(:disabled):hover{background:var(--accent);color:var(--on-accent)}
-.send:not(:disabled):hover svg{transform:translate(3px,-3px)}
-.send:disabled{opacity:.4;cursor:not-allowed}
+/* each state replaces the last with a soft cut: the blur is what stops two
+   words from reading as two objects */
+.send-label{display:inline-flex;align-items:center;justify-content:center;gap:10px;animation:send-in .24s var(--ease)}
+@keyframes send-in{from{opacity:0;filter:blur(2px);transform:translateY(3px)}}
+@media (prefers-reduced-motion:reduce){.send-label{animation:none}}
+.send svg{width:15px;height:15px;transition:transform .2s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .send:not(:disabled,[aria-disabled="true"]):hover{background:var(--accent);color:var(--on-accent)}
+  .send:not(:disabled,[aria-disabled="true"]):hover svg{transform:translate(3px,-3px)}
+}
+/* Not ready yet is aria-disabled, not disabled: the button still answers a press,
+   and what it answers with is the reason (.form-note.is-hint) */
+.send:disabled,.send[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
 .send.sent{background:var(--accent);color:var(--on-accent);opacity:1}
 .form-note{font-family:var(--f-mono);font-size:11.5px;line-height:1.5;opacity:.6}
+.form-note.is-hint{opacity:.95}
 .form-err{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
 @media (max-width:860px){ .contact-grid{grid-template-columns:1fr} .socials{margin-top:6px;padding-top:10px} }
 
@@ -661,22 +749,29 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
   display:flex;align-items:baseline;justify-content:space-between;gap:14px 28px;flex-wrap:wrap;
   padding:16px 0;border-top:1px solid var(--rule);margin:clamp(30px,4vw,52px) 0 clamp(26px,3vw,44px);
 }
-.filters{display:flex;flex-wrap:wrap;gap:6px 24px}
+.filters{position:relative;display:flex;flex-wrap:wrap;gap:6px 9px}
 .filter{
-  display:inline-flex;align-items:baseline;gap:8px;padding:4px 0;
-  font-size:16px;font-weight:500;color:var(--muted);transition:color .22s ease;
+  display:inline-flex;align-items:baseline;gap:8px;padding:4px 0 4px 15px;
+  font-size:16px;font-weight:500;color:var(--muted);transition:color .22s ease,opacity .18s ease;
 }
-.filter:hover{color:var(--ink)}
+@media (hover:hover) and (pointer:fine){.filter:hover{color:var(--ink)}}
 .filter.on{color:var(--ink)}
-.filter.on::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);transform:translateY(-1px)}
+/* Placed by Projects in work.jsx. .live arrives one frame after the first
+   placement, so the dot opens on its filter instead of flying in from the corner. */
+.filter-dot{
+  position:absolute;left:0;top:0;width:7px;height:7px;margin-top:-2.5px;
+  border-radius:50%;background:var(--accent);pointer-events:none;
+}
+.filter-dot.live{transition:transform .28s var(--ease-pill)}
+@media (prefers-reduced-motion:reduce){.filter-dot.live{transition:none}}
 .filter .n{font-family:var(--f-mono);font-size:11px;color:var(--faint)}
 .sort{
   display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);
   font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-  transition:color .22s ease;
+  transition:color .22s ease,opacity .18s ease;
 }
-.sort:hover{color:var(--ink)}
-.sort svg{width:13px;height:13px;transition:transform .35s var(--ease)}
+@media (hover:hover) and (pointer:fine){.sort:hover{color:var(--ink)}}
+.sort svg{width:13px;height:13px;transition:transform .22s var(--ease)}
 .sort.asc svg{transform:rotate(180deg)}
 .work-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(34px,4vw,54px) clamp(14px,1.8vw,24px)}
 @media (max-width:980px){ .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
@@ -688,10 +783,13 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
 .back{
   display:inline-flex;align-items:center;gap:9px;font-family:var(--f-mono);
   font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-  transition:color .22s ease,gap .3s var(--ease);
+  transition:color .22s ease,opacity .18s ease;
 }
-.back svg{width:14px;height:14px;transform:rotate(180deg)}
-.back:hover{color:var(--ink);gap:13px}
+.back svg{width:14px;height:14px;transform:rotate(180deg);transition:transform .2s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .back:hover{color:var(--ink)}
+  .back:hover svg{transform:translateX(-4px) rotate(180deg)}
+}
 .pp-eyebrow{margin-top:26px}
 .pp-title{
   margin-top:16px;font-weight:800;font-stretch:100%;
@@ -757,25 +855,31 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
 .shot-frame{
   display:block;width:100%;border-radius:16px;overflow:hidden;
   background:var(--paper-2);border:1px solid var(--rule);cursor:zoom-in;
-  transition:border-color .3s ease;
+  transition:border-color .3s ease,transform .18s var(--ease),opacity .18s ease;
 }
-.shot-frame:hover{border-color:var(--rule-2)}
-.shot-frame img{width:100%;height:auto;display:block;transition:transform 1.1s var(--ease-expo)}
-.shot-frame:hover img{transform:scale(1.012)}
+@media (hover:hover) and (pointer:fine){.shot-frame:hover{border-color:var(--rule-2)}}
+.shot-frame img{width:100%;height:auto;display:block;transition:transform .35s var(--ease)}
+@media (hover:hover) and (pointer:fine){.shot-frame:hover img{transform:scale(1.012);transition:transform .7s var(--ease-expo)}}
 .shot-cap{
   display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:baseline;
   font-size:14.5px;line-height:1.5;color:var(--muted);max-width:64ch;text-wrap:pretty;
 }
 .shot-n{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--faint)}
-.lb{position:fixed;inset:0;z-index:90;background:color-mix(in oklab,var(--paper) 92%,transparent);backdrop-filter:blur(10px);display:grid;place-items:center;padding:clamp(20px,4vw,56px);animation:lbIn .3s ease both}
+.lb{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:clamp(20px,4vw,56px);touch-action:pinch-zoom;animation:lbIn .3s ease both}
+/* the scrim is its own layer so a downward swipe can fade it and leave the
+   picture alone */
+.lb-scrim{position:absolute;inset:0;background:color-mix(in oklab,var(--paper) 92%,transparent);backdrop-filter:blur(10px);transition:opacity .25s ease}
 @keyframes lbIn{from{opacity:0}to{opacity:1}}
-.lb figure{max-width:min(1180px,100%);display:grid;gap:14px;justify-items:center}
-.lb img{max-height:78vh;width:auto;border-radius:12px;box-shadow:var(--lift)}
+@media (prefers-reduced-transparency:reduce){ .lb-scrim{background:var(--paper);backdrop-filter:none} }
+.lb figure{position:relative;max-width:min(1180px,100%);display:grid;gap:14px;justify-items:center}
+/* height:auto as well: Img prints the file's real height as an attribute, and
+   capping that with max-height alone would stretch a wide picture on a phone */
+.lb img{max-height:78vh;width:auto;height:auto;border-radius:12px;box-shadow:var(--lift)}
 .lb figcaption{font-size:14.5px;color:var(--muted);text-align:center;max-width:70ch}
-.lb-close{position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;border:1px solid var(--rule);background:var(--paper-2);display:grid;place-items:center}
+.lb-close{position:absolute;top:max(18px,env(safe-area-inset-top,0px));right:max(18px,env(safe-area-inset-right,0px));width:44px;height:44px;border-radius:50%;border:1px solid var(--rule);background:var(--paper-2);display:grid;place-items:center;transition:transform .18s var(--ease),opacity .18s ease}
 .lb-close svg{width:17px;height:17px}
-.lb-nav{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
-.lb-nav button{width:38px;height:38px;border-radius:50%;border:1px solid var(--rule);display:grid;place-items:center;background:var(--paper-2)}
+.lb-nav{position:absolute;bottom:max(20px,env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.lb-nav button{width:38px;height:38px;border-radius:50%;border:1px solid var(--rule);display:grid;place-items:center;background:var(--paper-2);transition:transform .18s var(--ease),opacity .18s ease}
 .lb-nav button:disabled{opacity:.3}
 .lb-nav svg{width:14px;height:14px}
 
@@ -783,19 +887,21 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
 .rows{border-top:1px solid var(--rule)}
 .row{
   display:flex;align-items:center;gap:18px;padding:16px 2px;border-bottom:1px solid var(--rule);
-  transition:padding-left .4s var(--ease),background-color .25s ease;
+  transition:background-color .25s ease,opacity .18s ease;
 }
-a.row:hover{padding-left:12px}
-.row-ico{width:38px;height:38px;border-radius:10px;border:1px solid var(--rule);display:grid;place-items:center;color:var(--muted);flex:none;transition:color .25s ease,border-color .25s ease}
+@media (hover:hover) and (pointer:fine){a.row:hover :is(.row-ico,.sup-av,.row-text){transform:translateX(12px)}}
+.row-ico{width:38px;height:38px;border-radius:10px;border:1px solid var(--rule);display:grid;place-items:center;color:var(--muted);flex:none;transition:color .25s ease,border-color .25s ease,transform .22s var(--ease)}
 .row-ico svg{width:17px;height:17px}
-a.row:hover .row-ico{color:var(--accent-ink);border-color:var(--accent)}
-.row-text{display:grid;gap:3px;min-width:0;flex:1}
+@media (hover:hover) and (pointer:fine){a.row:hover .row-ico{color:var(--accent-ink);border-color:var(--accent)}}
+.row-text{display:grid;gap:3px;min-width:0;flex:1;transition:transform .22s var(--ease)}
 .row-label{font-size:17px;font-weight:550;letter-spacing:-.012em}
 .row-note{font-size:14px;color:var(--muted);text-wrap:pretty}
 .row-kind{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
-.row-go{width:16px;height:16px;color:var(--muted);flex:none;transition:transform .35s var(--ease),color .25s ease}
-a.row:hover .row-go{color:var(--ink);transform:translate(2px,-2px)}
-a.row:hover .row-go.dl{transform:translateY(2px)}
+.row-go{width:16px;height:16px;color:var(--muted);flex:none;transition:transform .2s var(--ease),color .2s ease}
+@media (hover:hover) and (pointer:fine){
+  a.row:hover .row-go{color:var(--ink);transform:translate(2px,-2px)}
+  a.row:hover .row-go.dl{transform:translateY(2px)}
+}
 /* what I took away — an enclosed panel: the last content, clearly content */
 .takeaways{padding:clamp(46px,6vw,86px) 0 0}
 .take-panel{
@@ -824,19 +930,23 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .pnav-back{
   display:inline-flex;align-items:center;gap:9px;justify-self:start;
   font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-  transition:color .22s ease,gap .3s var(--ease);
+  transition:color .22s ease,opacity .18s ease;
 }
-.pnav-back svg{width:14px;height:14px;transform:rotate(180deg)}
-.pnav-back:hover{color:var(--ink);gap:14px}
+.pnav-back svg{width:14px;height:14px;transform:rotate(180deg);transition:transform .2s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .pnav-back:hover{color:var(--ink)}
+  .pnav-back:hover svg{transform:translateX(-4px) rotate(180deg)}
+}
 .pnav-next{
   display:grid;grid-template-columns:clamp(92px,11vw,148px) minmax(0,1fr) auto;
   gap:clamp(16px,2.4vw,34px);align-items:center;padding:clamp(8px,1.2vw,16px) 0 clamp(4px,1vw,12px);
+  transition:transform .18s var(--ease),opacity .18s ease;
 }
 .pnav-media{border-radius:14px;overflow:hidden;aspect-ratio:4/3;background:var(--rule)}
-.pnav-media img,.pnav-media svg{width:100%;height:100%;object-fit:cover;transition:transform 1.1s var(--ease-expo)}
-.pnav-next:hover .pnav-media img,.pnav-next:hover .pnav-media svg{transform:scale(1.05)}
-.pnav-text{display:grid;gap:6px;min-width:0;transition:transform .5s var(--ease)}
-.pnav-next:hover .pnav-text{transform:translateX(6px)}
+.pnav-media img,.pnav-media svg{width:100%;height:100%;object-fit:cover;transition:transform .35s var(--ease)}
+@media (hover:hover) and (pointer:fine){.pnav-next:hover .pnav-media img,.pnav-next:hover .pnav-media svg{transform:scale(1.05);transition:transform .7s var(--ease-expo)}}
+.pnav-text{display:grid;gap:6px;min-width:0;transition:transform .22s var(--ease)}
+@media (hover:hover) and (pointer:fine){.pnav-next:hover .pnav-text{transform:translateX(6px)}}
 .pnav-t{
   font-size:clamp(26px,3.4vw,50px);font-weight:700;font-stretch:104%;
   letter-spacing:-.035em;line-height:1.02;text-wrap:balance;
@@ -845,10 +955,10 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .pnav-go{
   width:clamp(44px,4.4vw,60px);height:clamp(44px,4.4vw,60px);border-radius:50%;
   border:1px solid var(--rule-2);display:grid;place-items:center;color:var(--ink);
-  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .45s var(--ease);
+  transition:background-color .25s ease,color .25s ease,border-color .25s ease,transform .22s var(--ease);
 }
 .pnav-go svg{width:17px;height:17px}
-.pnav-next:hover .pnav-go{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:translateX(5px)}
+@media (hover:hover) and (pointer:fine){.pnav-next:hover .pnav-go{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:translateX(5px)}}
 @media (max-width:720px){
   .pnav-next{grid-template-columns:76px minmax(0,1fr) 44px;gap:14px}
   .pnav-t{font-size:clamp(22px,6vw,30px)}
@@ -979,12 +1089,16 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .tools-rows{border-top:1px solid var(--rule)}
 .trow{
   display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:18px 0;
-  border-bottom:1px solid var(--rule);transition:padding-left .45s var(--ease);
+  border-bottom:1px solid var(--rule);
 }
-.trow:hover{padding-left:12px}
-.trow-k{display:inline-flex;align-items:baseline;gap:10px;font-size:clamp(21px,2.3vw,32px);font-weight:600;font-stretch:104%;letter-spacing:-.025em;flex:none}
-.trow-k::before{content:"";width:0;height:.2em;border-radius:50%;background:var(--accent);transition:width .45s var(--ease)}
-.trow:hover .trow-k::before{width:.2em}
+.trow-k{display:inline-flex;align-items:baseline;gap:10px;font-size:clamp(21px,2.3vw,32px);font-weight:600;font-stretch:104%;letter-spacing:-.025em;flex:none;transition:transform .22s var(--ease)}
+/* the dot takes no room: its negative margin cancels its width, so opening it
+   moves nothing, and the row steps forward as one piece */
+.trow-k::before{content:"";width:.2em;height:.2em;margin-right:-.2em;border-radius:50%;background:var(--accent);transform:scale(0);transition:transform .22s var(--ease)}
+@media (hover:hover) and (pointer:fine){
+  .trow:hover .trow-k{transform:translateX(12px)}
+  .trow:hover .trow-k::before{transform:none}
+}
 .trow-v{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px 16px;font-size:15.5px;color:var(--muted);text-align:right}
 .titem{display:inline-flex;align-items:center;gap:7px}
 /* the mark unrolls with the row. It is the WIDTH that opens, not a square
@@ -996,7 +1110,7 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
    — only smaller, rounded, and on a hairline so the white band of a tricolour
    still reads against paper. (Drawn, not emoji: Windows shows no flag emoji.) */
 .titem img.lang-flag{height:12px;border-radius:2.5px;box-shadow:0 0 0 1px color-mix(in oklab,var(--ink) 14%,transparent)}
-.trow:hover .titem img{max-width:46px;opacity:1}
+@media (hover:hover) and (pointer:fine){.trow:hover .titem img{max-width:46px;opacity:1}}
 .titem em{font-family:var(--f-voice);font-style:italic;font-size:1.1em;color:var(--ink)}
 @media (max-width:720px){ .trow{flex-direction:column;gap:8px} .trow-v{justify-content:flex-start;text-align:left} .titem img{max-width:46px;opacity:1} }
 
@@ -1173,6 +1287,7 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .sup-av{
   position:relative;width:56px;height:56px;flex:none;border-radius:50%;overflow:hidden;
   background:var(--paper-2);border:1px solid var(--rule);
+  transition:transform .22s var(--ease);
 }
 /* Img renders <picture><source><img>. The picture's box is sized by its own
    child, which makes every percentage on the image circular, and a percentage
@@ -1259,7 +1374,7 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 .foot-note-label{display:block;margin-bottom:8px;font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:color-mix(in oklab,var(--on-accent) 60%,transparent)}
 .foot-note-text{font-size:16px;line-height:1.55;letter-spacing:-.01em}
 .foot-note-text a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;transition:opacity .18s ease}
-.foot-note-text a:hover{opacity:.7}
+@media (hover:hover) and (pointer:fine){.foot-note-text a:hover{opacity:.7}}
 .foot-socials{display:flex;position:relative;z-index:2;margin-top:-58px}
 .foot-tile{
   width:106px;height:106px;border-radius:27px;display:grid;place-items:center;
@@ -1271,13 +1386,16 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 }
 .foot-tile + .foot-tile{margin-left:-24px}
 .foot-tile svg{width:48px;height:48px;transition:transform .28s cubic-bezier(.34,1.56,.64,1)}
-.foot-tile:hover{
-  z-index:5;transform:translateY(-12px) rotate(calc((var(--i) - 1) * 4deg)) scale(1.1);
-  background:var(--on-accent);color:var(--accent);border-color:var(--on-accent);
-  box-shadow:0 22px 40px -14px rgba(0,0,0,.5);
+@media (hover:hover) and (pointer:fine){
+  .foot-tile:hover{
+    z-index:5;transform:translateY(-12px) rotate(calc((var(--i) - 1) * 4deg)) scale(1.1);
+    background:var(--on-accent);color:var(--accent);border-color:var(--on-accent);
+    box-shadow:0 22px 40px -14px rgba(0,0,0,.5);
+  }
+  .foot-tile:hover svg{transform:scale(1.08)}
 }
-.foot-tile:hover svg{transform:scale(1.08)}
-.foot-tile:active{transform:translateY(-5px) scale(1.04)}
+.foot-tile:active{transform:rotate(calc((var(--i) - 1) * 4deg)) scale(var(--press))}
+@media (hover:hover) and (pointer:fine){.foot-tile:hover:active{transform:translateY(-5px) rotate(calc((var(--i) - 1) * 4deg)) scale(1.04)}}
 .foot-tile.copied{background:var(--on-accent);color:var(--accent);border-color:var(--on-accent)}
 .foot-tile-toast{
   position:absolute;left:50%;top:-6px;transform:translate(-50%,0);
@@ -1294,7 +1412,7 @@ a.row:hover .row-go.dl{transform:translateY(2px)}
 @media (prefers-reduced-motion:reduce){
   .foot-tile-toast{animation:none;opacity:1;transform:translate(-50%,-16px)}
   .foot-tile{transition:background-color .22s ease,color .22s ease}
-  .foot-tile:hover{transform:rotate(calc((var(--i) - 1) * 4deg))}
+  .foot-tile:hover,.foot-tile:hover:active{transform:rotate(calc((var(--i) - 1) * 4deg))}
 }
 .foot-base{width:100%;margin-top:2px;padding-top:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid color-mix(in oklab,var(--on-accent) 18%,transparent)}
 .foot-brand{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:500;letter-spacing:-.01em}
@@ -1323,3 +1441,57 @@ html[data-theme="light"] .sky{display:none}
 /* 404 */
 .nf{min-height:70vh;display:grid;place-items:center;text-align:center;padding-top:var(--nav-h)}
 .nf-in{display:grid;gap:18px;justify-items:center}
+
+/* ─── 19 · Press + touch ───────────────────────────────────────────
+   Everything you can press gives way the moment you touch it, and comes
+   back at its own pace: --press-t is the way in, each component's own
+   transition is the way out. It lives here, last, so a press always wins
+   over the hover it interrupts, and so the list of what is pressable can
+   be read in one place. A new control joins one of these lists and adds
+   transform + opacity to its own transition.
+
+   :is() on purpose: its specificity is that of its strongest entry, which
+   is what lets a plain .soc:active outrank .soc:hover and .to-top.show. */
+:is(.btn,.nav-link,.nav-cv,.veil-cta,.topic,.send:not(:disabled,[aria-disabled="true"])):active{
+  transform:scale(var(--press));opacity:var(--press-o);
+  transition-duration:var(--press-t);transition-delay:0s;
+}
+:is(.nav-icon,.nav-burger,.nav-logo,.soc,.to-top.show,.lb-close,.lb-nav button:not(:disabled)):active{
+  transform:scale(var(--press-sm));opacity:var(--press-o);
+  transition-duration:var(--press-t);transition-delay:0s;
+}
+:is(.pcard,.all-work,.pnav-next,.shot-frame):active{
+  transform:scale(var(--press-lg));opacity:var(--press-o);
+  transition-duration:var(--press-t);transition-delay:0s;
+}
+:is(.filter,.sort,.back,.pnav-back,.link-arrow,.contact-mail,.cv-pop a,.foot-note-text a,a.row):active{
+  opacity:var(--press-fade);
+  transition-duration:var(--press-t);transition-delay:0s;
+}
+.menu.open .menu-link:active{opacity:var(--press-fade);transition:opacity var(--press-t) ease}
+.foot-tile:active{transition-duration:var(--press-t)}
+@media (prefers-reduced-motion:reduce){
+  :root{--press:1;--press-sm:1;--press-lg:1;--press-o:.7}
+}
+
+/* The target is bigger than the thing you see. Each control keeps its drawn
+   size and grows an invisible ::after up to 44px, stopping short of its
+   neighbours; `.to-top` is left out of the position rule because it is fixed. */
+:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-burger,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a){position:relative}
+:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-burger,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a,.to-top)::after{content:"";position:absolute}
+.nav-link::after,.nav-icon::after,.nav-cv::after,.nav-logo::after{inset:-6px 0}
+.nav-burger::after{inset:-6px -4px}
+.sort::after{inset:-10px -6px}
+.back::after,.pnav-back::after{inset:-13px -6px}
+.filter::after{inset:-5px -4px}
+.topic::after,.btn-sm::after,.lb-nav button::after{inset:-3px}
+.link-arrow::after{inset:-9px 0}
+.contact-mail::after{inset:-12px 0}
+.foot-note-text a::after{inset:-14px -4px}
+.to-top::after{inset:-1px}
+/* rows of a menu touch each other, so here the row itself has to grow */
+@media (pointer:coarse){ .cv-pop a{min-height:44px} }
+/* the labels are drawn for a desktop; on a phone nothing goes under Apple's 11pt */
+@media (max-width:860px){
+  .flag,.fact dt,.rail-h,.row-kind,.tl-type,.tl-today span,.pbs-k,.tally dt,.foot-eyebrow,.foot-note-label{font-size:11px}
+}
