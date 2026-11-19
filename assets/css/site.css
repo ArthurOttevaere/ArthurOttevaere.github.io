@@ -314,9 +314,17 @@ html.lenis,html.lenis body{height:auto}
   max-width:calc(100vw - 24px);
   will-change:transform;
   view-transition-name:nav;
-  transition:transform .24s var(--ease-expo),opacity .2s ease,background-color .3s ease,color .3s ease;
+  /* coming back, the pill unfolds from its top centre on the site's spring */
+  transform-origin:50% 0;
+  transition:transform .46s var(--ease-pill),opacity .22s ease,background-color .3s ease,color .3s ease;
 }
-.nav.hidden{transform:translate(-50%,-140%);opacity:0;pointer-events:none}
+/* Scrolling down, the pill retracts instead of sliding off: it draws itself
+   in toward the top centre, and only fades once it has mostly gathered, so
+   you see it shrink away rather than blink out. Transform + opacity only. */
+.nav.hidden{
+  transform:translateX(-50%) translateY(-14px) scale(.55);opacity:0;pointer-events:none;
+  transition:transform .42s cubic-bezier(.55,0,.25,1),opacity .24s ease .16s,background-color .3s ease,color .3s ease;
+}
 .nav.hidden:focus-within{transform:translateX(-50%);opacity:1;pointer-events:auto}
 .nav-logo{display:inline-flex;align-items:center;height:36px;padding:0 12px 0 11px;color:inherit;transition:transform .18s var(--ease),opacity .18s ease}
 .nav-logo svg{height:16px;width:auto}
@@ -382,11 +390,16 @@ html.lenis,html.lenis body{height:auto}
 @media (hover:hover) and (pointer:fine){.cv-pop a:hover{background:color-mix(in oklab,var(--ink) 7%,transparent)}}
 .cv-pop .lang{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:22px}
 .nav-burger{display:none}
+@media (prefers-reduced-motion:reduce){
+  .nav,.nav.hidden{transition:opacity .2s ease,background-color .3s ease,color .3s ease}
+  .nav.hidden{transform:translateX(-50%)}
+}
 
 /* mobile: the pill keeps the logo + CV and opens a full-screen menu */
 @media (max-width:860px){
   .nav{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));transform:none;max-width:none;justify-content:space-between;gap:8px}
-  .nav.hidden{transform:translateY(-140%)}
+  .nav.hidden{transform:translateY(-14px) scale(.55)}
+  .nav.hidden:focus-within{transform:none}
   .nav-links,.nav-sep,.nav-theme{display:none}
   .nav-burger{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:inherit;transition:background-color .22s ease,transform .18s var(--ease),opacity .18s ease}
   .nav-burger svg{width:19px;height:19px}
@@ -1495,3 +1508,6 @@ html[data-theme="light"] .sky{display:none}
 @media (max-width:860px){
   .flag,.fact dt,.rail-h,.row-kind,.tl-type,.tl-today span,.pbs-k,.tally dt,.foot-eyebrow,.foot-note-label{font-size:11px}
 }
+
+/* the phone bar under reduced motion: it fades in place, nothing moves */
+@media (prefers-reduced-motion:reduce) and (max-width:860px){ .nav.hidden{transform:none} }
