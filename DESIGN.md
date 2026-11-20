@@ -17,7 +17,7 @@ colors:
   paper: "#F6F4EF"        # the page
   paper-2: "#FCFBF8"      # a panel lifted off the page
   # ink
-  ink: "#101014"          # primary text, and the nav pill's surface
+  ink: "#101014"          # primary text
   ink-2: "#33323A"        # long-form body text
   muted: "#67656C"        # secondary text, labels
   faint: "#A6A39C"        # decorative numerals only — NOT a text colour
@@ -174,7 +174,7 @@ rounded:
 spacing:
   gutter: "max(clamp(24px, 4.6vw, 48px), safe areas)"  # every page's margin from the screen edge
   shell: 1280px                        # max content width
-  nav-h: "60px + safe-area-inset-top"  # the reservation the fixed nav pill gets
+  nav-h: "80px + safe-area-inset-top"  # the reservation the fixed nav band gets
   # vertical rhythm — section padding, fluid
   section-sm: "clamp(38px, 4.5vw, 64px)"
   section-md: "clamp(70px, 9vw, 130px)"
@@ -184,7 +184,7 @@ motion:
   ease: "cubic-bezier(.2,.7,.2,1)"      # the default — most transitions
   ease-expo: "cubic-bezier(.16,1,.3,1)" # arrivals: reveals, big movement
   ease-io: "cubic-bezier(.65,0,.35,1)"  # a shape closing on itself (the splash)
-  ease-pill: "cubic-bezier(.32,.72,0,1)" # a selection sliding: the nav pill, the filter dot
+  ease-pill: "cubic-bezier(.32,.72,0,1)" # a selection changing: the nav tabs' width, the filter dot
   ease-pop: "cubic-bezier(.34,1.56,.64,1)" # overshoot — footer tiles only
   press: 90ms
   pressScale: 0.97
@@ -215,13 +215,15 @@ components:
     border: "1px solid transparent"
     iconSize: 15px
   nav:
-    offsetTop: 14px
-    padding: 6px
-    radius: "{rounded.pill}"
-    background: "{colors.ink}"
-    itemHeight: 36px
-    itemFontSize: 14.5px
-    shadow: "0 14px 34px -20px rgba(0,0,0,.55)"
+    offsetTop: 12px
+    height: 64px
+    maxWidth: 1180px
+    radius: 20px
+    background: "{colors.paper} @ 66% + backdrop blur(22px) saturate(1.6)"
+    itemHeight: 40px
+    itemFontSize: 17px
+    itemWidth: "wdth 72 rest / 100 hover / 125 current"
+    shadow: "0 0 0 1px {colors.ink} @ 9%, 0 18px 40px -26px rgba(0,0,0,.45)"
   input:
     radius: "{rounded.sm}"
     padding: "13px 15px"
@@ -367,7 +369,7 @@ five documented exceptions listed at the end of this section.
 
 | Token | Light | Dark | Use | Contrast on paper |
 |---|---|---|---|---|
-| `--ink` | `#101014` | `#ECEAE4` | Headings, primary text, the nav pill's surface | 17.3 : 1 / 16.0 : 1 |
+| `--ink` | `#101014` | `#ECEAE4` | Headings, primary text, the current nav tab | 17.3 : 1 / 16.0 : 1 |
 | `--ink-2` | `#33323A` | `#C6C4BE` | Long-form body copy (`.prose`, `.pp-lead`). Slightly softer than `--ink` so a 66ch paragraph does not vibrate. | 11.5 : 1 / 11.1 : 1 |
 | `--muted` | `#67656C` | `#96949C` | Secondary text: ledes, captions, labels, inactive nav items | 5.2 : 1 / 6.4 : 1 |
 | `--faint` | `#A6A39C` | `#5E5C63` | **Decorative only.** Section numerals, the timeline's year labels, the menu's `01`/`02`. Never a sentence. | 2.3 : 1 / 2.9 : 1 — below AA by design |
@@ -404,7 +406,7 @@ foreground/background pair so it never has to be styled twice:
 
 1. **Never write a hex outside `:root`.** If you need a tint, use
    `color-mix(in oklab, var(--token) N%, transparent)` — that is how the nav's
-   inner highlight, the footer's rules and the timeline's stem are built, and it
+   frosted surface, the footer's rules and the timeline's stem are built, and it
    is the only way a tint survives the theme switch.
 2. **Orange is a decision, not an accent.** Before making something orange, ask
    which of its five jobs it is doing: a surface that holds the whole screen, a
@@ -431,7 +433,7 @@ adding a sixth needs a line here.
 | Where | Value | Why |
 |---|---|---|
 | `--lift` | `rgba(16,16,20,…)` / `rgba(0,0,0,…)` | A shadow is a *shade*, not a colour; it must not shift with the palette. |
-| `.nav` shadow | `rgba(0,0,0,.55)` | Same. |
+| `.nav` shadow | `rgba(0,0,0,.45)` | Same. |
 | `.foot-tile` shadows | `rgba(0,0,0,.45 / .5)` | Same. |
 | Footer gradient + sheen | `#fff` inside `color-mix` | White is used as a *lightener* on the orange, not as a colour. |
 | `TOP_COLOR` in `app.jsx` | The four theme colours | `<meta name="theme-color">` cannot read a CSS variable. **If you change `--paper` or `--accent`, change `app.jsx:24` and `index.html:109` too.** |
@@ -493,7 +495,7 @@ gets; the max is the design size.
 | `.mq-item` | `clamp(42, 7vw, 104)` | 800 | 125% / 62% | 1.06 | −0.04em |
 | `.pp-title` | `clamp(38, 6vw, 92)` | 800 | 100% | 0.94 | −0.042em |
 | `.sec-title` | `clamp(38, 5.6vw, 86)` | 750 | 108% | 0.95 | −0.04em |
-| `.menu-link` | `clamp(40, 12vw, 72)` | 800 | 110% | 1 | −0.04em |
+| `.menu-link` | `clamp(46, min(15vw, 10.5vh), 92)` | 850 | 62% · 125% current | 0.9 | −0.03em |
 | `.veil-text` | `clamp(28, 4.4vw, 70)` | 600 | 92% | 1.07 | −0.028em |
 | `.pnav-t` | `clamp(26, 3.4vw, 50)` | 700 | 104% | 1.02 | −0.035em |
 | `.all-work-t` | `clamp(26, 3.4vw, 46)` | 700 | 104% | 1 | −0.035em |
@@ -546,7 +548,7 @@ list. It is never a heading and never a UI label.
 | `.input`, `.send` | 15.5 | — | `--form-fg` | — |
 | `.btn`, `.link-arrow` | 15 | — | contextual | — |
 | `.take-note` | 15 | 1.5 | `--muted` | — |
-| `.nav-link` | 14.5 | — | paper @ 66% | — |
+| `.nav-link` | 17 | — | `--muted`, `--ink` when current | — |
 | `.shot-cap`, `.fact dd` | 14.5 | 1.5 / 1.4 | `--muted` / `--ink` | 64ch |
 | `.row-note` | 14 | — | `--muted` | — |
 | `.btn-sm`, `.topic` | 13.5 | — | contextual | — |
@@ -636,9 +638,9 @@ fourth.
 | large | `clamp(110px, 13vw, 190px)` | Above the featured grid — the breath after the hero |
 
 Page-level offsets always reserve the nav:
-`padding-top: calc(var(--nav-h) + clamp(…))`. `--nav-h` is `60px` — a
-*reservation*, not the pill's measured height (which is 14 + 48 = 62px). Use the
-token; do not measure the pill.
+`padding-top: calc(var(--nav-h) + clamp(…))`. `--nav-h` is `80px` — a
+*reservation*, not the band's measured bottom (which is 12 + 64 = 76px). Use the
+token; do not measure the band.
 
 ### Grids
 
@@ -668,7 +670,7 @@ a named reason. Do not add one without a reason you can write in a sentence.
 |---|---|
 | `980px` | Work grid 3 → 2 columns |
 | `900px` | Project page: rail un-sticks and stacks above the content |
-| `860px` | **The structural break.** Nav becomes a burger + full-screen menu · hero re-weights with spacers and a hairline · About un-pins and the timeline becomes vertical · contact grid stacks |
+| `860px` | **The structural break.** Nav band drops its tabs for the dot + orange flood menu · hero re-weights with spacers and a hairline · About un-pins and the timeline becomes vertical · contact grid stacks |
 | `720px` | Featured grid → 1 column · takeaways → 1 column · toolkit rows stack · next-project row tightens |
 | `640px` | Footer compresses · back-to-top shrinks · intro CTA goes full-width |
 | `560px` | Work grid → 1 column · `.all-work` tightens |
@@ -690,7 +692,7 @@ without adding a row here.**
 | `90` | `.lb` — the lightbox |
 | `70` | `.progress`, `.cv-pop` |
 | `60` | `.nav` |
-| `59` | `.menu` — deliberately *under* the nav, so the pill stays clickable while the menu is open |
+| `59` | `.menu` — deliberately *under* the nav, so the dot (now a close button) stays clickable while the menu is open |
 | `58` | `.fly` — the copy of a cover in flight, over the page and under the nav |
 | `55` | `.to-top` |
 | `40` | `.veil` — the intro page |
@@ -736,8 +738,7 @@ list stays closed.
 
 | Where | Shadow | Why not `--lift` |
 |---|---|---|
-| `.nav` | `0 14px 34px -20px rgba(0,0,0,.55)` | A fixed pill over moving content needs a tighter, darker drop to stay legible over a photograph. |
-| `.nav-active::before` | `inset 0 1px 0 …16%` + `0 2px 5px rgba(0,0,0,.08)` | An inner highlight — the pill's active state is a lit surface inside a dark pill, which is the opposite of a lift. |
+| `.nav` | `0 0 0 1px ink@9%` + `0 18px 40px -26px rgba(0,0,0,.45)` | A frosted band over moving content needs an edge (the ring) and a soft drop to stay a separate object over a photograph. |
 | `.foot-tile` | `0 10px 24px -12px` → `0 22px 40px -14px` on hover | These are physical tiles that lift toward you. The hover shadow is part of the gesture. |
 | `.tl-cursor` | `0 0 0 6px accent @ 14%` | Not a shadow — a halo ring that makes a 15px dot readable against a busy axis. |
 
@@ -747,13 +748,16 @@ list stays closed.
 > gradient text, and no "shimmer". These are the house marks of generated
 > interfaces and they are banned here.
 
-The exceptions, all four of them, are deliberate and complete:
+The exceptions, all five of them, are deliberate and complete:
 
-- **`backdrop-filter: blur(10px)`** appears exactly once, on `.lb-scrim` — a
-  full-screen scrim that has to sit over arbitrary page content.
-- **Gradients** are a closed list of six: the footer's warm vertical lift
-  (accent → accent+12% white), the footer's radial sheen, the nav pill's inner
-  highlight, the timeline stem's fade from rule to accent, and two
+- **`backdrop-filter: blur(10px)`** on `.lb-scrim` — a full-screen scrim that
+  has to sit over arbitrary page content.
+- **The nav band** (`.nav`, 10.2) is the one frosted surface: `blur(22px)
+  saturate(1.6)` over paper at 66%. The owner chose it (Nov 2026) so the nav
+  reads over the orange, the dark panels and the photographs alike. No other
+  panel, card or popover is frosted.
+- **Gradients** are a closed list of five: the footer's warm vertical lift
+  (accent → accent+12% white), the footer's radial sheen, the timeline stem's fade from rule to accent, and two
   `mask-image` edge fades (the timeline stage and the marquee). No gradient
   anywhere else.
 - **`.foot::after`** uses a 240px spread shadow as a *paint trick*, to bleed the
@@ -862,7 +866,7 @@ Nothing loops except three things, each for a reason:
 | `--ease` | `cubic-bezier(.2,.7,.2,1)` | The default. Hovers, gaps opening, small transforms. |
 | `--ease-expo` | `cubic-bezier(.16,1,.3,1)` | **Arrivals.** Anything entering the viewport or travelling a long distance. Fast out of the gate, long settle. |
 | `--ease-io` | `cubic-bezier(.65,0,.35,1)` | Symmetric in-out. Used once: the splash closing into the dot — a shape collapsing on itself needs to accelerate and decelerate equally. |
-| `--ease-pill` | `cubic-bezier(.32,.72,0,1)` | A selection sliding: the nav's active pill and the Work page's filter dot. Slightly snappier than `--ease-expo`; the pill must arrive before the label's colour finishes changing. |
+| `--ease-pill` | `cubic-bezier(.32,.72,0,1)` | A selection changing: the nav tabs' width axis, the phone menu's words, and the Work page's filter dot. Slightly snappier than `--ease-expo`. |
 | `cubic-bezier(.34,1.56,.64,1)` | — | Overshoot. Used once: the footer tiles, which are physical objects. **Do not use overshoot anywhere else.** |
 
 ### The duration ladder
@@ -870,7 +874,7 @@ Nothing loops except three things, each for a reason:
 | Band | Range | Use |
 |---|---|---|
 | Instant | `140–220ms` | Colour, opacity, a small state flip, every hover nudge and arrow |
-| Quick | `250–350ms` | Background swaps, the nav pill, a picture letting go of its hover |
+| Quick | `250–350ms` | Background swaps, a picture letting go of its hover |
 | Base | `400–600ms` | A panel opening, a menu clipping in, a card's stem |
 | Arrival | `800–1150ms` | Reveals, word masks, image scale-down |
 | Cinematic | `1.5s` | The single slowest: `.rv-media` image settling from `scale(1.12)` |
@@ -981,7 +985,7 @@ need to be.
 | Moment | Gesture |
 |---|---|
 | Theme | The whole page crossfades over `.2s` as one picture (`.theme-shift`). Every component's own transition stands down, or the nav would lag behind the body |
-| Burger ↔ close | `Swap` in `app.jsx`: both icons are always there, and the outgoing one leaves at `scale(.8)`, `blur(2px)` and `opacity 0` over `.2s`. This is SF Symbols' Replace. Reduced motion keeps the fade. The theme's sun and moon stay out of it on purpose: they change with the page |
+| Dot ↔ close | The nav dot's orange core turns ink and grows to `1.18` while an orange `×` fades in over it (`.35s --ease-pill`) — the button changes state as the flood passes under it. The theme's sun and moon stay a plain glyph on purpose: they change with the page |
 | CV menu | Grows from `top right`, the button that opened it, in `.18s`, and leaves in `.12s`. Transitions rather than keyframes, so a second click can turn it around. It stays mounted, with `visibility` and `tabIndex` closing it |
 | Send | Each state replaces the last with `.24s` of `opacity`, `blur(2px)` and `translateY(3px)` (`.send-label`), so two words never read as two objects |
 | A check | `.draw` strokes the check on in `.32s`, in the form and on the footer's mail tile. `pathLength="1"` on `Icon.Check` is what lets one value fit any size. Reduced motion shows it whole |
@@ -998,7 +1002,7 @@ need to be.
   needs, then writes font variations and clip paths, so no frame forces a
   synchronous layout.
 - **Composite, don't repaint.** `will-change: transform` is declared on exactly
-  five permanent elements: `.nav`, `.nav-active`, `.tl-track`, `.marquee-track`, and
+  four permanent elements: `.menu-flood`, `.tl-track`, `.marquee-track`, and
   `#featured-dot::after`, plus `.fly`, which only exists for the half second of a flight. `will-change: clip-path` on `#boot` and `.veil`. That
   list is the budget — a `will-change` on every hover target costs more than it
   saves.
@@ -1031,7 +1035,7 @@ the file so a press always beats the hover it interrupts.
 | Group | Press | Who |
 |---|---|---|
 | `--press` `.97` | Scale | `.btn`, `.nav-link`, `.nav-cv`, `.veil-cta`, `.topic`, `.send` |
-| `--press-sm` `.95` | Scale, because a small target needs more travel to read | `.nav-icon`, `.nav-burger`, `.nav-logo`, `.soc`, `.to-top`, `.lb-close`, `.lb-nav button` |
+| `--press-sm` `.95` | Scale, because a small target needs more travel to read | `.nav-icon`, `.nav-dot`, `.nav-logo`, `.soc`, `.to-top`, `.lb-close`, `.lb-nav button` |
 | `--press-lg` `.985` | Scale, because a large surface moves further at its edges | `.pcard`, `.all-work`, `.pnav-next`, `.shot-frame` |
 | `--press-fade` `.6` | Opacity, because text and ruled rows have nothing to scale | `.filter`, `.sort`, `.back`, `.pnav-back`, `.link-arrow`, `.contact-mail`, `.cv-pop a`, `.foot-note-text a`, `a.row`, `.menu-link` |
 
@@ -1265,66 +1269,79 @@ global ring · disabled is `opacity .4` + `cursor: not-allowed` (submit only).
 
 ---
 
-### 10.2 Navigation pill — `.nav`
+### 10.2 Navigation band — `.nav`
 
-A fixed, centred dark pill holding the logo, the `NAV` links, a theme toggle and
-the CV button.
+A detached band that stays put: the tabs on the left, the mark in the middle,
+a theme toggle and the CV button on the right. Chosen in November 2026 over the
+dark pill (see the nav lab, round 3, "Largeurs") because it speaks the hero's
+type: **the selection is Archivo's width axis**, nothing is drawn behind the
+labels.
 
-**Anatomy** — `fixed; top:14px; left:50%; translateX(-50%)`, `padding: 6px`,
-`radius 999px`, `background: var(--ink)`, `color: var(--paper)`,
-`max-width: 100vw − 24px`, shadow `0 14px 34px -20px rgba(0,0,0,.55)`.
+**Anatomy** — `fixed`, `top: max(12px, safe-area)`, `left/right: max(12px,
+safe-area)`, `max-width: 1180px` centred, `height: 64px`, `radius: 20px`,
+three columns `1fr auto 1fr`. Frosted paper:
+`color-mix(in oklab, var(--paper) 66%, transparent)` under
+`backdrop-filter: blur(22px) saturate(1.6)`, a 1px `--ink @ 9%` ring and a soft
+drop `0 18px 40px -26px rgba(0,0,0,.45)`. It never hides on scroll.
 
-**The sliding indicator.** `.nav-active` is an absolutely positioned pill at
-`width: calc((100% - (var(--nav-n) - 1) * 2px) / var(--nav-n))`, translated by
-`calc(index * 100% + index * 2px)` (the `2px` is the grid gap). **`--nav-n` is
-`NAV.length`, written inline by `Nav`.** It used to be a literal `/ 3`, which
-made the indicator the wrong width and put it under the wrong label the day a
-fourth tab was added — the count must never be typed into the stylesheet
-again. Its visible
-surface is `::before` at `inset: 2px` — a vertical `color-mix` highlight plus an
-inset 1px top light. It sits at `z-index: -1` inside an `isolate` container, so
-it slides *behind* the labels. Transition `.28s cubic-bezier(.32,.72,0,1)`;
-`opacity: 0` when no nav item is active (home, 404, a project page).
+**Tabs** — `TABS` in `app.jsx` is `Home` + `NAV`, so a new page added to `NAV`
+appears here and in the phone menu at once. `17px / 650`, `letter-spacing
+-.02em`, `--muted` at rest.
 
-The pill slides between tabs but only ever fades in and out. Coming from a page
-with no tab it opens in place, so it never glides over from the first tab.
+| State | `wdth` | Weight | Colour |
+|---|---|---|---|
+| Rest | 72 | 650 | `--muted` |
+| Hover (fine pointers only) | 100 | 650 | `--ink` |
+| Current page | 125 | 750 | `--ink` |
 
-**Auto-hide.** The pill hides on sustained downward scroll and returns on any
-upward move (`app.jsx:121–141`). Three guards make it feel deliberate rather
-than twitchy: it never hides above `320px`; it needs `48px` of sustained
-downward travel to hide and only `16px` upward to return; and travel resets on
-direction change. Overscroll is clamped so iOS rubber-banding cannot trigger it.
-`.nav.hidden:focus-within` brings it back — a keyboard user is never left
-chasing a hidden pill.
+The axis and the weight move together over `.55s --ease-pill`. The tabs reflow
+as one tab widens — that is the gesture, not a side effect. Reduced motion keeps
+only the colour change.
 
-**Mobile (≤860px)** — the pill spans `left:12px; right:12px`, drops the links
-and the theme toggle, and keeps the logo, the CV button and a burger. The burger
-opens `.menu`.
+**Right side** — `.nav-icon` theme toggle (`opacity .72`, full on hover) and
+`.nav-cv`, an outline pill (`1.5px currentColor`) that fills orange on hover.
+The CV popover hangs `14px` under the band.
+
+**Mobile (≤860px)** — `58px` tall, `radius 18px`, two columns: the mark on the
+left; the CV and **the dot** on the right. The tabs and the theme toggle move
+into the menu. `.nav-dot` is the logo's orange dot set apart as a button: a
+`26px` orange core in a `40px` hairline ring. Pressed, it floods the screen (10.3)
+and turns into a close button — an ink core with an orange `×` — while the band
+dissolves into the orange (`.nav.menu-on`: no surface, `--on-accent` ink, the
+CV fades out, the mark's own dot goes ink).
 
 **Rules**
-- The pill's own colour is `--ink` in **both** themes. It is an object on the
-  page, not a surface of it.
-- Nav text uses `color-mix(in oklab, var(--paper) 66%, transparent)` at rest and
-  full `--paper` when active or hovered. Hover is gated on `(hover:hover) and
-  (pointer:fine)`.
-- Focus inside the pill uses `outline-offset: -3px` so the ring stays inside the
-  pill's radius.
+- The band is the **only** frosted surface in the system (see the anti-slop
+  rule's exceptions). It is frosted so it reads over the orange intro, the dark
+  panels and the photographs without changing colour with them.
+- Never add an indicator behind or under the tabs. The width is the indicator.
+- Focus uses `outline-offset: -2px` so the ring stays inside the tab.
 
 ---
 
-### 10.3 Full-screen menu — `.menu`
+### 10.3 Phone menu — `.menu`
 
-Mobile navigation. Not a drawer — a page.
+Mobile navigation, opened by the nav's dot. Not a drawer — the dot becomes the
+page.
 
-`fixed; inset:0`, `background: var(--paper)`, `z-index: 59`, opened by
-animating `clip-path: inset(0 0 100% 0) → inset(0)` over `.6s --ease-expo`.
-Items are `clamp(40px, 12vw, 72px) / 800 / wdth 110%`, each prefixed with a mono
-`01`–`04`, each on a `--rule` hairline, staggered in at
-`calc(120ms + var(--i) * 60ms)`.
+`fixed; inset: 0; z-index: 59`. `.menu-flood` is a `40px` orange disc placed on
+the dot (`--dot-x`, `--dot-y`, written by `Nav` from the button's own rect) and
+scaled to `--flood` — the distance to the farthest corner over its radius, so
+it always just covers the screen. Transform only: `.7s --ease-io` in, `.6s`
+out after a `.12s` beat so the words leave first.
+
+Items are `TABS`: `clamp(46px, min(15vw, 10.5vh), 92px) / 850 / uppercase`,
+set at `wdth 62` — and the current page at `wdth 125`, the same rule as the
+band. Each rises out of its own mask (`translateY(105%) → 0`, `.65s
+--ease-expo`, staggered `.26s + i × .05s`), with a mono `01`–`05` beside it.
+The socials and the theme toggle fade in last, on `--on-accent`.
 
 Behaviour: `Escape` closes · `body { overflow: hidden }` while open · Lenis is
-stopped and restarted · items get `tabIndex={-1}` when closed so they are not in
-the tab order · the active route is `--accent`.
+stopped and restarted · `<meta name="theme-color">` turns orange so the strip
+under the Dynamic Island matches, and goes back on close · items get
+`tabIndex={-1}` when closed · `visibility` holds for the `.75s` of the closing
+flood, then takes the menu out. Reduced motion: the disc fades in place, the
+words do not rise.
 
 ---
 
@@ -1687,7 +1704,7 @@ light-theme form and is switched off rather than recoloured.
 
 | Flips | Stays |
 |---|---|
-| All 20 surface / ink / line / accent tokens | The nav pill stays `--ink` — an object, not a surface |
+| All 20 surface / ink / line / accent tokens | The nav band stays frosted paper of its own theme — it follows the page, it is not inverted |
 | The grain (black `.15` → white `.07`) | The contact form stays dark (lifted, not inverted) |
 | `--lift` (warmer / much darker) | `--on-accent` stays near-black in both |
 | The logo filters (`--logo-mono*`) | Every layout, size, radius and duration |
@@ -1780,8 +1797,8 @@ One global ring, and it is never removed:
 ```
 
 `:focus-visible`, not `:focus`, so a mouse click does not ring a button. The one
-override is inside the nav pill (`outline-offset: -3px`) so the ring stays
-within the pill's radius. **There is no `outline: none` anywhere in this
+override is inside the nav band (`.nav-link`, `outline-offset: -2px`) so the ring stays
+within the tab's radius. **There is no `outline: none` anywhere in this
 stylesheet, and there must never be one.**
 
 A lightbox takes the focus when it opens, keeps `Tab` inside itself, and gives the

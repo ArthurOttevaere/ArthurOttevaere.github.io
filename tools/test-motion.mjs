@@ -58,50 +58,34 @@ try {
     await page.evaluate(() => window.__nav('/work/'));
     await page.waitForTimeout(400);
     if (!mobile) {
-      async function slide(to) {
-        return page.evaluate(async to => {
-          const pill = document.querySelector('.nav-active');
+      // the selection is the width axis: the active tab widens through
+      // in-between values (it eases, it does not snap) and ends fully wide
+      for (const route of ['/contact/', '/about/', '/work/']) {
+        const { samples, end } = await page.evaluate(async to => {
           const link = document.querySelector(`.nav-link[href="${to}"]`);
-          const start = pill.getBoundingClientRect().x;
-          const target = link.getBoundingClientRect().x;
+          const wdth = () => parseFloat((getComputedStyle(link).fontVariationSettings.match(/"wdth"\s+([\d.]+)/) || [])[1] || 100);
           link.click();
           const samples = [];
           const began = performance.now();
           await new Promise(resolve => {
             function frame(now) {
-              samples.push(pill.getBoundingClientRect().x);
-              if (now - began < 400) requestAnimationFrame(frame); else resolve();
+              samples.push(wdth());
+              if (now - began < 700) requestAnimationFrame(frame); else resolve();
             }
             requestAnimationFrame(frame);
           });
-          return { start, target, samples };
-        }, to);
+          return { samples, end: wdth() };
+        }, route);
+        assert.ok(samples.some(w => w > 74 && w < 123), 'The active tab widens through in-between values');
+        assert.ok(Math.abs(end - 125) < .5, 'The active tab ends fully wide');
       }
-      for (const route of ['/contact/', '/about/', '/work/']) {
-        const { start, target, samples } = await slide(route);
-        assert.ok(samples.some(x => x > Math.min(start, target) + 2 && x < Math.max(start, target) - 2), 'Pill visibly travels between tabs rather than jumping');
-        assert.ok(Math.abs(samples.at(-1) - target) < 1, 'Pill lands on the active tab');
-      }
-      const interrupted = await page.evaluate(async () => {
-        const pill = document.querySelector('.nav-active');
-        const x = () => pill.getBoundingClientRect().x;
-        document.querySelector('.nav-link[href="/contact/"]').click();
-        await new Promise(r => setTimeout(r, 90));
-        const before = x();
-        document.querySelector('.nav-link[href="/about/"]').click();
-        const after = x();
-        await new Promise(r => setTimeout(r, 400));
-        return { before, after, end: x(), target: document.querySelector('.nav-link.on').getBoundingClientRect().x };
-      });
-      assert.ok(Math.abs(interrupted.before - interrupted.after) < 1, 'Changing direction does not teleport the pill');
-      assert.ok(Math.abs(interrupted.end - interrupted.target) < 1, 'Interrupted slide settles on the latest selection');
     }
     await page.evaluate(() => window.__nav('/'));
     await page.waitForSelector('.veil', { state: 'attached' });
     assert.equal((await sceneAt(1000)).y, 0, 'Returning home also preserves the viewport anchor');
     await page.screenshot({ path: `/tmp/hero-fixed-${mobile ? 'mobile' : 'desktop'}.png` });
     assert.deepEqual(errors, []);
-    console.log(`${mobile ? 'Mobile' : 'Desktop'}: hero viewport anchoring, circle phases, reverse scrolling and return-home passed${mobile ? '' : '; pill intermediate movement passed'}`);
+    console.log(`${mobile ? 'Mobile' : 'Desktop'}: hero viewport anchoring, circle phases, reverse scrolling and return-home passed${mobile ? '' : '; nav width-axis selection passed'}`);
     await page.close();
   }
 } finally { await browser.close(); }
