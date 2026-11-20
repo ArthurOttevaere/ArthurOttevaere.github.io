@@ -373,21 +373,35 @@ html.lenis,html.lenis body{height:auto}
 @media (hover:hover) and (pointer:fine){.cv-pop a:hover{background:color-mix(in oklab,var(--ink) 7%,transparent)}}
 .cv-pop .lang{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:22px}
 
-/* The dot (phones only): the logo's orange dot, set apart as the menu button.
-   Pressed, it floods the screen with orange and the pages rise out of it. */
-.nav-dot{display:none}
-.nav-dot{position:relative;place-items:center;width:40px;height:40px;border-radius:50%;color:inherit;transition:transform .18s var(--ease),opacity .18s ease}
-.nav-dot::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px color-mix(in oklab,currentColor 16%,transparent);transition:opacity .2s ease}
-.nav-dot-core{width:26px;height:26px;border-radius:50%;background:var(--accent);transition:transform .35s var(--ease-pill),background-color .3s ease}
-.nav-dot svg{position:absolute;width:14px;height:14px;color:var(--accent);opacity:0;transition:opacity .2s ease}
+/* The burger (phones only). Pressed, the screen floods orange out of it and
+   the pages rise; the three bars become a cross in two beats.
+   Opening: the outer bars slide onto the middle one (.ln, .18s) while it
+   draws in, THEN they turn to ±45° (i, delayed .16s). Closing runs the same
+   beats backwards — unturn first, then part — so the bars never cross mid-
+   air. Each beat is a transition, so a second tap turns it around midway. */
+.nav-burger{display:none}
+.nav-burger{
+  position:relative;place-items:center;width:40px;height:40px;border-radius:50%;color:inherit;
+  transition:background-color .22s ease,transform .18s var(--ease),opacity .18s ease;
+}
+@media (hover:hover) and (pointer:fine){.nav-burger:hover{background:color-mix(in oklab,currentColor 8%,transparent)}}
+.nav-burger .ln{position:absolute;left:11px;right:11px;top:50%;height:1.8px;margin-top:-.9px;transition:transform .18s var(--ease) .16s}
+.nav-burger .ln:nth-child(1){transform:translateY(-6px)}
+.nav-burger .ln:nth-child(3){transform:translateY(6px)}
+.nav-burger .ln i{display:block;height:100%;border-radius:2px;background:currentColor;transition:transform .26s var(--ease-pill),opacity .14s ease}
+.nav-burger .ln:nth-child(2) i{transition:transform .2s var(--ease) .14s,opacity .14s ease .14s}
+.nav.menu-on .nav-burger .ln{transform:none;transition-delay:0s}
+.nav.menu-on .nav-burger .ln:nth-child(1) i{transform:rotate(45deg);transition-delay:.16s}
+.nav.menu-on .nav-burger .ln:nth-child(3) i{transform:rotate(-45deg);transition-delay:.16s}
+.nav.menu-on .nav-burger .ln:nth-child(2) i{transform:scaleX(0);opacity:0;transition-delay:0s}
+@media (prefers-reduced-motion:reduce){
+  .nav-burger .ln,.nav-burger .ln i,.nav.menu-on .nav-burger .ln,.nav.menu-on .nav-burger .ln i{transition-duration:.01s;transition-delay:0s}
+}
 /* while the menu is open the band dissolves into the orange: only the mark
-   and the dot (now a close button) stay */
+   and the burger (now a cross) stay */
 .nav.menu-on{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--on-accent)}
 .nav.menu-on .nav-cv-wrap,.nav.menu-on > .nav-right > .nav-cv{opacity:0;pointer-events:none}
 .nav.menu-on .nav-logo{--logo-dot:var(--on-accent)}
-.nav.menu-on .nav-dot::before{opacity:0}
-.nav.menu-on .nav-dot-core{background:var(--on-accent);transform:scale(1.18)}
-.nav.menu-on .nav-dot svg{opacity:1}
 
 @media (max-width:860px){
   .nav{height:58px;padding:0 9px 0 10px;grid-template-columns:auto 1fr;border-radius:18px}
@@ -395,7 +409,7 @@ html.lenis,html.lenis body{height:auto}
   .nav-logo{order:-1;justify-self:start;padding:0 8px}
   .nav-logo svg{height:19px}
   .nav-cv{height:38px;padding:0 15px;font-size:14.5px}
-  .nav-dot{display:grid}
+  .nav-burger{display:grid}
 }
 
 /* a check that draws itself, stroke first. pathLength="1" on Icon.Check is what
@@ -406,7 +420,7 @@ html.lenis,html.lenis body{height:auto}
 
 /* The phone menu. An orange disc grows out of the nav's dot until it covers
    the screen (transform only — --dot-x/--dot-y/--flood are set by Nav from
-   the dot's own position), then the pages rise in Archivo at full height.
+   the burger's own position), then the pages rise in Archivo at full height.
    The page you are on is set wide, like the tab it stands for. */
 .menu{position:fixed;inset:0;z-index:59;visibility:hidden;pointer-events:none;transition:visibility 0s linear .75s}
 .menu.open{visibility:visible;pointer-events:auto;transition:none}
@@ -1474,7 +1488,7 @@ html[data-theme="light"] .sky{display:none}
   transform:scale(var(--press));opacity:var(--press-o);
   transition-duration:var(--press-t);transition-delay:0s;
 }
-:is(.nav-icon,.nav-dot,.nav-logo,.soc,.to-top.show,.lb-close,.lb-nav button:not(:disabled)):active{
+:is(.nav-icon,.nav-burger,.nav-logo,.soc,.to-top.show,.lb-close,.lb-nav button:not(:disabled)):active{
   transform:scale(var(--press-sm));opacity:var(--press-o);
   transition-duration:var(--press-t);transition-delay:0s;
 }
@@ -1495,10 +1509,10 @@ html[data-theme="light"] .sky{display:none}
 /* The target is bigger than the thing you see. Each control keeps its drawn
    size and grows an invisible ::after up to 44px, stopping short of its
    neighbours; `.to-top` is left out of the position rule because it is fixed. */
-:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-dot,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a){position:relative}
-:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-dot,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a,.to-top)::after{content:"";position:absolute}
+:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-burger,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a){position:relative}
+:is(.nav-link,.nav-icon,.nav-cv,.nav-logo,.nav-burger,.sort,.filter,.back,.pnav-back,.topic,.link-arrow,.contact-mail,.btn-sm,.lb-nav button,.foot-note-text a,.to-top)::after{content:"";position:absolute}
 .nav-link::after,.nav-icon::after,.nav-cv::after,.nav-logo::after{inset:-6px 0}
-.nav-dot::after{inset:-2px}
+.nav-burger::after{inset:-2px}
 .sort::after{inset:-10px -6px}
 .back::after,.pnav-back::after{inset:-13px -6px}
 .filter::after{inset:-5px -4px}

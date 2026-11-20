@@ -29,10 +29,10 @@ try {
       assert.equal(await hidden(), false, 'The nav band stays on screen while scrolling');
     }
     if (mobile) {
-      await page.locator('.nav-dot').click();
+      await page.locator('.nav-burger').click();
       assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
-      assert.ok(await page.locator('.menu.open').count(), 'The dot opens the menu');
-      await page.locator('.nav-dot').click();
+      assert.ok(await page.locator('.menu.open').count(), 'The burger opens the menu');
+      await page.locator('.nav-burger').click();
       assert.equal(await page.evaluate(() => document.body.style.overflow), '');
     } else {
       await page.mouse.wheel(0, 800);

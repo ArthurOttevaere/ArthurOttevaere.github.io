@@ -670,7 +670,7 @@ a named reason. Do not add one without a reason you can write in a sentence.
 |---|---|
 | `980px` | Work grid 3 → 2 columns |
 | `900px` | Project page: rail un-sticks and stacks above the content |
-| `860px` | **The structural break.** Nav band drops its tabs for the dot + orange flood menu · hero re-weights with spacers and a hairline · About un-pins and the timeline becomes vertical · contact grid stacks |
+| `860px` | **The structural break.** Nav band drops its tabs for a burger + orange flood menu · hero re-weights with spacers and a hairline · About un-pins and the timeline becomes vertical · contact grid stacks |
 | `720px` | Featured grid → 1 column · takeaways → 1 column · toolkit rows stack · next-project row tightens |
 | `640px` | Footer compresses · back-to-top shrinks · intro CTA goes full-width |
 | `560px` | Work grid → 1 column · `.all-work` tightens |
@@ -692,7 +692,7 @@ without adding a row here.**
 | `90` | `.lb` — the lightbox |
 | `70` | `.progress`, `.cv-pop` |
 | `60` | `.nav` |
-| `59` | `.menu` — deliberately *under* the nav, so the dot (now a close button) stays clickable while the menu is open |
+| `59` | `.menu` — deliberately *under* the nav, so the burger (now a cross) stays clickable while the menu is open |
 | `58` | `.fly` — the copy of a cover in flight, over the page and under the nav |
 | `55` | `.to-top` |
 | `40` | `.veil` — the intro page |
@@ -985,7 +985,7 @@ need to be.
 | Moment | Gesture |
 |---|---|
 | Theme | The whole page crossfades over `.2s` as one picture (`.theme-shift`). Every component's own transition stands down, or the nav would lag behind the body |
-| Dot ↔ close | The nav dot's orange core turns ink and grows to `1.18` while an orange `×` fades in over it (`.35s --ease-pill`) — the button changes state as the flood passes under it. The theme's sun and moon stay a plain glyph on purpose: they change with the page |
+| Burger ↔ cross | Two beats, both transitions so a second tap turns them around: the outer bars slide onto the middle one (`.18s`) as it draws in, then turn to ±45° (`.26s --ease-pill`, `.16s` later). Closing runs the beats backwards — unturn, then part — so the bars never cross mid-air. Reduced motion: an instant swap. Each bar is an outer span that slides and an inner one that turns, so the two beats never fight over one `transform`. The theme's sun and moon stay a plain glyph on purpose: they change with the page |
 | CV menu | Grows from `top right`, the button that opened it, in `.18s`, and leaves in `.12s`. Transitions rather than keyframes, so a second click can turn it around. It stays mounted, with `visibility` and `tabIndex` closing it |
 | Send | Each state replaces the last with `.24s` of `opacity`, `blur(2px)` and `translateY(3px)` (`.send-label`), so two words never read as two objects |
 | A check | `.draw` strokes the check on in `.32s`, in the form and on the footer's mail tile. `pathLength="1"` on `Icon.Check` is what lets one value fit any size. Reduced motion shows it whole |
@@ -1035,7 +1035,7 @@ the file so a press always beats the hover it interrupts.
 | Group | Press | Who |
 |---|---|---|
 | `--press` `.97` | Scale | `.btn`, `.nav-link`, `.nav-cv`, `.veil-cta`, `.topic`, `.send` |
-| `--press-sm` `.95` | Scale, because a small target needs more travel to read | `.nav-icon`, `.nav-dot`, `.nav-logo`, `.soc`, `.to-top`, `.lb-close`, `.lb-nav button` |
+| `--press-sm` `.95` | Scale, because a small target needs more travel to read | `.nav-icon`, `.nav-burger`, `.nav-logo`, `.soc`, `.to-top`, `.lb-close`, `.lb-nav button` |
 | `--press-lg` `.985` | Scale, because a large surface moves further at its edges | `.pcard`, `.all-work`, `.pnav-next`, `.shot-frame` |
 | `--press-fade` `.6` | Opacity, because text and ruled rows have nothing to scale | `.filter`, `.sort`, `.back`, `.pnav-back`, `.link-arrow`, `.contact-mail`, `.cv-pop a`, `.foot-note-text a`, `a.row`, `.menu-link` |
 
@@ -1303,11 +1303,11 @@ only the colour change.
 The CV popover hangs `14px` under the band.
 
 **Mobile (≤860px)** — `58px` tall, `radius 18px`, two columns: the mark on the
-left; the CV and **the dot** on the right. The tabs and the theme toggle move
-into the menu. `.nav-dot` is the logo's orange dot set apart as a button: a
-`26px` orange core in a `40px` hairline ring. Pressed, it floods the screen (10.3)
-and turns into a close button — an ink core with an orange `×` — while the band
-dissolves into the orange (`.nav.menu-on`: no surface, `--on-accent` ink, the
+left; the CV and **a burger** on the right. The tabs and the theme toggle move
+into the menu. `.nav-burger` is three `1.8px` bars, `18px` wide, `6px` apart, in a
+`40px` round target. (A lone orange dot was tried first and dropped: nobody reads
+a dot as "menu".) Pressed, it floods the screen (10.3) and folds into a cross
+(see Motion, "Burger ↔ cross") while the band dissolves into the orange (`.nav.menu-on`: no surface, `--on-accent` ink, the
 CV fades out, the mark's own dot goes ink).
 
 **Rules**
@@ -1321,11 +1321,11 @@ CV fades out, the mark's own dot goes ink).
 
 ### 10.3 Phone menu — `.menu`
 
-Mobile navigation, opened by the nav's dot. Not a drawer — the dot becomes the
-page.
+Mobile navigation, opened by the nav's burger. Not a drawer — the screen floods
+out of the button.
 
 `fixed; inset: 0; z-index: 59`. `.menu-flood` is a `40px` orange disc placed on
-the dot (`--dot-x`, `--dot-y`, written by `Nav` from the button's own rect) and
+the burger (`--dot-x`, `--dot-y`, written by `Nav` from the button's own rect) and
 scaled to `--flood` — the distance to the farthest corner over its radius, so
 it always just covers the screen. Transform only: `.7s --ease-io` in, `.6s`
 out after a `.12s` beat so the words leave first.

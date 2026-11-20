@@ -133,7 +133,7 @@ function CvButton(){
 // into the menu (Menu below).
 function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
   const toggleMenu = e => {
-    // the flood grows out of the dot, so the menu needs to know where it is
+    // the flood grows out of the burger, so the menu needs to know where it is
     // and how far it has to reach to cover the farthest corner
     const r = e.currentTarget.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -158,10 +158,13 @@ function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
       <span className="nav-right">
         <ThemeButton theme={theme} toggle={toggle}/>
         <CvButton/>
-        <button type="button" className="nav-dot" aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        <button type="button" className="nav-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={menuOpen} onClick={toggleMenu}>
-          <span className="nav-dot-core" aria-hidden="true"/>
-          <Icon.Close aria-hidden="true"/>
+          {/* three bars: each one's outer span slides, its inner one turns,
+              so the closing and the opening can run in two beats */}
+          <span className="ln" aria-hidden="true"><i/></span>
+          <span className="ln" aria-hidden="true"><i/></span>
+          <span className="ln" aria-hidden="true"><i/></span>
         </button>
       </span>
     </header>
