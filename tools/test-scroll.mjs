@@ -15,27 +15,24 @@ try {
       await page.evaluate(y => window.__lenis ? window.__lenis.scrollTo(y, { immediate: true, force: true }) : window.scrollTo(0, y), y);
       await page.waitForTimeout(60);
     };
-    const hidden = () => page.locator('.nav').evaluate(el => el.classList.contains('hidden'));
+    // the band never hides: it is on screen, at the top, wherever you are
+    const hidden = () => page.locator('.nav').evaluate(el => {
+      const r = el.getBoundingClientRect();
+      return getComputedStyle(el).opacity === '0' || r.bottom <= 0;
+    });
     const restLetters = await page.locator('.hero-word .v').evaluateAll(els => els.map(el => el.style.fontVariationSettings).join('|'));
     await move(450);
     assert.notEqual(await page.locator('.hero-word .v').evaluateAll(els => els.map(el => el.style.fontVariationSettings).join('|')), restLetters, 'Hero typography still animates');
     await move(0);
-    await move(700);
-    assert.equal(await hidden(), true, 'Downward scrolling hides navigation');
-    await move(698);
-    assert.equal(await hidden(), true, 'Tiny reversal does not flicker navigation');
-    await move(675);
-    assert.equal(await hidden(), false, 'Intentional upward scrolling reveals navigation');
-    await move(678);
-    assert.equal(await hidden(), false, 'Tiny downward movement keeps navigation visible');
-    await move(740);
-    assert.equal(await hidden(), true);
-    await move(0);
-    assert.equal(await hidden(), false);
+    for (const y of [700, 698, 675, 740, 0]) {
+      await move(y);
+      assert.equal(await hidden(), false, 'The nav band stays on screen while scrolling');
+    }
     if (mobile) {
-      await page.locator('.nav-burger').click();
+      await page.locator('.nav-dot').click();
       assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
-      await page.locator('.nav-burger').click();
+      assert.ok(await page.locator('.menu.open').count(), 'The dot opens the menu');
+      await page.locator('.nav-dot').click();
       assert.equal(await page.evaluate(() => document.body.style.overflow), '');
     } else {
       await page.mouse.wheel(0, 800);

@@ -14,6 +14,8 @@ const NAV = [
   { label: 'Outside', to: '/outside/', route: 'outside' },
   { label: 'Contact', to: '/contact/', route: 'contact' },
 ];
+// what the nav band shows: Home is a tab of its own, the mark stays the mark
+const TABS = [{ label: 'Home', to: '/', route: 'home' }].concat(NAV);
 const THEME_KEY = 'ao-theme';
 
 /* ── The strip above the Dynamic Island ────────────────────────────────────
@@ -77,17 +79,6 @@ function useTheme(){
   return [theme, toggle];
 }
 
-// Two icons in one place, the second taking over from the first the way SF
-// Symbols' Replace does: both are always there, so the swap can be interrupted.
-function Swap({ first, A, B }){
-  return (
-    <span className="swap">
-      <A className={first ? 'on' : undefined}/>
-      <B className={first ? undefined : 'on'}/>
-    </span>
-  );
-}
-
 function ThemeButton({ theme, toggle, className }){
   const next = theme === 'light' ? 'dark' : 'light';
   const Glyph = theme === 'light' ? Icon.Moon : Icon.Sun;
@@ -134,61 +125,43 @@ function CvButton(){
 }
 
 /* ── Nav ───────────────────────────────────────────────────────────────── */
+// A detached band that stays put: the tabs on the left, the mark in the
+// middle, the CV on the right. The selection is drawn with Archivo's width
+// axis — the page you are on is set wide, the one under the pointer opens,
+// the rest stay condensed — so the nav speaks the same type as the hero.
+// On a phone the tabs give way to the orange dot, which floods the screen
+// into the menu (Menu below).
 function Nav({ route, theme, toggle, menuOpen, setMenuOpen }){
-  const [hidden, setHidden] = useState(false);
-  const activeIndex = NAV.findIndex(n => n.route === route);
-  // The pill slides between tabs, but it only ever fades in and out: arriving
-  // from a page with no tab, it opens where it belongs instead of gliding over
-  // from the first one, and leaving, it stays where it was.
-  const pill = useRef(Math.max(0, activeIndex));
-  const gone = useRef(activeIndex < 0);
-  const opening = gone.current && activeIndex >= 0;
-  if (activeIndex >= 0) pill.current = activeIndex;
-  useEffect(() => { gone.current = activeIndex < 0; }, [activeIndex]);
-  useEffect(() => {
-    let raf = 0, lastY = Math.max(0, window.scrollY), travel = 0;
-    setHidden(false);
-    const update = () => {
-      raf = 0;
-      // Clamp elastic overscroll and require sustained movement before toggling.
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const y = clamp(window.scrollY, 0, max);
-      const delta = y - lastY;
-      lastY = y;
-      if (y <= 320 || menuOpen){ travel = 0; setHidden(false); return; }
-      if (!delta) return;
-      if (Math.sign(delta) !== Math.sign(travel)) travel = 0;
-      travel += delta;
-      if (travel >= 48) setHidden(true);
-      else if (travel <= -16) setHidden(false);
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
-  }, [route, menuOpen]);
+  const toggleMenu = e => {
+    // the flood grows out of the dot, so the menu needs to know where it is
+    // and how far it has to reach to cover the farthest corner
+    const r = e.currentTarget.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const far = Math.hypot(Math.max(cx, window.innerWidth - cx), Math.max(cy, window.innerHeight - cy));
+    const s = document.documentElement.style;
+    s.setProperty('--dot-x', cx.toFixed(1) + 'px');
+    s.setProperty('--dot-y', cy.toFixed(1) + 'px');
+    s.setProperty('--flood', (far / 20 * 1.04).toFixed(2));
+    setMenuOpen(o => !o);
+  };
   return (
-    <header className={'nav' + (hidden && !menuOpen ? ' hidden' : '')}>
-      <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
-      <nav className="nav-links" aria-label="Primary" style={{ '--nav-n': NAV.length }}>
-        <span className="nav-active" aria-hidden="true" style={{
-          transform: 'translateX(calc(' + pill.current * 100 + '% + ' + pill.current * 2 + 'px))',
-          opacity: activeIndex < 0 ? 0 : 1,
-          transition: opening ? 'opacity .18s ease' : undefined,
-        }}/>
-        {NAV.map(n => (
+    <header className={'nav' + (menuOpen ? ' menu-on' : '')}>
+      <nav className="nav-links" aria-label="Primary">
+        {TABS.map(n => (
           <Link key={n.route} to={n.to} className={'nav-link' + (route === n.route ? ' on' : '')}
                 aria-current={route === n.route ? 'page' : undefined}>
             {n.label}
           </Link>
         ))}
       </nav>
+      <Link to="/" className="nav-logo" aria-label="Home"><Icon.Logo/></Link>
       <span className="nav-right">
-        <span className="nav-sep" aria-hidden="true"/>
         <ThemeButton theme={theme} toggle={toggle}/>
         <CvButton/>
-        <button type="button" className="nav-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-                aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
-          <Swap first={!menuOpen} A={Icon.Menu} B={Icon.Close}/>
+        <button type="button" className="nav-dot" aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={menuOpen} onClick={toggleMenu}>
+          <span className="nav-dot-core" aria-hidden="true"/>
+          <Icon.Close aria-hidden="true"/>
         </button>
       </span>
     </header>
@@ -203,19 +176,25 @@ function Menu({ open, route, close, theme, toggle }){
     document.addEventListener('keydown', key);
     document.body.style.overflow = 'hidden';
     if (window.__lenis) window.__lenis.stop();
+    // the screen turns orange, so the strip under the Dynamic Island does too
+    const was = topAccent;
+    topAccent = true; paintTop();
     return () => {
       document.removeEventListener('keydown', key);
       document.body.style.overflow = '';
       if (window.__lenis) window.__lenis.start();
+      topAccent = was; paintTop();
     };
   }, [open, close]);
-  const items = [{ label: 'Home', to: '/', route: 'home' }].concat(NAV);
   return (
     <div className={'menu' + (open ? ' open' : '')} aria-hidden={!open}>
-      {items.map((n, i) => (
+      <span className="menu-flood" aria-hidden="true"/>
+      <div className="menu-body">
+      {TABS.map((n, i) => (
         <Link key={n.route} to={n.to} className={'menu-link' + (route === n.route ? ' on' : '')}
-              style={{ '--i': i }} tabIndex={open ? 0 : -1} onClick={close}>
-          <span className="n">{String(i + 1).padStart(2, '0')}</span>{n.label}
+              style={{ '--i': i }} tabIndex={open ? 0 : -1} onClick={close}
+              aria-current={route === n.route ? 'page' : undefined}>
+          <span className="n">{String(i + 1).padStart(2, '0')}</span><span className="lbl">{n.label}</span>
         </Link>
       ))}
       <div className="menu-foot">
@@ -225,6 +204,7 @@ function Menu({ open, route, close, theme, toggle }){
           {P.email ? <a className="soc" href={'mailto:' + P.email} aria-label="Email" tabIndex={open ? 0 : -1}><Icon.Mail/></a> : null}
         </span>
         <ThemeButton theme={theme} toggle={toggle} className="soc"/>
+      </div>
       </div>
     </div>
   );
