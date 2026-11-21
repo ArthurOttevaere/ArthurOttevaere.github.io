@@ -262,11 +262,13 @@ window.PORTFOLIO_DATA = {
          info   what "Get Info" in the right-click menu says
          icon   the iPhone app icon: "linkedin", "github", "folder", "globe"
          short  OPTIONAL — a shorter name for under the iPhone icon
+         appIcon OPTIONAL — a real app icon (in /assets/logos/dock/) for the
+                iPhone, used instead of the drawn `icon`
          widget OPTIONAL — on the iPhone, shows this one as a small widget
                 instead of an app: { title, sub, cta }
        At most five folders: there are seven places on the desk in all. */
     desk: [
-      { label: "LinkedIn",      href: "https://www.linkedin.com/in/arthur-ottevaere/", icon: "linkedin", info: "Where the formal version of me lives." },
+      { label: "LinkedIn",      href: "https://www.linkedin.com/in/arthur-ottevaere/", icon: "linkedin", appIcon: "/assets/logos/dock/linkedin.png", info: "Where the formal version of me lives." },
       { label: "Formula 1",     href: "/work/f1/", icon: "folder", info: "Weekend data. Became the F1 Duel prediction game.",
         widget: { title: "F1 Duel", sub: "Beat the model", cta: "Play" } },
       { label: "Side projects", href: "/work/",    icon: "folder", info: "Everything I built, at school and for fun." },

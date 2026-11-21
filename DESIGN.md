@@ -778,8 +778,8 @@ The exceptions, all six of them, are deliberate and complete:
 - **The device mocks on About** (§11.6) quote macOS and iOS, so they carry the
   operating system's own materials and nothing else does: the frosted menu bar,
   context menu, dock and Search pill (`blur(20–30px) saturate(1.6–1.8)`), the
-  gradients that app icons and widgets are made of, and the phone's titanium
-  frame. The test: each one is a thing Apple draws. None of it may leave
+  gradients that app icons and widgets are made of, the phone's titanium
+  frame, and the MacBook's aluminium, keyboard and lid. The test: each one is a thing Apple draws. None of it may leave
   `.dk` or `.ip`.
 
 ---
@@ -1726,11 +1726,23 @@ short: it is a fix for a dataset quirk, not a way to edit geography.
    field: the highlight sweeps across on `--ease-io`, then the two handles show.
    The languages are one line, flag + level, right under the bio — small, but
    where a recruiter reads.
+   **The desk lives inside a MacBook** (`.ab-mac`, 340vh, pinned). It arrives
+   closed, seen from above — aluminium lid with the site's "a." — and over the
+   first 40% of the scroll the lid rises on its hinge over a real keyboard,
+   the camera comes level and the screen wakes; it stays open and usable while
+   you read, and closes again over the last 20% as you leave. The desk is drawn
+   at 1280 × 800 and scaled into the panel. Which face of the lid you see is
+   computed in JS from the eye's position, not left to `backface-visibility`
+   (Safari ignored it and showed the screen mirrored). Closed, the lid lies at
+   exactly −90° and the base sits 2px lower, so their outlines coincide.
    **On phones (≤860px) the desk becomes an iPhone** (`.ip`): a home screen in
    container units, with the profile as a medium widget, the first four tools
    beside a small widget (the `desk` entry that has a `widget`), the other tools
-   as apps, the Search pill, and a dock with the CVs and the links. A folder
-   that is also a tool (GitHub) lives on the tool's icon instead of twice.
+   as apps, the Search pill, and a dock with the links; the two CVs open the
+   grid, labelled. A folder that is also a tool (GitHub) lives on the tool's
+   icon instead of twice. **It unlocks with Face ID** when it is half on screen
+   (or tapped): the island widens with the padlock and the scan ring, the
+   padlock opens, the lock screen slides away and the home screen settles in.
 3. **What I'm into** (`.ab-wall`). Four rows of pills, each list three times,
    drift with the scroll in alternating directions — never on their own. Filled
    pills lead somewhere (`href` + `note` in `interests`); the others say honestly
@@ -2128,7 +2140,11 @@ site — where the two disagree, the stylesheet wins and this file is wrong.
 - **2026-11-21 — About rebuilt** (§11.6). The scroll-filled bio, the floating id
   card, the toolkit rows and the interests marquee are gone; in their place the
   "A QUICK LOOK AT ME." opener, the Mac desk / iPhone home screen and the
-  passions wall. The timeline is untouched. This adds the only quoted face
+  passions wall. The timeline is untouched.
+- **2026-11-22 — About entrances.** The desk opens inside a MacBook (lid,
+  keyboard, close on leave) and the iPhone unlocks with Face ID; real LinkedIn
+  icon and labelled CVs on the phone; the opener refits only on width changes
+  (the phone toolbars were making it stutter). This adds the only quoted face
   (the system font) and the only quoted materials (frosted glass, icon
   gradients), both confined to the device mocks — see §3 and §5.
 

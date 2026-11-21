@@ -50,6 +50,7 @@ function AboutOpener(){
       const L = OP_LINES[i];
       el.style.fontSize = '100px';
       el.style.fontVariationSettings = "'wdth' " + Math.max(L.a, L.b);
+      el._w = null;                       // frame() must write the width again
       const w = el.scrollWidth || 1;
       el.style.fontSize = Math.min(100 * W / w * .985, H * (i === 2 ? .36 : .25)) + 'px';
     });
@@ -60,10 +61,14 @@ function AboutOpener(){
     const p = (still || run <= 0) ? 1 : clamp(-scene.getBoundingClientRect().top / run, 0, 1);
     const seg = (a, b) => clamp((p - a) / (b - a), 0, 1);
     const t = [easeIO(seg(0, .42)), easeIO(seg(.08, .5)), easeIO(seg(.42, .68))];
+    // whole steps of the axis, and only when one changes: every new width is
+    // a fresh shaping of a very large line, so the fewer, the smoother
     lineRefs.current.forEach((el, i) => {
       if (!el) return;
-      const L = OP_LINES[i];
-      el.style.fontVariationSettings = "'wdth' " + lerp(L.a, L.b, t[i]).toFixed(1);
+      const L = OP_LINES[i], v = Math.round(lerp(L.a, L.b, t[i]));
+      if (el._w === v) return;
+      el._w = v;
+      el.style.fontVariationSettings = "'wdth' " + v;
     });
     const me = lineRefs.current[2];
     if (me) me.style.transform = 'translateY(' + ((1 - t[2]) * 105).toFixed(2) + '%)';
@@ -73,11 +78,19 @@ function AboutOpener(){
     if (footRef.current) footRef.current.style.opacity = seg(.74, .86).toFixed(3);
   }
 
+  /* Refit only when the WIDTH changes. A phone fires `resize` every time its
+     toolbars slide in or out while you scroll; refitting then (which resets
+     the lines to 100px to measure them) is what made the opener stutter. */
   useEffect(() => {
-    let alive = true;
-    const run = () => { if (alive){ fit(); frame(); } };
-    run();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
+    let alive = true, lastW = 0;
+    const run = force => {
+      if (!alive) return;
+      const w = window.innerWidth;
+      if (force === true || w !== lastW){ lastW = w; fit(); }
+      frame();
+    };
+    run(true);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => run(true));
     window.addEventListener('resize', run);
     return () => { alive = false; window.removeEventListener('resize', run); };
   }, []);
@@ -169,15 +182,151 @@ function AppGlyph({ app }){
 const DESK_DOC_SLOTS    = [[3, 3], [20, 9], [37, 1]];
 const DESK_FOLDER_SLOTS = [[76, 4], [1, 40], [80, 38], [7, 74], [72, 74]];
 
+/* Two entrances: on computers the desk is shown inside a MacBook whose lid
+   opens as you scroll in (and closes as you leave); on phones the iPhone
+   unlocks with Face ID when it comes on screen. */
 function AboutMe({ narrow }){
   const ref = useRef(null);
   const on = useInView(ref, narrow ? .12 : .3);
+  if (!narrow) return <MacBook/>;
   return (
     <section className="ab-me" ref={ref}>
       <div className="shell">
         {narrow
-          ? <React.Fragment><AboutText on={on}/><IPhone/></React.Fragment>
-          : <Desk on={on}/>}
+          ? <React.Fragment><AboutText on={on}/><IPhone lock/></React.Fragment>
+          : null}
+      </div>
+    </section>
+  );
+}
+
+/* ── the MacBook ─────────────────────────────────────────────────────
+   A pinned scene: the laptop arrives closed, seen a little from above; the
+   scroll lifts the lid on its hinge (rotateX about its bottom edge) while the
+   camera comes level, and the screen wakes once it is nearly upright. The
+   desk inside is drawn at one design size (1280 × 800, the panel's 16:10)
+   and scaled to the panel, so it is the same desk at every width. */
+const MAC_W = 1280, MAC_H = 800, MAC_BEZEL = 14, MAC_PERSP = 4600, MAC_EYE = .9;
+
+/* The keyboard, row by row, as on a MacBook: [label, width in key units,
+   kind]. Every row adds up to 14.5 units, so the right edge is straight.
+   kind: 'fn' a half-height function key · 'm' a modifier (small label,
+   bottom-left) · 'mr' one with its label bottom-right · 'arrows' the
+   inverted T. */
+const MAC_KEYS = [
+  [['esc', 1.5, 'fn'], ...['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'].map(k => [k, 1, 'fn']), ['', 1, 'fn id']],
+  [['§', 1], ['1', 1], ['2', 1], ['3', 1], ['4', 1], ['5', 1], ['6', 1], ['7', 1], ['8', 1], ['9', 1], ['0', 1], ['-', 1], ['=', 1], ['delete', 1.5, 'mr']],
+  [['tab', 1.5, 'm'], ...'QWERTYUIOP'.split('').map(k => [k, 1]), ['[', 1], [']', 1], ['\\', 1]],
+  [['caps lock', 1.8, 'm'], ...'ASDFGHJKL'.split('').map(k => [k, 1]), [';', 1], ["'", 1], ['return', 1.7, 'mr']],
+  [['shift', 2.3, 'm'], ...'ZXCVBNM'.split('').map(k => [k, 1]), [',', 1], ['.', 1], ['/', 1], ['shift', 2.2, 'mr']],
+  [['fn', 1, 'm'], ['control', 1, 'm'], ['option', 1, 'm'], ['command', 1.25, 'm'], ['', 5], ['command', 1.25, 'm'], ['option', 1, 'm'], ['', 3, 'arrows']],
+];
+function MacKeyboard(){
+  return (
+    <span className="mac-kb">
+      {MAC_KEYS.map((row, ri) => (
+        <span className={'mac-row' + (ri === 0 ? ' is-fn' : '')} key={ri}>
+          {row.map(([label, w, kind], ki) => kind === 'arrows' ? (
+            <span className="mac-arrows" key={ki} style={{ flexGrow: w }}>
+              <i>◀</i><span><i>▲</i><i>▼</i></span><i>▶</i>
+            </span>
+          ) : (
+            <i key={ki} className={kind ? 'k-' + kind.split(' ').join(' k-') : undefined} style={{ flexGrow: w }}>{label}</i>
+          ))}
+        </span>
+      ))}
+    </span>
+  );
+}
+function MacBook(){
+  const still = reduceMotion();
+  const sceneRef = useRef(null), stageRef = useRef(null), camRef = useRef(null), macRef = useRef(null), lidRef = useRef(null), dispRef = useRef(null);
+  const [awake, setAwake] = useState(still);
+
+  function size(){
+    const stage = stageRef.current, mac = macRef.current; if (!stage || !mac) return;
+    const cs = getComputedStyle(stage);
+    const availW = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const availH = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 26;   // 26 = the front lip
+    const fromH = (availH - 2 * MAC_BEZEL) * MAC_W / MAC_H + 2 * MAC_BEZEL;
+    const mw = Math.max(560, Math.min(availW * .94, fromH, 1240));
+    mac.style.setProperty('--mw', mw + 'px');
+    mac.style.setProperty('--s', ((mw - 2 * MAC_BEZEL) / MAC_W).toFixed(4));
+    mac._lh = (mw - 2 * MAC_BEZEL) * MAC_H / MAC_W + 2 * MAC_BEZEL;     // the lid's height
+  }
+  function frame(){
+    const scene = sceneRef.current, lid = lidRef.current, mac = macRef.current; if (!scene || !lid) return;
+    const run = scene.offsetHeight - window.innerHeight;
+    const p = (still || run <= 0) ? 1 : clamp(-scene.getBoundingClientRect().top / run, 0, 1);
+    // opens over the first 40% of the scroll, stays open (and usable) while you
+    // read, and closes again over the last 20% as you leave for the next act
+    const o = easeIO(clamp(p / .4, 0, 1)) * (1 - easeIO(clamp((p - .8) / .2, 0, 1)));
+    // Negative rotateX brings a top edge toward you. Closed, the lid lies flat
+    // at −90°, exactly over the base: the base sits 2px lower (translateZ in
+    // its CSS), so the two never fight and their outlines coincide; the
+    // camera starts above the laptop (everything tipped toward you by up to
+    // 30°) and comes level, at the hinge's height, as the lid comes upright.
+    const angle = -90 + 90 * o, tilt = -30 * (1 - o);
+    lid.style.transform = 'rotateX(' + angle.toFixed(2) + 'deg)';
+    // closed, the laptop lies toward you below the hinge: lift it so it sits
+    // in the middle of the screen, and let it settle as it opens
+    const lh = lid.offsetHeight || mac._lh || 500;
+    const lift = -lh * .62 * (1 - o);
+    mac.style.transform = 'translateY(' + lift.toFixed(1) + 'px) rotateX(' + tilt.toFixed(2) + 'deg) scale(' + (.84 + .16 * o).toFixed(3) + ')';
+
+    /* Which face of the lid is turned to you — worked out here rather than left
+       to backface-visibility, which Safari does not honour on a lid this full
+       of layers (it showed the screen, mirrored, while the lid was still
+       lying on the keyboard). The eye sits where perspective-origin puts it;
+       the screen shows only when the vector to the eye meets its front. */
+    const cam = camRef.current;
+    if (cam){
+      const th = (angle + tilt) * Math.PI / 180;
+      const eyeY = cam.offsetHeight * MAC_EYE, hingeY = lh + lift;
+      const cy = hingeY - lh / 2 * Math.cos(th), cz = -lh / 2 * Math.sin(th);
+      const facing = (eyeY - cy) * -Math.sin(th) + (MAC_PERSP - cz) * Math.cos(th) > 0;
+      lid.classList.toggle('is-back', !facing);
+    }
+    const wake = clamp((o - .55) / .35, 0, 1);              // the screen lights up as it comes upright
+    if (dispRef.current) dispRef.current.style.opacity = wake.toFixed(3);
+    if (o > .95) setAwake(true);
+    // on the stage, not the section: React rewrites the section's className
+    if (stageRef.current) stageRef.current.classList.toggle('is-live', still || o > .98);
+  }
+  useEffect(() => {
+    const run = () => { size(); frame(); };
+    run();
+    window.addEventListener('resize', run);
+    return () => window.removeEventListener('resize', run);
+  }, []);
+  useScrollFrame(frame, []);
+
+  return (
+    <section className={'ab-mac' + (still ? ' is-still' : '') + (awake ? ' is-awake' : '')} ref={sceneRef}>
+      <div className="ab-mac-stage" ref={stageRef}>
+        <div className="mac-cam" ref={camRef}>
+          <div className="mac" ref={macRef}>
+            <div className="mac-lid" ref={lidRef}>
+              {/* the outside of the lid, shown while it is the face turned to you */}
+              <span className="mac-back" aria-hidden="true"><span className="mac-mark">a<i/></span></span>
+              <div className="mac-screen">
+                <span className="mac-notch" aria-hidden="true"/>
+                <div className="mac-display" ref={dispRef}>
+                  <div className="mac-fit"><Desk on={awake} inMac/></div>
+                </div>
+              </div>
+            </div>
+            {/* the keyboard half: a plane lying flat from the hinge toward you,
+                with its front lip hanging from the far edge */}
+            <div className="mac-deck" aria-hidden="true">
+              <span className="mac-grille l"/>
+              <MacKeyboard/>
+              <span className="mac-grille r"/>
+              <span className="mac-pad"/>
+              <span className="mac-lip"><span className="mac-scoop"/></span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -237,7 +386,7 @@ function PdfIcon({ lang }){
   );
 }
 
-function Desk({ on }){
+function Desk({ on, inMac }){
   const P    = PROFILE();
   const cvs  = useCvLinks();
   const items = deskItems(cvs).slice(0, DESK_DOC_SLOTS.length + DESK_FOLDER_SLOTS.length);
@@ -271,15 +420,16 @@ function Desk({ on }){
   }
   function move(e){
     const g = drag.current; if (g.id !== e.pointerId) return;
-    const el = itemRefs.current[g.i];
-    const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    const el = itemRefs.current[g.i], body = bodyRef.current, sc = scatterRef.current;
+    // in layout pixels: inside the MacBook the desk is drawn scaled down
+    const k = (sc.getBoundingClientRect().width / sc.offsetWidth) || 1;
+    const dx = (e.clientX - g.sx) / k, dy = (e.clientY - g.sy) / k;
     if (!g.moved && Math.hypot(dx, dy) < 4) return;
     g.moved = true; el.classList.add('drag');
     // keep it on the desk, and above the dock
-    const B = bodyRef.current.getBoundingClientRect(), S = scatterRef.current.getBoundingClientRect();
-    const baseL = S.left + el.offsetLeft, baseT = S.top + el.offsetTop;
-    const nx = clamp(g.ox + dx, B.left + 8 - baseL, B.right - el.offsetWidth - 8 - baseL);
-    const ny = clamp(g.oy + dy, B.top + 8 - baseT, B.bottom - el.offsetHeight - 96 - baseT);
+    const baseL = sc.offsetLeft + el.offsetLeft, baseT = sc.offsetTop + el.offsetTop;
+    const nx = clamp(g.ox + dx, 8 - baseL, body.clientWidth - el.offsetWidth - 8 - baseL);
+    const ny = clamp(g.oy + dy, 8 - baseT, body.clientHeight - el.offsetHeight - 96 - baseT);
     el.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
   }
   function up(e){
@@ -289,8 +439,8 @@ function Desk({ on }){
   }
   function context(e, i){
     e.preventDefault(); setSel(i);
-    const B = bodyRef.current.getBoundingClientRect();
-    setMenu({ i, x: Math.min(e.clientX - B.left, B.width - 196), y: e.clientY - B.top });
+    const body = bodyRef.current, B = body.getBoundingClientRect(), k = (B.width / body.offsetWidth) || 1;
+    setMenu({ i, x: Math.min((e.clientX - B.left) / k, body.offsetWidth - 196), y: (e.clientY - B.top) / k });
   }
   function act(kind){
     const i = menu.i, it = items[i], el = itemRefs.current[i];
@@ -309,7 +459,7 @@ function Desk({ on }){
   }
 
   return (
-    <div className={'dk' + (on ? ' on' : '')}>
+    <div className={'dk' + (on ? ' on' : '') + (inMac ? ' in-mac' : '')}>
       <MenuBar say={say}/>
       <div className="dk-body" ref={bodyRef}>
         <div className="dk-scatter" ref={scatterRef}>
@@ -350,7 +500,7 @@ function Desk({ on }){
 
         <div className="dk-dock-wrap">
           <span className="eyebrow">Toolkit — what's in my dock</span>
-          <Dock/>
+          <Dock say={say}/>
         </div>
       </div>
     </div>
@@ -417,7 +567,7 @@ function MenuBar({ say }){
 }
 
 // The dock: one icon per tool, a separator between groups, macOS magnification.
-function Dock(){
+function Dock({ say }){
   const apps = useMemo(toolApps, []);
   const dockRef = useRef(null), appRefs = useRef([]);
   const [running, setRunning] = useState(() => new Set());
@@ -449,6 +599,13 @@ function Dock(){
           </button>
         </React.Fragment>
       ))}
+      {/* the Trash, where macOS keeps it: last, after its own separator */}
+      <i className="dk-sep" aria-hidden="true"/>
+      <button type="button" role="listitem" className="dk-app dk-trash" ref={el => { appRefs.current[apps.length] = el; }}
+              aria-label="Trash" onClick={() => say && say('The Trash is empty. I keep everything.')}>
+        <img className="app-img" src="/assets/logos/dock/trash.svg" alt="" draggable="false" loading="lazy" decoding="async"/>
+        <b aria-hidden="true">Trash</b>
+      </button>
     </div>
   );
 }
@@ -504,13 +661,15 @@ function PhoneApp({ app, onTap, label }){
   };
   return (
     <button type="button" className="ip-app" ref={ref} onClick={tap} aria-label={app.short || app.label}>
-      <span className="ip-ico">{app.tool ? <AppGlyph app={app.tool}/> : <PhoneIcon kind={app.icon} lang={app.pdf}/>}</span>
+      <span className="ip-ico">{app.tool ? <AppGlyph app={app.tool}/>
+        : app.appIcon ? <AppGlyph app={{ icon: app.appIcon }}/>
+        : <PhoneIcon kind={app.icon} lang={app.pdf}/>}</span>
       {label === false ? null : <span className="ip-lbl" aria-hidden="true">{app.short || app.label}</span>}
     </button>
   );
 }
 
-function IPhone(){
+function IPhone({ lock }){
   const P     = PROFILE();
   const cvs   = useCvLinks();
   const time  = useClock();
@@ -520,19 +679,55 @@ function IPhone(){
   const toolLabels = new Set(tools.map(t => t.label));
   const byLabel = new Map(items.map(it => [it.label, it]));
   const widget = items.find(it => it.widget);
-  // a folder that is also a tool (GitHub) lives on the tool's icon instead
-  const links = items.filter(it => !it.widget && !toolLabels.has(it.label));
+  // a folder that is also a tool (GitHub) lives on the tool's icon instead;
+  // the CVs sit on the home screen, labelled, where they read as CVs; the
+  // links go in the dock
+  const links = items.filter(it => !it.widget && !it.pdf && !toolLabels.has(it.label));
+  const docs  = items.filter(it => it.pdf);
   const dock  = links.slice(0, 4), extra = links.slice(4);
   const asTool = t => ({ label: t.label, tool: t, href: (byLabel.get(t.label) || {}).href });
-  const quad  = widget ? tools.slice(0, 4) : [];
-  const rest  = (widget ? tools.slice(4) : tools).map(asTool).concat(extra);
+  // the CVs open the grid, beside the small widget: the first thing you read
+  const apps  = docs.concat(tools.map(asTool), extra);
+  const quad  = widget ? apps.slice(0, 4) : [];
+  const rest  = widget ? apps.slice(4) : apps;
+
+  /* Face ID. Locked until the phone is well on screen (or tapped):
+     the island widens to show the padlock and the scan, the padlock opens,
+     the lock screen slides away and the home screen settles in. */
+  const ipRef = useRef(null);
+  const [st, setSt] = useState(() => (lock && !reduceMotion()) ? 'locked' : 'home');
+  const started = useRef(false);
+  function unlock(){
+    if (started.current || st === 'home') return;
+    started.current = true;
+    setSt('scan');
+    setTimeout(() => setSt('open'), 1000);
+    setTimeout(() => setSt('home'), 1450);
+  }
+  useEffect(() => {
+    if (st !== 'locked') return;
+    const el = ipRef.current; if (!el) return;
+    const io = new IntersectionObserver(es => { if (es[0].isIntersecting){ io.disconnect(); setTimeout(unlock, 350); } }, { threshold: .55 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  let today = '';
+  try { today = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Brussels' }).format(new Date()).replace(',', ''); } catch (e) {}
 
   return (
-    <div className="ip" aria-label="My phone's home screen">
+    <div className={'ip' + (lock ? ' is-lockable is-' + st : '')} ref={ipRef} aria-label="My phone's home screen"
+         onClick={lock && st === 'locked' ? unlock : undefined}>
       <div className="ip-screen">
         <div className="ip-status" aria-hidden="true">
           <span className="ip-time">{time}</span>
-          <span className="ip-island"/>
+          <span className="ip-island">
+            {lock ? (
+              <React.Fragment>
+                <svg className="ip-pad" viewBox="0 0 14 18"><path className="shk" d="M3.5 8V5.5a3.5 3.5 0 0 1 7 0V8" fill="none" stroke="currentColor" strokeWidth="1.8"/><rect x="1" y="8" width="12" height="9" rx="2.2"/></svg>
+                <svg className="ip-scan" viewBox="0 0 24 24"><defs><linearGradient id="ip-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#7DE2FF"/><stop offset="1" stopColor="#2E7BFF"/></linearGradient></defs><circle cx="12" cy="12" r="9" fill="none" stroke="url(#ip-ring)" strokeWidth="3" strokeDasharray="44 13" strokeLinecap="round"/></svg>
+              </React.Fragment>
+            ) : null}
+          </span>
           <span className="ip-sys">
             <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
             <svg width="16" height="11" viewBox="0 0 16 12"><path d="M8 11.6 5.6 9.1a3.4 3.4 0 0 1 4.8 0zM3.6 7.1a6.2 6.2 0 0 1 8.8 0l-1.3 1.3a4.4 4.4 0 0 0-6.2 0zM1.5 5A9.2 9.2 0 0 1 14.5 5l-1.3 1.3a7.4 7.4 0 0 0-10.4 0zM-.6 2.9a12.2 12.2 0 0 1 17.2 0l-1.3 1.3a10.4 10.4 0 0 0-14.6 0z"/></svg>
@@ -557,7 +752,7 @@ function IPhone(){
           {widget ? (
             <div className="ip-split">
               <div className="ip-quad">
-                {quad.map(t => <PhoneApp key={t.name} app={asTool(t)} onTap={() => openHref(asTool(t).href)}/>)}
+                {quad.map(a => <PhoneApp key={a.label} app={a} onTap={() => openHref(a.href)}/>)}
               </div>
               <div className="ip-w ip-w-s">
                 <button type="button" className="ip-card ip-small" onClick={() => openHref(widget.href)}>
@@ -589,6 +784,17 @@ function IPhone(){
         <div className="ip-dock">
           {dock.map(a => <PhoneApp key={a.label} app={a} label={false} onTap={() => openHref(a.href)}/>)}
         </div>
+        {lock ? (
+          <div className="ip-lock" aria-hidden="true">
+            <span className="ip-lock-date">{today}</span>
+            <span className="ip-lock-time">{time}</span>
+            <span className="ip-lock-hint">{st === 'locked' ? 'Look at me to unlock' : ''}</span>
+            <span className="ip-lock-btns">
+              <i><svg viewBox="0 0 24 24"><path d="M8 2h8v5l-2 3v12h-4V10L8 7z" fill="currentColor"/></svg></i>
+              <i><svg viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="currentColor"/><circle cx="12" cy="13" r="3.6" fill="#fff" fillOpacity=".9"/></svg></i>
+            </span>
+          </div>
+        ) : null}
         <span className="ip-home-bar" aria-hidden="true"/>
       </div>
     </div>
