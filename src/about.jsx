@@ -1,7 +1,8 @@
 // =============================================================================
-//  about.jsx — the story: the bio that fills in as you scroll (with the little
-//  floating card for the CV and LinkedIn), the timeline you travel through,
-//  the toolkit, and what I'm into.
+//  about.jsx — four acts: "A QUICK LOOK AT ME." on the width axis; about me
+//  as a Mac desk (an iPhone home screen on phones) with the bio, languages,
+//  CVs, folders and the toolkit as a dock; what I'm into as a wall of pills;
+//  and the timeline you travel through.
 // =============================================================================
 
 const { useState, useEffect, useMemo, useRef } = React;
@@ -14,114 +15,587 @@ function About(){
   useReveals(ref, [narrow]);
   return (
     <div className="page" ref={ref}>
-      <AboutIntro narrow={narrow}/>
+      <AboutOpener/>
+      <AboutMe narrow={narrow}/>
+      <Passions/>
       <Timeline narrow={narrow}/>
-      <Toolkit/>
-      <Interests/>
       <AboutCta/>
     </div>
   );
 }
 
-/* ── Act 1 · the bio, filling in ───────────────────────────────────────── */
-function AboutIntro({ narrow }){
+/* ── Act 1 · A QUICK LOOK AT ME. ───────────────────────────────────────────
+   The width axis breathes against itself: line one opens while line two
+   closes, then ME. rises out of its mask and the dot lands last. Each line
+   is sized once, at its WIDEST, to span the column (capped by the screen's
+   height), so the scroll only ever moves the width axis — nothing reflows. */
+const OP_LINES = [
+  { a: 62,  b: 125 },   // A quick   — opens
+  { a: 125, b: 62  },   // look at   — closes
+  { a: 70,  b: 104 },   // Me.       — rises
+];
+function AboutOpener(){
   const P = PROFILE();
-  const animated = !reduceMotion();
-  const sceneRef = useRef(null);
-  const bioRef   = useRef(null);
-  const wordRefs = useRef([]);
+  const still = reduceMotion();
+  const sceneRef = useRef(null), stageRef = useRef(null), dotRef = useRef(null), footRef = useRef(null);
+  const lineRefs = useRef([]);
 
-  const paras = [P.bio && P.bio[0], P.bio && P.bio[1]].filter(Boolean).map(t => t.split(/\s+/).filter(Boolean));
-  const offsets = []; { let acc = 0; paras.forEach(w => { offsets.push(acc); acc += w.length; }); }
-  const total = offsets.length ? offsets[offsets.length - 1] + paras[paras.length - 1].length : 0;
-
-  /* Two ways to measure the same gesture. On desktop the scene is pinned and
-     its scroll runway IS the progress. On phones nothing is pinned — the block
-     just scrolls by — so the fill tracks the bio's own travel up the screen.
-     The branch has to be the breakpoint, not `runway > 0`: on a phone the
-     scene is taller than the screen too, and that runway is only a couple of
-     hundred pixels, so the words would all light up at once. */
-  useScrollFrame(() => {
-    const spans = wordRefs.current;
-    if (!animated){ spans.forEach(s => { if (s) s.style.opacity = 1; }); return; }
+  function fit(){
+    const stage = stageRef.current; if (!stage) return;
+    const cs = getComputedStyle(stage);
+    const W = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const H = stage.clientHeight;
+    lineRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const L = OP_LINES[i];
+      el.style.fontSize = '100px';
+      el.style.fontVariationSettings = "'wdth' " + Math.max(L.a, L.b);
+      const w = el.scrollWidth || 1;
+      el.style.fontSize = Math.min(100 * W / w * .985, H * (i === 2 ? .36 : .25)) + 'px';
+    });
+  }
+  function frame(){
     const scene = sceneRef.current; if (!scene) return;
-    const vh = window.innerHeight;
-    let p;
-    if (narrow){
-      // The bio is already on screen when the page loads, so a plain "crossing
-      // a reading line" mapping would land mid-fill. Start where the block
-      // actually is: at the top of the page if it begins above the line,
-      // otherwise the moment it crosses it.
-      const b = (bioRef.current || scene).getBoundingClientRect();
-      const start = Math.max(0, b.top + window.scrollY - vh * .74);
-      const range = Math.max(1, b.height * .6 + vh * .18);
-      p = clamp((window.scrollY - start) / range, 0, 1);
-    } else {
-      const r = scene.getBoundingClientRect();
-      const runway = r.height - vh;
-      p = runway > 0 ? clamp(-r.top / runway, 0, 1) : clamp((vh - r.top) / vh, 0, 1);
-    }
-    const spread = 3.4, head = clamp(p / .78, 0, 1) * (total + spread);
-    spans.forEach((s, i) => { if (s) s.style.opacity = (.16 + .84 * clamp((head - i) / spread, 0, 1)).toFixed(3); });
-  }, [total, animated, narrow]);
+    const run = scene.offsetHeight - window.innerHeight;
+    const p = (still || run <= 0) ? 1 : clamp(-scene.getBoundingClientRect().top / run, 0, 1);
+    const seg = (a, b) => clamp((p - a) / (b - a), 0, 1);
+    const t = [easeIO(seg(0, .42)), easeIO(seg(.08, .5)), easeIO(seg(.42, .68))];
+    lineRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const L = OP_LINES[i];
+      el.style.fontVariationSettings = "'wdth' " + lerp(L.a, L.b, t[i]).toFixed(1);
+    });
+    const me = lineRefs.current[2];
+    if (me) me.style.transform = 'translateY(' + ((1 - t[2]) * 105).toFixed(2) + '%)';
+    // the dot lands with a small overshoot, then settles at 1
+    const d = seg(.68, .78);
+    if (dotRef.current) dotRef.current.style.transform = 'scale(' + (d >= 1 ? 1 : d * 1.18 - Math.max(0, d - .85) * 1.2).toFixed(3) + ')';
+    if (footRef.current) footRef.current.style.opacity = seg(.74, .86).toFixed(3);
+  }
 
+  useEffect(() => {
+    let alive = true;
+    const run = () => { if (alive){ fit(); frame(); } };
+    run();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
+    window.addEventListener('resize', run);
+    return () => { alive = false; window.removeEventListener('resize', run); };
+  }, []);
+  useScrollFrame(frame, []);
+
+  const ln = i => el => { lineRefs.current[i] = el; };
   return (
-    <section className={'ab-scene' + (animated ? ' is-animated' : '')} ref={sceneRef}>
-      <div className="ab-sticky">
-        <div className="shell">
-          <div className="ab-grid">
-            <div>
-              {/* the page needs a heading of its own; the design's is the bio */}
-              <h1 className="sr-only">About {P.name}</h1>
-              <span className="eyebrow rv rv-fade">About</span>
-              <div className="ab-bio" ref={bioRef} style={{ marginTop: 18 }}>
-                {paras.map((wa, pi) => (
-                  <p key={pi}>
-                    {wa.map((w, wi) => {
-                      const idx = offsets[pi] + wi;
-                      return <span className="wd" key={wi} ref={el => { wordRefs.current[idx] = el; }}>{w}{wi < wa.length - 1 ? ' ' : ''}</span>;
-                    })}
-                  </p>
-                ))}
-              </div>
-            </div>
-            <IdCard/>
-          </div>
+    <section className={'ab-op' + (still ? ' is-still' : '')} ref={sceneRef}>
+      <h1 className="sr-only">About {P.name}</h1>
+      <div className="ab-op-stage" ref={stageRef}>
+        <div className="ab-op-top"><span className="eyebrow">About</span><span className="eyebrow">01 — 04</span></div>
+        <div className="ab-op-type" aria-hidden="true">
+          <span className="ab-op-line l1" ref={ln(0)}>A<i className="sp"/>quick</span>
+          <span className="ab-op-line l2" ref={ln(1)}>look<i className="sp"/>at</span>
+          <span className="ab-op-mask"><span className="ab-op-line l3" ref={ln(2)}>Me<span className="dot" ref={dotRef}/></span></span>
+        </div>
+        <div className="ab-op-foot" ref={footRef}>
+          <p className="ab-op-voice">{COPY('aboutVoice', 'A business engineer, a data person, and a Formula 1 nerd on weekends.')}</p>
+          <span className="eyebrow" aria-hidden="true">Scroll</span>
         </div>
       </div>
     </section>
   );
 }
 
-// The little floating card: who, where, and the two links people come for.
-function IdCard(){
-  const P   = PROFILE();
-  const cvs = useCvLinks();
-  const age = computeAge(P.birth);
+/* ── Act 2 · about me — a Mac desk on computers, an iPhone on phones ───────
+   The same things in both: the bio, the languages, the CVs and the folders
+   from data.js (`desk`), and the toolkit as apps (`toolGroups`). */
+
+// Turns true once, the first time `ref` is well on screen.
+function useInView(ref, threshold){
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduceMotion() || !('IntersectionObserver' in window)){ setOn(true); return; }
+    const io = new IntersectionObserver(es => {
+      if (es[0].isIntersecting){ setOn(true); io.disconnect(); }
+    }, { threshold: threshold == null ? .3 : threshold });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return on;
+}
+
+// "/…" stays in the app, a PDF or "https://…" opens in a new tab.
+function openHref(href){
+  if (!href || href === '#') return;
+  const internal = href.startsWith('/') && !/\.pdf(\?|#|$)/i.test(href);
+  if (internal){ if (window.__nav) window.__nav(href); else window.location.href = href; return; }
+  window.open(href, '_blank', 'noopener');
+}
+
+// The CVs (as PDF files) and the folders, in desk order.
+function deskItems(cvs){
+  const P = PROFILE();
+  const docs = cvs.map(c => ({
+    label: 'CV_' + c.lang.toUpperCase() + '.pdf', short: 'CV ' + c.lang.toUpperCase(),
+    href: c.href, pdf: c.lang.toUpperCase(), icon: 'pdf',
+    info: c.lang === 'fr' ? 'Mon CV, en français.' : 'My résumé, in ' + c.label + '.',
+  }));
+  const folders = (P.desk || []).filter(f => f && f.href && f.href !== '#');
+  return docs.concat(folders);
+}
+
+// The toolkit, flat: { name, label, icon, logo, mono, group, sep }.
+function toolApps(){
+  const P = PROFILE();
+  const groups = (P.toolGroups && P.toolGroups.length)
+    ? P.toolGroups
+    : [{ label: 'Toolkit', items: (P.tools || []).map(t => [t, t.slice(0, 2)]) }];
+  const out = [];
+  groups.forEach((g, gi) => (g.items || []).forEach((it, j) => out.push({
+    name: it[0], mono: it[1], logo: it[2], flip: !!it[3], icon: it[4], label: it[5] || it[0], group: g.label, sep: gi > 0 && j === 0,
+  })));
+  return out;
+}
+
+// What a tool looks like as an app: its own icon, or its flat logo on a tile.
+function AppGlyph({ app }){
+  if (app.icon) return <img className="app-img" src={app.icon} alt="" draggable="false" loading="lazy" decoding="async"/>;
   return (
-    <aside className="idcard rv rv-up" aria-label="Card">
-      {P.photo ? <span className="idcard-av"><img src={P.photo} alt="" decoding="async"/></span> : null}
-      <span className="idcard-n">{P.name}</span>
-      <span className="idcard-m">{P.location}{age ? ' · ' + age : ''}</span>
-      {P.status ? <span className="idcard-s"><i/>{P.status}</span> : null}
-      <span className="idcard-b">
-        {cvs.map((c, i) => (
-          <a key={c.lang} href={c.href} target="_blank" rel="noopener noreferrer"
-             className={'btn btn-sm ' + (i === 0 ? 'btn-accent' : 'btn-line')}>
-            CV{cvs.length > 1 ? ' · ' + c.lang.toUpperCase() : ''} <Icon.Download/>
-          </a>
-        ))}
-        {P.linkedin && P.linkedin !== '#' ? (
-          <a className="btn btn-sm btn-line" href={P.linkedin} target="_blank" rel="noopener noreferrer">
-            LinkedIn <Icon.ArrowUR/>
-          </a>
-        ) : null}
-      </span>
-    </aside>
+    <span className="app-tile">
+      {app.logo ? <img className={app.flip ? 'is-mono' : undefined} src={app.logo} alt="" draggable="false"/> : <b>{app.mono}</b>}
+    </span>
   );
 }
 
-/* ── Act 2 · the timeline you travel through ──────────────────────────────
+const DESK_DOC_SLOTS    = [[3, 3], [20, 9], [37, 1]];
+const DESK_FOLDER_SLOTS = [[76, 4], [1, 40], [80, 38], [7, 74], [72, 74]];
+
+function AboutMe({ narrow }){
+  const ref = useRef(null);
+  const on = useInView(ref, narrow ? .12 : .3);
+  return (
+    <section className="ab-me" ref={ref}>
+      <div className="shell">
+        {narrow
+          ? <React.Fragment><AboutText on={on}/><IPhone/></React.Fragment>
+          : <Desk on={on}/>}
+      </div>
+    </section>
+  );
+}
+
+// "about me", selected like a word in a text field; the bio; the languages.
+function AboutText({ on }){
+  const P = PROFILE();
+  const paras = (P.bio || []).slice(0, 3);
+  const langs = P.languages || [];
+  return (
+    <div className={'ab-text' + (on ? ' on' : '')}>
+      <span className="eyebrow">02 — Who</span>
+      <h2 className="ab-ttl">
+        <span className="ab-sel"><i className="hdl hdl-a"/>about me<i className="hdl hdl-b"/></span><span className="ab-caret" aria-hidden="true"/><span className="dot"/>
+      </h2>
+      <div className="ab-bio">{paras.map((t, i) => <p key={i}>{t}</p>)}</div>
+      {langs.length ? (
+        <p className="ab-langs">
+          <span className="eyebrow">Languages</span>
+          {langs.map(([name, lvl, flag]) => (
+            <span className="ab-lg" key={name} title={name + ' · ' + lvl}>
+              {flag ? <img src={flag} alt="" loading="lazy" decoding="async"/> : null}
+              <span className="sr-only">{name}: </span><b>{String(lvl || '').split(/\s+[—–]\s+/)[0]}</b>
+            </span>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/* the two drawn icons of the desk */
+function FolderIcon(){
+  return (
+    <svg className="dk-fold" viewBox="0 0 80 64" aria-hidden="true">
+      <path d="M4 10a5 5 0 0 1 5-5h18l6 6h38a5 5 0 0 1 5 5v40a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" fill="#E8440F"/>
+      <path d="M2 22a5 5 0 0 1 5-5h66a5 5 0 0 1 5 5v35a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5z" fill="#FF6A2E"/>
+      <path d="M7 18h66a4 4 0 0 1 4 4v1H3v-1a4 4 0 0 1 4-4z" fill="#FFB08C" opacity=".55"/>
+    </svg>
+  );
+}
+function PdfIcon({ lang }){
+  const sys = '-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif';
+  return (
+    <svg className="dk-doc" viewBox="0 0 64 80" aria-hidden="true">
+      <path d="M6 2h36l18 18v54a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4z" fill="#FFFFFF" stroke="#101014" strokeOpacity=".14"/>
+      <path d="M42 2v14a4 4 0 0 0 4 4h14z" fill="#E9E7E2"/>
+      <g fill="#101014" fillOpacity=".16">
+        <rect x="10" y="14" width="18" height="3" rx="1.5"/><rect x="10" y="22" width="26" height="2" rx="1"/>
+        <rect x="10" y="27" width="40" height="2" rx="1"/><rect x="10" y="32" width="34" height="2" rx="1"/><rect x="10" y="37" width="38" height="2" rx="1"/>
+      </g>
+      <rect x="2" y="48" width="60" height="16" fill="#E5322D"/>
+      <text x="32" y="60.5" textAnchor="middle" fontFamily={sys} fontWeight="800" fontSize="11.5" fill="#fff" letterSpacing=".6">PDF</text>
+      <text x="32" y="73" textAnchor="middle" fontFamily={sys} fontWeight="700" fontSize="7.5" fill="#101014" fillOpacity=".5">{lang}</text>
+    </svg>
+  );
+}
+
+function Desk({ on }){
+  const P    = PROFILE();
+  const cvs  = useCvLinks();
+  const items = deskItems(cvs).slice(0, DESK_DOC_SLOTS.length + DESK_FOLDER_SLOTS.length);
+  const age  = computeAge(P.birth);
+  const bodyRef = useRef(null), scatterRef = useRef(null), itemRefs = useRef([]), drag = useRef({}), toastT = useRef(0);
+  const [sel, setSel]     = useState(-1);
+  const [menu, setMenu]   = useState(null);           // { i, x, y }
+  const [toast, setToast] = useState('');
+  const say = m => { setToast(m); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 1900); };
+
+  useEffect(() => {
+    const off = e => {
+      if (!e.target.closest('.dk-ctx')) setMenu(null);
+      if (!e.target.closest('.dk-item')) setSel(-1);
+    };
+    document.addEventListener('pointerdown', off);
+    return () => { document.removeEventListener('pointerdown', off); clearTimeout(toastT.current); };
+  }, []);
+
+  // where each item sits: CVs top left, folders around the memoji
+  let d = 0, f = 0;
+  const slots = items.map(it => it.pdf ? DESK_DOC_SLOTS[d++] : DESK_FOLDER_SLOTS[f++]).map(s => s || [50, 90]);
+
+  function down(e, i){
+    if (e.button !== 0) return;
+    setSel(i);
+    const el = itemRefs.current[i];
+    const m = new DOMMatrix(getComputedStyle(el).transform);
+    drag.current = { i, id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: m.m41, oy: m.m42, moved: false };
+    el.setPointerCapture(e.pointerId);
+  }
+  function move(e){
+    const g = drag.current; if (g.id !== e.pointerId) return;
+    const el = itemRefs.current[g.i];
+    const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    if (!g.moved && Math.hypot(dx, dy) < 4) return;
+    g.moved = true; el.classList.add('drag');
+    // keep it on the desk, and above the dock
+    const B = bodyRef.current.getBoundingClientRect(), S = scatterRef.current.getBoundingClientRect();
+    const baseL = S.left + el.offsetLeft, baseT = S.top + el.offsetTop;
+    const nx = clamp(g.ox + dx, B.left + 8 - baseL, B.right - el.offsetWidth - 8 - baseL);
+    const ny = clamp(g.oy + dy, B.top + 8 - baseT, B.bottom - el.offsetHeight - 96 - baseT);
+    el.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
+  }
+  function up(e){
+    const g = drag.current; if (g.id !== e.pointerId) return;
+    itemRefs.current[g.i].classList.remove('drag');
+    drag.current = {};
+  }
+  function context(e, i){
+    e.preventDefault(); setSel(i);
+    const B = bodyRef.current.getBoundingClientRect();
+    setMenu({ i, x: Math.min(e.clientX - B.left, B.width - 196), y: e.clientY - B.top });
+  }
+  function act(kind){
+    const i = menu.i, it = items[i], el = itemRefs.current[i];
+    setMenu(null);
+    if (kind === 'open') openHref(it.href);
+    if (kind === 'info') say(it.info || it.label);
+    if (kind === 'copy'){
+      const url = new URL(it.href, window.location.href).href;
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => say('Link copied'), () => say(url));
+      else say(url);
+    }
+    if (kind === 'trash'){
+      el.classList.remove('nope'); void el.offsetWidth; el.classList.add('nope');
+      say('Nice try. That one stays.');
+    }
+  }
+
+  return (
+    <div className={'dk' + (on ? ' on' : '')}>
+      <MenuBar say={say}/>
+      <div className="dk-body" ref={bodyRef}>
+        <div className="dk-scatter" ref={scatterRef}>
+          <div className="dk-me">
+            {P.photo ? <img src={P.photo} alt="" decoding="async"/> : null}
+            <span className="dk-me-shadow"/>
+            <span className="dk-me-tag">{P.location}{age ? ' · ' + age : ''}</span>
+          </div>
+          {items.map((it, i) => (
+            <a key={it.label} href={it.href} ref={el => { itemRefs.current[i] = el; }}
+               className={'dk-item' + (it.pdf ? ' is-doc' : '') + (sel === i ? ' sel' : '')}
+               style={{ left: slots[i][0] + '%', top: slots[i][1] + '%', '--t': (.15 + i * .1) + 's' }}
+               aria-label={it.label + (it.pdf ? '' : ' — folder')}
+               draggable="false"
+               onClick={e => e.preventDefault()}
+               onDoubleClick={() => openHref(it.href)}
+               onKeyDown={e => { if (e.key === 'Enter'){ e.preventDefault(); openHref(it.href); } }}
+               onPointerDown={e => down(e, i)} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+               onContextMenu={e => context(e, i)}>
+              {it.pdf ? <PdfIcon lang={it.pdf}/> : <FolderIcon/>}
+              <span>{it.label}</span>
+            </a>
+          ))}
+        </div>
+
+        <AboutText on={on}/>
+
+        {menu ? (
+          <div className="dk-ctx" role="menu" style={{ left: menu.x, top: menu.y }}>
+            <button role="menuitem" onClick={() => act('open')}>Open<kbd>⌘O</kbd></button>
+            <button role="menuitem" onClick={() => act('copy')}>Copy link<kbd>⌘C</kbd></button>
+            <button role="menuitem" onClick={() => act('info')}>Get Info<kbd>⌘I</kbd></button>
+            <hr/>
+            <button role="menuitem" onClick={() => act('trash')}>Move to Trash<kbd>⌘⌫</kbd></button>
+          </div>
+        ) : null}
+        <div className={'dk-toast' + (toast ? ' on' : '')} role="status">{toast}</div>
+
+        <div className="dk-dock-wrap">
+          <span className="eyebrow">Toolkit — what's in my dock</span>
+          <Dock/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The Mac menu bar: Finder's menus, the status icons, the input menu (the
+// languages again, where macOS keeps them) and Brussels time.
+function MenuBar({ say }){
+  const P = PROFILE();
+  const langs = P.languages || [];
+  const time = useClock();
+  const [open, setOpen] = useState(false);
+  const [cur, setCur] = useState(0);
+  const srcRef = useRef(null);
+  const greet = { French: 'Bonjour', English: 'Hello', Dutch: 'Hallo' };
+  const code  = { French: 'FR', English: 'EN', Dutch: 'NL' };
+  let date = '';
+  try { date = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Brussels' }).format(new Date()).replace(',', ''); } catch (e) {}
+  useEffect(() => {
+    if (!open) return;
+    const off = e => { if (!e.target.closest('.mb-in-wrap')) setOpen(false); };
+    document.addEventListener('pointerdown', off);
+    return () => document.removeEventListener('pointerdown', off);
+  }, [open]);
+  const cn = langs[cur] ? (code[langs[cur][0]] || langs[cur][0].slice(0, 2).toUpperCase()) : 'FR';
+  return (
+    <div className="mb">
+      <div className="mb-l">
+        <span className="mb-i mb-apple" aria-hidden="true">
+          <svg viewBox="0 0 170 200"><path d="M150.4 172.8c-8.3 12.4-17 24.4-30.4 24.6-13.4.3-17.6-7.9-33-7.9-15.3 0-20.1 7.7-32.8 8.2-13 .5-23-13.4-31.4-25.7C5.7 147-7.5 101.5 10.2 70.9c8.8-15.2 24.4-24.8 41.3-25 12.9-.3 25 8.6 32.9 8.6 7.9 0 22.6-10.7 38.1-9.1 6.5.3 24.7 2.6 36.4 19.8-.9.6-21.7 12.7-21.5 38 .3 30.2 26.5 40.2 26.8 40.4-.2.7-4.2 14.4-13.8 28.2zM110.1 0c1.4 13.1-3.9 26.3-11.7 35.7C90.6 45.2 77.7 52.5 65 51.5c-1.7-12.8 4.6-26.2 11.8-34.5C84.8 7.6 98.3.6 110.1 0z"/></svg>
+        </span>
+        <span className="mb-i mb-app">Finder</span>
+        {['File', 'Edit', 'View', 'Go', 'Window', 'Help'].map(m => <span className="mb-i mb-menu" key={m} aria-hidden="true">{m}</span>)}
+      </div>
+      <div className="mb-r">
+        <span className="mb-i mb-ico" aria-hidden="true"><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".6" y=".6" width="21" height="10.8" rx="3.2" fill="none" stroke="currentColor" strokeOpacity=".45" strokeWidth="1.1"/><rect x="2.3" y="2.3" width="15" height="7.4" rx="1.8"/><path d="M23.2 4.2v3.6c.8-.3 1.3-1 1.3-1.8s-.5-1.5-1.3-1.8z" fillOpacity=".45"/></svg></span>
+        <span className="mb-i mb-ico" aria-hidden="true"><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.6 5.6 9.1a3.4 3.4 0 0 1 4.8 0zM3.6 7.1a6.2 6.2 0 0 1 8.8 0l-1.3 1.3a4.4 4.4 0 0 0-6.2 0zM1.5 5A9.2 9.2 0 0 1 14.5 5l-1.3 1.3a7.4 7.4 0 0 0-10.4 0zM-.6 2.9a12.2 12.2 0 0 1 17.2 0l-1.3 1.3a10.4 10.4 0 0 0-14.6 0z"/></svg></span>
+        {langs.length ? (
+          <span className="mb-in-wrap">
+            <button type="button" ref={srcRef} className={'mb-i mb-in-btn' + (open ? ' open' : '')} aria-haspopup="menu" aria-expanded={open}
+                    aria-label="Languages I speak" onClick={() => setOpen(o => !o)}>
+              <span className="mb-in">{cn}</span>
+            </button>
+            {open ? (
+              <div className="mb-menu-pop" role="menu">
+                <div className="h">Languages I speak</div>
+                {langs.map(([name, lvl, flag], i) => (
+                  <button type="button" role="menuitemradio" aria-checked={i === cur} className="o" key={name}
+                          onClick={() => { setCur(i); setOpen(false); say((greet[name] || name) + '!'); }}>
+                    <i>{i === cur ? '✓' : ''}</i>{flag ? <img src={flag} alt=""/> : null}{name}<span>{String(lvl).split(/\s+[—–]\s+/)[0]}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </span>
+        ) : null}
+        <span className="mb-i mb-ico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="5.8" cy="5.8" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6"/><path d="m9.2 9.2 3.8 3.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg></span>
+        <span className="mb-i mb-ico" aria-hidden="true"><svg width="17" height="13" viewBox="0 0 17 13"><rect x=".7" y=".7" width="15.6" height="5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.3"/><circle cx="13.6" cy="3.2" r="1.6"/><rect x=".7" y="7.3" width="15.6" height="5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.3"/><circle cx="3.4" cy="9.8" r="1.6"/></svg></span>
+        <span className="mb-i mb-time">{date ? date + ' ' : ''}{time}</span>
+      </div>
+    </div>
+  );
+}
+
+// The dock: one icon per tool, a separator between groups, macOS magnification.
+function Dock(){
+  const apps = useMemo(toolApps, []);
+  const dockRef = useRef(null), appRefs = useRef([]);
+  const [running, setRunning] = useState(() => new Set());
+  const still = reduceMotion();
+  function mag(x){
+    appRefs.current.forEach(a => {
+      if (!a) return;
+      const r = a.getBoundingClientRect(), c = r.left + r.width / 2, dd = Math.abs(x - c);
+      a.style.setProperty('--m', (1 + .55 * Math.exp(-(dd * dd) / (2 * 70 * 70))).toFixed(3));
+    });
+  }
+  function launch(i, name){
+    const a = appRefs.current[i];
+    if (!still && a){ a.classList.remove('bounce'); void a.offsetWidth; a.classList.add('bounce'); }
+    setTimeout(() => setRunning(s => new Set(s).add(name)), still ? 0 : 1500);
+  }
+  return (
+    <div className="dk-dock" ref={dockRef} role="list" aria-label="Toolkit"
+         onPointerMove={e => { if (!still && e.pointerType === 'mouse') mag(e.clientX); }}
+         onPointerLeave={() => appRefs.current.forEach(a => a && a.style.removeProperty('--m'))}>
+      {apps.map((a, i) => (
+        <React.Fragment key={a.name}>
+          {a.sep ? <i className="dk-sep" aria-hidden="true"/> : null}
+          <button type="button" role="listitem" className={'dk-app' + (running.has(a.name) ? ' run' : '')}
+                  ref={el => { appRefs.current[i] = el; }} onClick={() => launch(i, a.name)}
+                  aria-label={a.label + ' · ' + a.group}>
+            <AppGlyph app={a}/>
+            <b aria-hidden="true">{a.label}</b>
+          </button>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* ── the iPhone (phones) ───────────────────────────────────────────────────
+   A home screen: the profile as a medium widget, the first four tools beside
+   a small widget (the `desk` entry that has a `widget`), the other tools,
+   the Search pill, and a dock with the CVs and the links. */
+function PhoneIcon({ kind, lang }){
+  if (kind === 'pdf') return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <rect width="60" height="60" rx="13.5" fill="#fff"/>
+      <rect x=".5" y=".5" width="59" height="59" rx="13" fill="none" stroke="#000" strokeOpacity=".08"/>
+      <path d="M19 10h15l9 9v29a2 2 0 0 1-2 2H19a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" fill="#F4F3F0" stroke="#101014" strokeOpacity=".16"/>
+      <path d="M34 10v7a2 2 0 0 0 2 2h7z" fill="#E2E0DA"/>
+      <rect x="17" y="30" width="26" height="8" fill="#E5322D"/>
+      <text x="30" y="36.4" textAnchor="middle" fontFamily="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" fontWeight="800" fontSize="6" fill="#fff">PDF</text>
+      <text x="30" y="46" textAnchor="middle" fontFamily="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" fontWeight="700" fontSize="5.6" fill="#101014" fillOpacity=".55">{lang}</text>
+    </svg>
+  );
+  if (kind === 'linkedin') return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <defs><linearGradient id="ip-li" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1A7BD8"/><stop offset="1" stopColor="#0A5DB3"/></linearGradient></defs>
+      <rect width="60" height="60" rx="13.5" fill="url(#ip-li)"/>
+      <text x="30" y="41" textAnchor="middle" fontFamily="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" fontWeight="800" fontSize="29" fill="#fff" letterSpacing="-1">in</text>
+    </svg>
+  );
+  if (kind === 'globe') return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <defs><linearGradient id="ip-gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2A2A31"/><stop offset="1" stopColor="#101014"/></linearGradient></defs>
+      <rect width="60" height="60" rx="13.5" fill="url(#ip-gl)"/>
+      <g fill="none" stroke="#FF6A2E" strokeWidth="2"><circle cx="30" cy="30" r="15"/><ellipse cx="30" cy="30" rx="6.5" ry="15"/><path d="M15.6 25h28.8M15.6 35h28.8"/></g>
+      <circle cx="37" cy="24" r="3" fill="#fff"/>
+    </svg>
+  );
+  // folder
+  return (
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <defs><linearGradient id="ip-fo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF7A45"/><stop offset="1" stopColor="#F0440F"/></linearGradient></defs>
+      <rect width="60" height="60" rx="13.5" fill="url(#ip-fo)"/>
+      <path d="M15 21a3 3 0 0 1 3-3h8l3 3h13a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3z" fill="#fff" fillOpacity=".55"/>
+      <path d="M14 26a3 3 0 0 1 3-3h26a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H17a3 3 0 0 1-3-3z" fill="#fff"/>
+    </svg>
+  );
+}
+
+function PhoneApp({ app, onTap, label }){
+  const ref = useRef(null);
+  const tap = () => {
+    const el = ref.current;
+    if (el && !reduceMotion()){ el.classList.remove('bounce'); void el.offsetWidth; el.classList.add('bounce'); }
+    if (onTap) onTap();
+  };
+  return (
+    <button type="button" className="ip-app" ref={ref} onClick={tap} aria-label={app.short || app.label}>
+      <span className="ip-ico">{app.tool ? <AppGlyph app={app.tool}/> : <PhoneIcon kind={app.icon} lang={app.pdf}/>}</span>
+      {label === false ? null : <span className="ip-lbl" aria-hidden="true">{app.short || app.label}</span>}
+    </button>
+  );
+}
+
+function IPhone(){
+  const P     = PROFILE();
+  const cvs   = useCvLinks();
+  const time  = useClock();
+  const age   = computeAge(P.birth);
+  const items = deskItems(cvs);
+  const tools = toolApps();
+  const toolLabels = new Set(tools.map(t => t.label));
+  const byLabel = new Map(items.map(it => [it.label, it]));
+  const widget = items.find(it => it.widget);
+  // a folder that is also a tool (GitHub) lives on the tool's icon instead
+  const links = items.filter(it => !it.widget && !toolLabels.has(it.label));
+  const dock  = links.slice(0, 4), extra = links.slice(4);
+  const asTool = t => ({ label: t.label, tool: t, href: (byLabel.get(t.label) || {}).href });
+  const quad  = widget ? tools.slice(0, 4) : [];
+  const rest  = (widget ? tools.slice(4) : tools).map(asTool).concat(extra);
+
+  return (
+    <div className="ip" aria-label="My phone's home screen">
+      <div className="ip-screen">
+        <div className="ip-status" aria-hidden="true">
+          <span className="ip-time">{time}</span>
+          <span className="ip-island"/>
+          <span className="ip-sys">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
+            <svg width="16" height="11" viewBox="0 0 16 12"><path d="M8 11.6 5.6 9.1a3.4 3.4 0 0 1 4.8 0zM3.6 7.1a6.2 6.2 0 0 1 8.8 0l-1.3 1.3a4.4 4.4 0 0 0-6.2 0zM1.5 5A9.2 9.2 0 0 1 14.5 5l-1.3 1.3a7.4 7.4 0 0 0-10.4 0zM-.6 2.9a12.2 12.2 0 0 1 17.2 0l-1.3 1.3a10.4 10.4 0 0 0-14.6 0z"/></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".6" y=".6" width="22" height="10.8" rx="3.4" fill="none" stroke="currentColor" strokeOpacity=".4" strokeWidth="1.1"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2"/><path d="M24 4.2v3.6c.8-.3 1.3-1 1.3-1.8s-.5-1.5-1.3-1.8z" fillOpacity=".4"/></svg>
+          </span>
+        </div>
+
+        <div className="ip-home">
+          <div className="ip-w ip-w-m">
+            <div className="ip-card ip-me">
+              <div className="ip-me-top">
+                {P.photo ? <span className="ip-av"><img src={P.photo} alt="" decoding="async"/></span> : null}
+                <span className="ip-me-k">About</span>
+              </div>
+              <div className="ip-me-n">{P.name}</div>
+              <div className="ip-me-m">{P.location}{age ? ' · ' + age : ''}</div>
+              {P.status ? <div className="ip-me-s"><i/>{P.status}</div> : null}
+            </div>
+            <span className="ip-lbl">Profile</span>
+          </div>
+
+          {widget ? (
+            <div className="ip-split">
+              <div className="ip-quad">
+                {quad.map(t => <PhoneApp key={t.name} app={asTool(t)} onTap={() => openHref(asTool(t).href)}/>)}
+              </div>
+              <div className="ip-w ip-w-s">
+                <button type="button" className="ip-card ip-small" onClick={() => openHref(widget.href)}>
+                  <span className="ip-small-top">
+                    <span className="ip-art" aria-hidden="true">
+                      <svg viewBox="0 0 40 40"><rect width="40" height="40" rx="7" fill="#101014"/>
+                        <g fill="#fff">{[0,1,2,3].map(r => [0,1,2,3].map(c => (r + c) % 2 ? null : <rect key={r + '-' + c} x={8 + c * 6} y={8 + r * 6} width="6" height="6"/>))}</g>
+                        <rect x="7" y="7" width="26" height="26" fill="none" stroke="#fff" strokeOpacity=".5"/></svg>
+                    </span>
+                    <span className="ip-small-k" aria-hidden="true">●</span>
+                  </span>
+                  <span className="ip-small-sub">{widget.widget.sub || widget.label}</span>
+                  <span className="ip-small-t">{widget.widget.title || widget.label}</span>
+                  <span className="ip-play"><svg viewBox="0 0 10 12" aria-hidden="true"><path d="M0 0l10 6-10 6z"/></svg>{widget.widget.cta || 'Open'}</span>
+                </button>
+                <span className="ip-lbl">{widget.label}</span>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="ip-grid">
+            {rest.map(a => <PhoneApp key={a.label} app={a} onTap={() => openHref(a.href)}/>)}
+          </div>
+        </div>
+
+        <div className="ip-search" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 14 14"><circle cx="5.8" cy="5.8" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.8"/><path d="m9.2 9.2 3.8 3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>Search
+        </div>
+        <div className="ip-dock">
+          {dock.map(a => <PhoneApp key={a.label} app={a} label={false} onTap={() => openHref(a.href)}/>)}
+        </div>
+        <span className="ip-home-bar" aria-hidden="true"/>
+      </div>
+    </div>
+  );
+}
+
+/* ── Act 4 · the timeline you travel through ──────────────────────────────
    The axis is real time: a year is always the same number of pixels, every
    step is a bar of its actual length, and "Today" sits where today is. The
    orange dot stays put while time slides past it — scrolling moves you, not
@@ -138,7 +612,7 @@ function Timeline({ narrow }){
 function TimelineHead(){
   return (
     <div className="shell tl-head">
-      <span className="eyebrow rv rv-fade">The path</span>
+      <span className="eyebrow rv rv-fade">04 — The path</span>
       <Words as="h2" className="sec-title" text="Where I've been" dot/>
     </div>
   );
@@ -585,120 +1059,83 @@ function TimelineList({ entries }){
   );
 }
 
-/* ── Act 3 · the toolkit ───────────────────────────────────────────────── */
-function Toolkit(){
-  const P = PROFILE();
-  const groups = (P.toolGroups && P.toolGroups.length)
-    ? P.toolGroups
-    : [{ label: 'Toolkit', items: (P.tools || []).map(t => [t, t.slice(0, 2)]) }];
-  const langs = P.languages || [];
-  if (!groups.length) return null;
-  return (
-    <section className="ab-sec">
-      <div className="shell">
-        <span className="eyebrow rv rv-fade">The toolkit</span>
-        <Words as="h2" className="sec-title" text="What I build with" dot/>
-        <div className="tools-rows" style={{ marginTop: 'clamp(28px,3.5vw,48px)' }}>
-          {groups.map((g, i) => (
-            <div className="trow rv rv-up" key={i} style={{ '--d': (i * .05) + 's' }}>
-              <span className="trow-k">{g.label}</span>
-              <span className="trow-v">
-                {(g.items || []).map((it, j) => (
-                  <span className="titem" key={j}>
-                    {it[2] ? <img className={it[3] ? 'is-mono' : undefined} src={it[2]} alt="" loading="lazy" decoding="async"/> : null}
-                    {it[0]}
-                  </span>
-                ))}
-              </span>
-            </div>
-          ))}
-          {langs.length ? (
-            <div className="trow rv rv-up" style={{ '--d': (groups.length * .05) + 's' }}>
-              <span className="trow-k">Languages</span>
-              <span className="trow-v">
-                {langs.map((l, j) => (
-                  <span className="titem" key={j}>
-                    {l[2] ? <img className="lang-flag" src={l[2]} alt="" loading="lazy" decoding="async"/> : null}
-                    {l[0]} <em>{l[1]}</em>
-                  </span>
-                ))}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
+/* ── Act 3 · what I'm into — a wall of pills ───────────────────────────────
+   Four rows drift with the scroll, in alternating directions, and never on
+   their own. The filled pills lead somewhere (an `href` in data.js); picking
+   one says where, picking the others says honestly that nothing came of it
+   yet. Each row repeats the list three times so its ends are never seen;
+   only one copy is offered to keyboards and screen readers. */
+function PillNote({ text, href }){
+  const parts = String(text || '').split(/\[([^\]]+)\]/);
+  return parts.map((t, i) => i % 2
+    ? <Link key={i} to={href}>{t}</Link>
+    : <React.Fragment key={i}>{t}</React.Fragment>);
 }
 
-/* ── Act 4 · what I'm into — two lines of moving type ──────────────────── */
-function Interests(){
+function Passions(){
   const items = PROFILE().interests || [];
+  const [pick, setPick] = useState(null);
+  const wallRef = useRef(null);
+  const rows = useMemo(() => {
+    const n = items.length;
+    return [0, 3, 5, 1].map(k => {
+      const r = items.slice(k % n).concat(items.slice(0, k % n));
+      return r.concat(r, r);
+    });
+  }, [items]);
+
+  useScrollFrame(() => {
+    const wall = wallRef.current; if (!wall) return;
+    const vh = window.innerHeight, r = wall.getBoundingClientRect();
+    if (r.bottom < -200 || r.top > vh + 200) return;
+    const p = (vh - r.top) / (vh + r.height);
+    Array.from(wall.children).forEach((row, i) => {
+      const span = row.scrollWidth / 3, dir = i % 2 ? 1 : -1, base = -span * (.35 + i * .07);
+      const x = reduceMotion() ? base : base + dir * (p - .5) * Math.min(520, span * .5);
+      row.style.transform = 'translate3d(' + x.toFixed(1) + 'px,0,0)';
+    });
+  }, [rows]);
+
   if (!items.length) return null;
+  const picked = items.find(it => it.label === pick);
+  const n = items.length;
   return (
-    <section className="ab-sec">
+    <section className="ab-sec ab-pass">
       <div className="shell">
         <header className="sec-head">
           <div>
-            <span className="eyebrow rv rv-fade">Beyond the data</span>
+            <span className="eyebrow rv rv-fade">03 — Off the clock</span>
             <Words as="h2" className="sec-title" text="What I'm into" dot/>
           </div>
-          <Link to="/world/" className="link-arrow rv rv-fade" style={{ '--d': '.12s' }}>
-            The rest of it <Icon.ArrowUR/>
-          </Link>
+          <p className="ab-pass-note rv rv-fade" style={{ '--d': '.12s' }}>Some of them turned into projects. Pick one.</p>
         </header>
       </div>
-      <div style={{ marginTop: 'clamp(28px,3.5vw,50px)' }}>
-        <MarqueeRow items={items} dir={-1} variant="wide"/>
-        <MarqueeRow items={items.slice().reverse()} dir={1} variant="narrow"/>
+      <div className="ab-wall" ref={wallRef}>
+        {rows.map((row, ri) => (
+          <div className="ab-row" key={ri}>
+            {row.map((it, i) => {
+              const live = ri === 0 && i >= n && i < 2 * n;   // the one copy keyboards get
+              const cls = 'ab-pill' + (it.href ? ' solid' : ((i + ri) % 5 === 3 ? ' ghost' : '')) + (pick === it.label ? ' on' : '');
+              return (
+                <button type="button" key={i} className={cls}
+                        tabIndex={live ? 0 : -1} aria-hidden={live ? undefined : 'true'} aria-pressed={live ? pick === it.label : undefined}
+                        onClick={() => setPick(it.label)}>
+                  {it.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="shell">
+        <div className="ab-pick" aria-live="polite">
+          <span className="k">{picked ? picked.label : 'Pick a pill'}</span>
+          <p>{picked
+            ? (picked.note ? <PillNote text={picked.note} href={picked.href}/> : 'No project out of this one yet. Just something I love.')
+            : 'The filled ones lead somewhere on the site.'}</p>
+        </div>
       </div>
     </section>
-  );
-}
-
-function MarqueeRow({ items, dir, variant }){
-  const trackRef = useRef(null);
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track || reduceMotion()) return;
-    let raf = 0, x = 0, half = 0, last = performance.now(), vel = 0, lastY = window.scrollY, alive = true;
-    const measure = () => { half = track.scrollWidth / 2; };
-    measure();
-    function loop(){
-      if (!alive) return;
-      raf = requestAnimationFrame(loop);
-      const now = performance.now();
-      const dt = Math.min(64, now - last); last = now;
-      const sy = window.scrollY, dy = sy - lastY; lastY = sy;
-      vel = vel * .86 + dy * .14;
-      const speed = .028 + Math.min(.26, Math.abs(vel) * .004);     // px per ms
-      x += speed * dt;
-      if (half > 0) x = x % half;
-      track.style.transform = 'translate3d(' + (dir < 0 ? -x : x - half) + 'px,0,0)';
-    }
-    const io = new IntersectionObserver(es => {
-      const on = es[0].isIntersecting;
-      if (on && !raf){ last = performance.now(); lastY = window.scrollY; loop(); }
-      if (!on && raf){ cancelAnimationFrame(raf); raf = 0; }
-    }, { rootMargin: '120px' });
-    io.observe(track);
-    window.addEventListener('resize', measure);
-    return () => { alive = false; io.disconnect(); window.removeEventListener('resize', measure); if (raf) cancelAnimationFrame(raf); };
-  }, [dir]);
-
-  const row = dup => items.map((it, i) => {
-    const Glyph = Icon[it.icon] || Icon.Dot;
-    return (
-      <span className="mq-item" key={dup + '-' + i}>
-        <Glyph/>{it.label}<span className="mq-sep" aria-hidden="true"/>
-      </span>
-    );
-  });
-
-  return (
-    <div className={'marquee ' + (variant || '')} aria-hidden={dir > 0 ? 'true' : undefined}>
-      <div className="marquee-track" ref={trackRef}>{row(0)}{row(1)}</div>
-    </div>
   );
 }
 

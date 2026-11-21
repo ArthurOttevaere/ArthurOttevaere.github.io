@@ -235,24 +235,47 @@ window.PORTFOLIO_DATA = {
     /* About — skill tags (flat list, kept for the command palette etc.) */
     tools: ["Python", "R", "SQL", "PowerBI", "Excel", "Canva", "Notion", "Git"],
 
-    /* About — skills grouped by category for the "workbench" act.
-       Each item: [name, monogram, logo?, mono?].
-         • monogram = 1–3 char badge shown when no logo is set.
-         • logo (optional) = image path, e.g. "/assets/logos/python.svg".
-           When present, the logo is shown instead of the monogram.
-         • mono (optional) = true for a logo that is a single black mark
-           (Notion, GitHub…). It is then flipped to white in dark mode so
-           it never disappears into the page. Leave it out for logos that
-           carry their own colours.
+    /* About — the toolkit, shown as the dock of the Mac desk (and as the apps
+       of the iPhone home screen on phones). Groups are split by a separator.
+       Each item: [name, monogram, logo?, mono?, appIcon?, label?].
+         • monogram = 1–3 char badge, used only when there is no icon at all.
+         • logo (optional) = flat mark, e.g. "/assets/logos/python.png".
+         • mono (optional) = true for a logo that is a single black mark; it is
+           flipped to white in dark mode. Use false (or leave it out) otherwise.
+         • appIcon (optional) = a macOS/iOS app icon that carries its own
+           squircle, in /assets/logos/dock/. Shown in the dock when present.
+         • label (optional) = the name shown under/over the icon when it
+           differs from `name` (e.g. "Power BI").
        Edit freely; falls back to `tools` if removed. */
     toolGroups: [
-      { label: "Code",        items: [["Python","Py","/assets/logos/python.png"], ["R","R","/assets/logos/r.png"], ["SQL","SQL","/assets/logos/sql.png"]] },
-      { label: "Data & Viz",  items: [["Excel","XL","/assets/logos/excel.png"], ["PowerBI","BI","/assets/logos/powerbi.svg"]] },
-      { label: "Workflow",    items: [["Git","Git","/assets/logos/git.svg"], ["Notion","N","/assets/logos/notion.png",true], ["Canva","Ca","/assets/logos/canva.png"]] },
+      { label: "Code",        items: [["Python","Py","/assets/logos/python.png",false,"/assets/logos/dock/python.png"], ["R","R","/assets/logos/r.png",false,"/assets/logos/dock/r.png"], ["SQL","SQL","/assets/logos/sql.png",false,"/assets/logos/dock/sql.svg"]] },
+      { label: "Data & Viz",  items: [["Excel","XL","/assets/logos/excel.png",false,"/assets/logos/dock/excel.png"], ["PowerBI","BI","/assets/logos/powerbi.svg",false,"/assets/logos/dock/powerbi.svg","Power BI"]] },
+      { label: "Workflow",    items: [["Git","Git","/assets/logos/git.svg",false,"/assets/logos/dock/github.png","GitHub"], ["Notion","N","/assets/logos/notion.png",true,"/assets/logos/dock/notion.png"], ["Canva","Ca","/assets/logos/canva.png",false,"/assets/logos/dock/canva.png"]] },
     ],
 
+    /* About — what sits on the desk, around the memoji (and on the iPhone
+       home screen on phones). The two CVs are added on their own from `cv`
+       above, as PDF files; everything here is a folder.
+         label  the name under the folder
+         href   where a double-click (a tap on phones) goes. "/…" stays on
+                the site, "https://…" opens in a new tab
+         info   what "Get Info" in the right-click menu says
+         icon   the iPhone app icon: "linkedin", "github", "folder", "globe"
+         short  OPTIONAL — a shorter name for under the iPhone icon
+         widget OPTIONAL — on the iPhone, shows this one as a small widget
+                instead of an app: { title, sub, cta }
+       At most five folders: there are seven places on the desk in all. */
+    desk: [
+      { label: "LinkedIn",      href: "https://www.linkedin.com/in/arthur-ottevaere/", icon: "linkedin", info: "Where the formal version of me lives." },
+      { label: "Formula 1",     href: "/work/f1/", icon: "folder", info: "Weekend data. Became the F1 Duel prediction game.",
+        widget: { title: "F1 Duel", sub: "Beat the model", cta: "Play" } },
+      { label: "Side projects", href: "/work/",    icon: "folder", info: "Everything I built, at school and for fun." },
+      { label: "GitHub",        href: "https://github.com/ArthurOttevaere",            icon: "github",   info: "Code for most of the projects on this site." },
+      { label: "Rotterdam '26", short: "Rotterdam", href: "/world/", icon: "globe",  info: "Exchange semester, Fall 2026. Opens the globe." },
+    ],
 
-    /* About — spoken languages. Each item: [name, level, flag?].
+    /* About — spoken languages, one line under the bio: flag + the short
+       level (the part before "—"). Each item: [name, level, flag?].
        `flag` is an OPTIONAL path to a small flag, drawn in /assets/logos/flags/
        (SVG, so it stays crisp and looks the same on every machine — emoji flags
        don't render at all on Windows). Leave it out and the language simply
@@ -263,18 +286,21 @@ window.PORTFOLIO_DATA = {
       ["Dutch",   "B2 — working", "/assets/logos/flags/nl.svg"],
     ],
 
-    /* About — "What I'm into" looping marquee.
-       icon = a key from src/icons.jsx (Music, Football, Stock, Chip,
-       Flag, Apple, Planet …). label = the text shown next to it. */
+    /* About — "What I'm into": a wall of pills that drifts as you scroll.
+       label = the text of the pill. icon = a key from src/icons.jsx (kept
+       for other uses). OPTIONAL: href + note make the pill a filled one that
+       leads somewhere — the note is the line shown when it is picked; wrap
+       the words that should be the link in [brackets]. A pill without them
+       simply says there is no project out of it yet. */
     interests: [
       { icon: "Chip",     label: "Tech" },
-      { icon: "F1",       label: "Formula 1" },
+      { icon: "F1",       label: "Formula 1", href: "/work/f1/", note: "Became [F1 Duel], a prediction game against a model trained on eight seasons." },
       { icon: "Apple",    label: "Apple" },
       { icon: "Planet",   label: "Astronomy" },
       { icon: "Music",    label: "Music" },
       { icon: "Football", label: "Football" },
       { icon: "Stock",    label: "Stock Market" },
-      { icon: "Plane",    label: "Travel" },
+      { icon: "Plane",    label: "Travel",    href: "/world/",   note: "Every country I've lived, studied or worked in is on [the globe]." },
     ],
 
     /* ── World — the /world/ page (the globe) ────────────────────────
@@ -382,6 +408,7 @@ window.PORTFOLIO_DATA = {
     workLede:    "A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.",
     contactLede: "Internships, freelance, coffee chats — all welcome. Usually reply within a day.",
     aboutCta:    "Got an internship, a project, or just a question?",
+    aboutVoice:  "A business engineer, a data person, and a Formula 1 nerd on weekends.",   // the line under "A QUICK LOOK AT ME." on the About page
     worldLede:   "Where I grew up, studied and worked, and the places I've been. Turn it, or press play.",
   },
 

@@ -287,7 +287,7 @@ Two rules govern everything below:
 | 8 | [Iconography & Imagery](#8--iconography--imagery) | Design + content |
 | 9 | [Voice & Content](#9--voice--content) | Content |
 | 10 | [Components](#10--components) | Code |
-| 11 | [Scenes](#11--scenes) | Code — the four set pieces |
+| 11 | [Scenes](#11--scenes) | Code — the five set pieces |
 | 12 | [Theming](#12--theming) | Code |
 | 13 | [Accessibility](#13--accessibility) | Everyone |
 | 14 | [Do's and Don'ts](#14--dos-and-donts) | Everyone |
@@ -323,8 +323,9 @@ never decoration. It appears as a full-bleed surface (the intro, the footer, the
 splash), a dot that ends a title, a rule that fills as you scroll, and a focus
 ring. Nothing else is orange.
 
-**Quiet, until you move.** Nothing animates on its own except three things that
-are alive on purpose: the badge ring, the footer's fir trees, and the marquee.
+**Quiet, until you move.** Nothing animates on its own except two things that
+are alive on purpose: the badge ring and the footer's fir trees — plus the
+text cursor on About, which blinks only until the selection replaces it.
 Everything else is driven by your scroll or your cursor, and stops the instant
 you do.
 
@@ -335,9 +336,9 @@ deliberately outside them — there is no third option.
 
 | Motif | What it is | Where it appears |
 |---|---|---|
-| **The dot** | A small orange disc, sized in `em` so it scales with the type it belongs to. It is the period at the end of a title. | Ends every `Words` title · opens the intro (grows into a full page) · the logo's period · the timeline's travelling cursor · the "Today" marker · the bullet before a takeaway · the separator in the marquee |
-| **Text that arrives** | Words are hidden and then delivered — rising out of a mask, or filling from 20% to 100% opacity as you scroll through them. | Hero name · section titles (`.words`) · the intro statement · the About bio |
-| **Width that breathes** | Archivo's `wdth` axis is treated as a dimension of the design, not a fallback. The hero name compresses from 125 to 72 as you scroll and swells under the cursor. | Hero name · every display size carries a deliberate `font-stretch` · the marquee's two rows (125% / 62%) |
+| **The dot** | A small orange disc, sized in `em` so it scales with the type it belongs to. It is the period at the end of a title. | Ends every `Words` title · opens the intro (grows into a full page) · the logo's period · the timeline's travelling cursor · the "Today" marker · the bullet before a takeaway · the period of "ME.", which lands last on About |
+| **Text that arrives** | Words are hidden and then delivered — rising out of a mask, or filling from 20% to 100% opacity as you scroll through them. | Hero name · section titles (`.words`) · the intro statement · "ME." rising out of its mask on About |
+| **Width that breathes** | Archivo's `wdth` axis is treated as a dimension of the design, not a fallback. The hero name compresses from 125 to 72 as you scroll and swells under the cursor. | Hero name · every display size carries a deliberate `font-stretch` · the About opener ("A QUICK" opens 62 → 125 while "LOOK AT" closes 125 → 62) · a passion pill widening when picked |
 
 ### What this system is not
 
@@ -426,8 +427,8 @@ foreground/background pair so it never has to be styled twice:
 
 ### The documented hex exceptions
 
-Six places write a literal colour, and each has a reason. This list is closed —
-adding a seventh needs a line here.
+Seven places write a literal colour, and each has a reason. This list is closed —
+adding an eighth needs a line here.
 
 | Where | Value | Why |
 |---|---|---|
@@ -436,6 +437,7 @@ adding a seventh needs a line here.
 | `.foot-tile` shadows | `rgba(0,0,0,.45 / .5)` | Same. |
 | Footer gradient + sheen | `#fff` inside `color-mix` | White is used as a *lightener* on the orange, not as a colour. |
 | `--bubble-fg` | `#FFFFFF` | White on an orange message bubble (Arthur's reply in the contact thread, the typing dots). A messaging-app reference only reads with white on the bubble, so this one place departs from `--on-accent`. |
+| The device mocks on About (`.mb`, `.dk-*`, `.ip-*`, and the SVG icons in `about.jsx`) | Apple's own: the titanium frame, the black island, the green status dot `#34C759`, the dark widget `#3A3A41 → #1E1E23`, the grey dock tooltip, white glass, the PDF red `#E5322D`, the folders' orange | A quotation of macOS/iOS reads only in the system's own colours. The orange widget and folders still use the accent's family. None of these may be used outside the mocks. |
 | `TOP_COLOR` in `app.jsx` | The four theme colours | `<meta name="theme-color">` cannot read a CSS variable. **If you change `--paper` or `--accent`, change `app.jsx:24` and `index.html:109` too.** |
 
 ---
@@ -449,6 +451,12 @@ adding a seventh needs a line here.
 | **Display + text** | Archivo | `wdth 62–125`, `wght 100–900` | Everything, unless it is one of the two below. Variable on both axes — the width axis is the identity. |
 | **Voice** | Instrument Serif, italic | `ital 0;1` | Places, quotes, a level of language, a name of a thing. The italic serif is how the site *says something in its own words* rather than labelling it. |
 | **Labels** | Geist Mono | `400;500` | Dates, numbers, eyebrows, kinds, counts. Anything that is data about the content rather than the content. |
+
+**One quoted face.** Inside the two device mocks on About (the Mac desk and the
+iPhone, §11.6) the system font (`-apple-system, BlinkMacSystemFont, …`) draws
+the menu bar, the context menu, the dock labels and the home screen. It is a
+quotation of macOS and iOS, not a fourth face of the site: nothing outside
+`.mb`, `.dk-ctx`, `.dk-app b` and `.ip-screen` may use it.
 
 Loaded from Google Fonts with `display=swap` and both `preconnect` hints
 (`index.html:66–68`). The fallback stacks are real and sized to be survivable —
@@ -470,8 +478,9 @@ as different weights of statement:
 | `.pp-title` | `100%` | Neutral — a project's name, whatever it is |
 | `.sec-title` | `108%` | Slightly wide — a section announcing itself |
 | `.page-title`, `.boot-hello` | `112%` | Wide — the page's own name |
-| `.marquee.wide` | `125%` | The maximum. Used once. |
-| `.marquee.narrow` | `62%` | The minimum. Used once, directly under the maximum, which is the whole point of that section. |
+| `.ab-op-line` | `62–125` animated | The About opener. "A QUICK" opens from the minimum to the maximum while "LOOK AT" closes from the maximum to the minimum — both extremes on one screen, which is the whole point of that scene. |
+| `.ab-ttl` | `106` | "about me", the one title of the desk. |
+| `.ab-pill` | `100 → 116` | A passion pill widens when hovered or picked. |
 
 The hero name is the extreme case: JS writes `font-variation-settings` per
 *letter*, interpolating each letter's width from its rest value to its scrolled
@@ -492,24 +501,23 @@ gets; the max is the design size.
 | `.contact-title` | `clamp(60, 9.6vw, 150)` | 800 | 96% | 0.86 | −0.05em |
 | `.page-title` | `clamp(52, 9.4vw, 140)` | 800 | 112% | 0.86 | −0.045em |
 | `.boot-hello` | `clamp(46, 9vw, 132)` | 800 | 112% | 1 | −0.045em |
-| `.mq-item` | `clamp(42, 7vw, 104)` | 800 | 125% / 62% | 1.06 | −0.04em |
+| `.ab-op-line` | fitted to width, ≤ 25% (ME.: 36%) of the screen's height | 820 | 62–125 animated | 0.84 | −0.025em |
+| `.ab-ttl` | `clamp(54, 7.4vw, 118)` | 760 | 106 | 0.95 | −0.045em |
 | `.pp-title` | `clamp(38, 6vw, 92)` | 800 | 100% | 0.94 | −0.042em |
 | `.sec-title` | `clamp(38, 5.6vw, 86)` | 750 | 108% | 0.95 | −0.04em |
 | `.menu-link` | `clamp(46, min(15vw, 10.5vh), 92)` | 850 | 62% · 125% current | 0.9 | −0.03em |
 | `.veil-text` | `clamp(28, 4.4vw, 70)` | 600 | 92% | 1.07 | −0.028em |
 | `.pnav-t` | `clamp(26, 3.4vw, 50)` | 700 | 104% | 1.02 | −0.035em |
 | `.all-work-t` | `clamp(26, 3.4vw, 46)` | 700 | 104% | 1 | −0.035em |
-| `.ab-bio` | `clamp(23, 2.8vw, 42)` | 550 | — | 1.24 | −0.024em |
 | `.sec-h` | `clamp(25, 2.6vw, 36)` | 700 | 104% | 1.08 | −0.03em |
 | `.take-h` | `clamp(23, 2.5vw, 34)` | 700 | 104% | 1.05 | −0.03em |
 | `.pcard-title` | `clamp(23, 2.3vw, 33)` | 550 | — | 1.06 | −0.025em |
-| `.trow-k` | `clamp(21, 2.3vw, 32)` | 600 | 104% | — | −0.025em |
+| `.ab-pill` | `clamp(18, 2.1vw, 30)` | 500 | 100 → 116 | 1 | −0.015em |
 | `.ab-cta p` | `clamp(20, 2.2vw, 30)` | 600 | — | — | −0.025em |
 | `.take-name` | `clamp(17, 1.7vw, 21)` | 600 | 102% | 1.25 | −0.02em |
 | `.tl-title` | `20` | 650 | — | 1.18 | −0.018em |
 | `.pcard.sm .pcard-title` | `20` | 550 | — | 1.06 | −0.025em |
 | `.prose h3` | `19` | 650 | — | — | −0.015em |
-| `.idcard-n` | `17` | 700 | — | — | −0.015em |
 | `.row-label` | `17` | 550 | — | — | −0.012em |
 
 **The tracking law:** negative letter-spacing scales with size. Roughly
@@ -526,7 +534,8 @@ Archivo — positive tracking belongs to the mono face only.
 | `.veil-cta-note` | `clamp(18, 1.7vw, 24)` | 1.25 | The sentence next to the intro's exit button. |
 | `.tl-place` | `19` | 1.2 | The school or company on a timeline card, under a hairline. |
 | `.veil-text em` | `1.06em` | inherit | The `*asterisked*` phrase inside the intro statement. |
-| `.titem em` | `1.1em` | inherit | A language level ("C1 — fluent"). |
+| `.ab-op-voice` | `clamp(18, 1.9vw, 26)` | 1.2 | The line under "ME." (`copy.aboutVoice`). Max 30ch. |
+| `.ab-pass-note` | `clamp(18, 1.6vw, 23)` | 1.25 | The note beside "What I'm into". Max 32ch. |
 
 **Where the voice is allowed:** a place, a level, a quotation, or the single
 phrase in a statement that carries the whole statement. That is the complete
@@ -544,7 +553,8 @@ list. It is never a heading and never a UI label.
 | `.contact-l p` | `clamp(16, 1.4vw, 19)` | — | `--muted` | 40ch |
 | `.pcard-sub` | 16 | 1.35 | `--muted` | — |
 | `.foot-note-text` | 16 | 1.55 | `--on-accent` | 680px box |
-| `.trow-v` | 15.5 | — | `--muted` | — |
+| `.ab-bio p` | `clamp(16, 1.3vw, 18.5)` | 1.5 | `--ink-2` | 560px box |
+| `.ab-pick p` | 17 | 1.45 | `--ink-2` | 620px box |
 | `.input`, `.send` | 15.5 | — | `--form-fg` | — |
 | `.btn`, `.link-arrow` | 15 | — | contextual | — |
 | `.take-note` | 15 | 1.5 | `--muted` | — |
@@ -552,7 +562,7 @@ list. It is never a heading and never a UI label.
 | `.shot-cap`, `.fact dd` | 14.5 | 1.5 / 1.4 | `--muted` / `--ink` | 64ch |
 | `.row-note` | 14 | — | `--muted` | — |
 | `.btn-sm`, `.topic` | 13.5 | — | contextual | — |
-| `.tools li`, `.idcard-s`, `.field-label` | 13 | — | `--ink-2` / `--muted` | — |
+| `.tools li`, `.dk-item` label, `.field-label` | 13 | — | `--ink-2` / `--ink` | — |
 
 **The measure law:** every run of prose has a `max-width` in `ch`. Long-form
 text is 66ch, a lede is 54ch, an intro is 56ch, a caption is 64ch. `text-wrap:
@@ -573,7 +583,8 @@ All uppercase with positive tracking. The size ladder is deliberately narrow:
 | `.sec-n` | 11.5 | 0.08em | `--accent-ink` |
 | `.back`, `.pnav-back`, `.sort` | 11.5 | 0.08em | `--muted` |
 | `.pcard-date` | 11.5 | 0.06em | `--muted` |
-| `.idcard-m` | 11.5 | 0.04em | `--muted` |
+| `.ab-lg b` (a language level) | 12.5 | 0.04em | `--ink` |
+| `.dk-me-tag` | 11 | 0.06em | `--muted` |
 | `.all-work-k` | 11 | 0.1em | `--muted` |
 | `.pnav-m`, `.shot-n`, `.count`, `.filter .n` | 11 | 0.06–0.08em | `--muted` / `--faint` |
 | `.fact dt`, `.rail-h`, `.row-kind`, `.tl-type`, `.tl-today span` | 10.5 (11 ≤860) | 0.08em | `--muted` |
@@ -650,7 +661,8 @@ token; do not measure the band.
 | `.pp-body` (project) | `250px` rail + `1fr` content, gap `clamp(30,5vw,90)` | — | — | — |
 | `.contact-grid` | `1fr` + `0.92fr`, gap `clamp(32,5vw,76)` | — | — | — |
 | `.take-grid` | 2 columns | — | 1 column | — |
-| `.ab-grid` (About) | `1fr` + `270px` | — | — | — |
+| `.dk-body` (About desk) | `1fr` scatter + `1.08fr` text, the dock absolutely below | — | — | ≤860: replaced by the iPhone |
+| `.ip-grid` (About iPhone) | 4 columns in container units (`cqw`); `.ip-split` = a 2×2 of apps beside a small widget | — | — | — |
 | `.gl` (World) | `minmax(290px,380px)` side column + the globe | — | — | ≤900: one column — intro, globe, play/card, tally, legend |
 
 Row gaps are always larger than column gaps in the card grids — roughly 2.5×.
@@ -669,8 +681,8 @@ a named reason. Do not add one without a reason you can write in a sentence.
 |---|---|
 | `980px` | Work grid 3 → 2 columns |
 | `900px` | Project page: rail un-sticks and stacks above the content |
-| `860px` | **The structural break.** Nav band drops its tabs for a burger + orange flood menu · hero re-weights with spacers and a hairline · About un-pins and the timeline becomes vertical · contact grid stacks |
-| `720px` | Featured grid → 1 column · takeaways → 1 column · toolkit rows stack · next-project row tightens |
+| `860px` | **The structural break.** Nav band drops its tabs for a burger + orange flood menu · hero re-weights with spacers and a hairline · About's Mac desk becomes an iPhone home screen and the timeline becomes vertical · contact grid stacks |
+| `720px` | Featured grid → 1 column · takeaways → 1 column · passion pick note stacks · next-project row tightens |
 | `640px` | Footer compresses · back-to-top shrinks · intro CTA goes full-width |
 | `560px` | Work grid → 1 column · `.all-work` tightens |
 | `520px` | Hero badge 64px · hero buttons 42px |
@@ -747,7 +759,7 @@ list stays closed.
 > gradient text, and no "shimmer". These are the house marks of generated
 > interfaces and they are banned here.
 
-The exceptions, all five of them, are deliberate and complete:
+The exceptions, all six of them, are deliberate and complete:
 
 - **`backdrop-filter: blur(10px)`** on `.lb-scrim` — a full-screen scrim that
   has to sit over arbitrary page content.
@@ -757,12 +769,18 @@ The exceptions, all five of them, are deliberate and complete:
   panel, card or popover is frosted.
 - **Gradients** are a closed list of five: the footer's warm vertical lift
   (accent → accent+12% white), the footer's radial sheen, the timeline stem's fade from rule to accent, and two
-  `mask-image` edge fades (the timeline stage and the marquee). No gradient
-  anywhere else.
+  `mask-image` edge fades (the timeline stage and the passions wall). No gradient
+  anywhere else — save inside the device mocks, below.
 - **`.foot::after`** uses a 240px spread shadow as a *paint trick*, to bleed the
   footer's colour into the browser's overscroll area past the end of the
   document. It is clipped so it adds no layout and no scroll.
 - **`.tl-cursor`**'s ring, above.
+- **The device mocks on About** (§11.6) quote macOS and iOS, so they carry the
+  operating system's own materials and nothing else does: the frosted menu bar,
+  context menu, dock and Search pill (`blur(20–30px) saturate(1.6–1.8)`), the
+  gradients that app icons and widgets are made of, and the phone's titanium
+  frame. The test: each one is a thing Apple draws. None of it may leave
+  `.dk` or `.ip`.
 
 ---
 
@@ -832,10 +850,9 @@ The dot is sized in `em` so it belongs to its type:
 | `.dot` (ends a title) | `0.17em`, `margin-left: .06em` |
 | `.hero-dot` | `0.16em`, `margin-left: .05em` |
 | `.boot-hello .bd` | `0.17em` |
-| `.mq-sep` | `0.14em` |
-| `.trow-k::before` | `0 → 0.2em` on hover (the width opens) |
+| `.ab-op-line .dot` (ME.) | `0.19em`, lands with a small overshoot |
 | `.take-name::before`, `.flag::before` | `6px` |
-| `.filter.on::before`, `.idcard-s i` | `7px` |
+| `.filter.on::before` | `7px` |
 | `.tl-v-node` | `12px`, 2px border |
 | `.tl-today i` | `11px`, 2px accent border |
 | `.tl-cursor` | `15px` + 6px halo |
@@ -856,7 +873,7 @@ Nothing loops except three things, each for a reason:
 |---|---|---|
 | `.badge-ring` | `20s` linear | It is a "scroll to explore" affordance; a still one would not read as an invitation. |
 | `.fir` sway | `5.4–7.2s`, four offsets | The footer is a landscape. A still forest is a graphic; a moving one is a place. |
-| `.marquee` | speed-coupled | It is a list of interests that is *literally* about momentum, and its speed follows your scroll velocity (`.028 px/ms` at rest, up to `.26`). |
+| `.ab-caret` blink | `1s` steps | The text cursor after "about me", until the selection sweeps across it — then it is gone. A cursor that does not blink reads as a stray bar. |
 
 ### The easing set
 
@@ -864,7 +881,7 @@ Nothing loops except three things, each for a reason:
 |---|---|---|
 | `--ease` | `cubic-bezier(.2,.7,.2,1)` | The default. Hovers, gaps opening, small transforms. |
 | `--ease-expo` | `cubic-bezier(.16,1,.3,1)` | **Arrivals.** Anything entering the viewport or travelling a long distance. Fast out of the gate, long settle. |
-| `--ease-io` | `cubic-bezier(.65,0,.35,1)` | Symmetric in-out. Used once: the splash closing into the dot — a shape collapsing on itself needs to accelerate and decelerate equally. |
+| `--ease-io` | `cubic-bezier(.65,0,.35,1)` | Symmetric in-out. Used twice: the splash closing into the dot — a shape collapsing on itself needs to accelerate and decelerate equally — and the selection sweeping across "about me", which is a drag, not an arrival. |
 | `--ease-pill` | `cubic-bezier(.32,.72,0,1)` | A selection changing: the nav tabs' width axis, the phone menu's words, and the Work page's filter dot. Slightly snappier than `--ease-expo`. |
 | `cubic-bezier(.34,1.56,.64,1)` | — | Overshoot. Used once: the footer tiles, which are physical objects. **Do not use overshoot anywhere else.** |
 
@@ -880,8 +897,9 @@ Nothing loops except three things, each for a reason:
 
 **Hover stays under `.25s`.** It answers a pointer, it is not a scene, and it only
 ever moves `transform` and `opacity`. Animating `padding`, `gap` or `width` on hover
-reflows the row and can re-wrap its text. The one exception is `.titem img`, which
-opens `max-width` on purpose (§8). A picture is allowed one slow gesture: it eases
+reflows the row and can re-wrap its text. The one exception is the dock's
+magnification, which grows each icon's `width`/`height` on purpose: that *is*
+the macOS gesture, and the dock is a single row that cannot re-wrap. A picture is allowed one slow gesture: it eases
 into its hover over `.7s --ease-expo` and lets go in `.35s`, so leaving is always
 faster than arriving.
 
@@ -1001,7 +1019,7 @@ need to be.
   needs, then writes font variations and clip paths, so no frame forces a
   synchronous layout.
 - **Composite, don't repaint.** `will-change: transform` is declared on exactly
-  four permanent elements: `.menu-flood`, `.tl-track`, `.marquee-track`, and
+  four permanent elements: `.menu-flood`, `.tl-track`, `.ab-row` (the passion rows), and
   `#featured-dot::after`, plus `.fly`, which only exists for the half second of a flight. `will-change: clip-path` on `#boot` and `.veil`. That
   list is the budget — a `will-change` on every hover target costs more than it
   saves.
@@ -1016,14 +1034,15 @@ scene has a non-animated form that is not a degraded one:
 | Reveals | All shown at once — `opacity:1 !important`, no transform, no clip |
 | Home intro | `.intro-static` — the same words, the same orange page, as a normal section |
 | Timeline | `.tl-v` — a real vertical timeline with a descending dot |
-| About bio | Fully opaque, no fill |
+| About opener | The final frame: both lines at rest width, ME. and its dot in place, the scene un-pinned |
+| About desk | Folders and selection shown at once, no caret blink, no dock bounce or magnification |
 | Splash | Cross-fades out instead of closing into the dot |
-| Badge, firs, marquee | Animation off |
+| Badge, firs, passion rows | Animation off (the rows sit still) |
 | Footer toast | Shown in place, no keyframes |
 | Page transition | No enter animation |
 
 JS respects it too: `reduceMotion()` in `lib.jsx` gates Lenis, the hero's
-pointer tracking, the marquee loop and the splash's clip-path hand-off.
+pointer tracking, the About opener's scrub, the dock and the splash's clip-path hand-off.
 
 ### The press
 
@@ -1105,13 +1124,17 @@ white there. That asymmetry is intentional.
 same visual weight. Negative margins (`-9px 0`) keep it out of the row's height,
 because the travelling timeline measures card heights.
 
-**Toolkit marks** unroll on row hover by animating `max-width: 0 → 46px`, not a
-square box — a wordmark like Canva keeps its proportions instead of being
-squeezed into 16×16.
+**App icons** are the one place a borrowed mark keeps its full colour and its
+own squircle: the toolkit is drawn as a macOS dock (and as iOS apps), and an
+app icon is what a tool *is* there. They live in `/assets/logos/dock/` as
+256px PNGs or SVGs with the squircle at 208px and transparent padding around
+it, so every icon carries the same optical weight. A tool without one falls
+back to its flat logo on a paper squircle (`.app-tile`). Two were drawn for
+the site (SQL, Power BI) to match the others.
 
-**Flags** are drawn SVGs, not emoji (Windows renders no flag emoji at all). They
-get `height: 12px`, `border-radius: 2.5px`, and a `0 0 0 1px` hairline so the
-white band of a tricolour still reads against paper.
+**Flags** are drawn SVGs, not emoji (Windows renders no flag emoji at all). On
+About they are `20 × 14px`, `border-radius: 3px`, with a `0 0 0 1px` hairline so
+the white band of a tricolour still reads against paper.
 
 ### Project covers
 
@@ -1214,7 +1237,7 @@ A project `section.body` entry is a string (a paragraph) or one of:
 
 ### Copy overrides
 
-`copy.introCta`, `copy.workLede`, `copy.contactLede`, `copy.aboutCta`. Each has
+`copy.introCta`, `copy.workLede`, `copy.contactLede`, `copy.aboutCta`, `copy.aboutVoice`. Each has
 a default in its component via `COPY(key, fallback)`; delete the key and the
 default returns. Add a new one only when the sentence is genuinely editorial.
 
@@ -1467,9 +1490,9 @@ demo mode and confirms locally. There is no third state.
 
 ---
 
-### 10.7 Quiet row — `.row` / `.trow`
+### 10.7 Quiet row — `.row`
 
-The system's list primitive. Used for attachments, takeaways and the toolkit. It
+The system's list primitive. Used for attachments and takeaways. It
 is deliberately **not a card** — content that is a list should read as a list.
 
 `border-top` on the container, `border-bottom` on each row, `18px` vertical
@@ -1477,9 +1500,6 @@ padding. The hover gesture is `translateX(12px)` on the icon and the text, over
 `.22s --ease` — the row steps forward rather than lighting up, and nothing reflows. On a link row the icon tile picks
 up `--accent-ink` and the trailing `ArrowUR` translates `(2px,-2px)`; on a
 download row it translates `(0, 2px)` instead.
-
-`.trow` (toolkit) adds a dot that *opens* on hover — `.trow-k::before` scales
-`0 → 1`, and a negative margin cancels its width so it takes no room — and unrolls each item's logo by animating `max-width`.
 
 ---
 
@@ -1532,18 +1552,18 @@ are fetched ahead. Mouse and keyboard keep the arrows, and `Escape` still closes
 | `.soc` | `48 × 48`, `radius 13px`, `--paper-2` on `--rule`; hover inverts to `--ink` and lifts `3px`. |
 | `.to-top` | `46px` circle (42 ≤640), `--lift`, appears past `1.1 × viewport height`, `tabIndex -1` while hidden. |
 | `.progress` | `2px`, `z 70`, `transform: scaleX(var(--p))` from origin `0 50%`; `opacity 0` above `8px` of scroll. |
-| `.idcard` | `--paper-2`, `--rule`, `radius 20px`, `--lift`. Avatar is bottom-anchored with the image at `70%` so the head rises out of the bubble, lifted `3px` so the chin never touches the rim. |
+| `.ab-pill` | `999px`, `1.5px` ink border. Filled (`.solid`, ink) when it leads somewhere (`href` in data.js); `.ghost` (`--rule-2`, `--faint`) on every fifth for texture; `.on` = the orange, at width 116. |
 | `.take-panel` | An enclosed panel — `--paper-2` on `--rule`, `clamp(20px,2.4vw,30px)`. The last content on a project page, clearly still content. |
-| `.flag`, `.pill-up`, `.tools li`, `.topic` | The four pill-shaped chips. All `999px`; all mono except `.tools li` and `.topic`. |
+| `.flag`, `.pill-up`, `.tools li`, `.topic` | The four pill-shaped chips (the passion pills are display type, not chips). All `999px`; all mono except `.tools li` and `.topic`. |
 
 ---
 
 ## 11 · Scenes
 
-Four set pieces. Each is a single continuous gesture, each has a
+Five set pieces. Each is a single continuous gesture, each has a
 reduced-motion twin, and each is the reason the system exists — read these
 before changing anything they touch. The Outside page is deliberately *not*
-one of them: see 11.5.
+one of them: see 11.5. About is 11.6.
 
 ### 11.1 The splash — `#boot`
 
@@ -1652,7 +1672,7 @@ sitting square:
 
 | Part | What it is |
 |---|---|
-| `.pbs` | The records, as a printed table: ruled top and bottom, one cell per distance, cells divided by hairlines, `--pbn` columns (the count, inline). Each cell is the distance at `clamp(16,1.6vw,20)/600` in `--ink` — **Archivo, not mono**: here the distance *names* the record rather than tagging it, the same reasoning that makes `.trow-k` a real size in the toolkit — then a `.tabular` time at `clamp(25,2.7vw,37)`, then the pace. **The pace is computed from the distance and the clock, never typed** (`pace()` in `outside.jsx`) — one less number that can drift out of true. The block announces itself by structure, not by size; a board of huge figures would make this a results page. |
+| `.pbs` | The records, as a printed table: ruled top and bottom, one cell per distance, cells divided by hairlines, `--pbn` columns (the count, inline). Each cell is the distance at `clamp(16,1.6vw,20)/600` in `--ink` — **Archivo, not mono**: here the distance *names* the record rather than tagging it, the same reasoning that sets the About passion pills in Archivo rather than mono — then a `.tabular` time at `clamp(25,2.7vw,37)`, then the pace. **The pace is computed from the distance and the clock, never typed** (`pace()` in `outside.jsx`) — one less number that can drift out of true. The block announces itself by structure, not by size; a board of huge figures would make this a results page. |
 | `.race` | A race. The box holds, in order: the photograph; or the time at `clamp(38,5.4vw,76)`; or the distance at `clamp(21,2.4vw,34)`. With none of the three there is **no box** — `.race.bare` is a hairline and its text. This chain is what lets a race exist before its photograph does without ever showing a placeholder. The pace rides against the time wherever the time lands — under it inside the box, beside it on the line below a photograph — so the pairing reads the same here as in `.pbs`. |
 | `.tally` | Two figures beside the map's title, in the slot `.sec-head` already keeps free. `column-reverse`, so the number reads first. |
 | `.atlas` | **A plate, not two blocks of colour.** The world is line work: every border a hairline at `--ink` 15% over a `--ink` 5% wash. The countries visited are the only filled thing on it — solid `--ink` at 92%, cut apart from one another by a `--paper` hairline, without which the eight in western Europe merge into one shapeless blot. The **single country under the pointer** turns `--accent` (§2, the fifth job). Every stroke is `vector-effect="non-scaling-stroke"`, set on the path, so a hairline is one *screen* pixel at any size rather than fattening with the viewBox. |
@@ -1682,6 +1702,44 @@ the rings whose centre falls in a given lon/lat box, for the countries that need
 it. It clips the *visited* layer only — French Guiana is still part of the
 background world, as it should be. The list is one line long and should stay
 short: it is a fix for a dataset quirk, not a way to edit geography.
+
+---
+
+### 11.6 About — the opener, the desk, the wall
+
+`/about/` is four acts, numbered in their eyebrows `01 — 04`.
+
+1. **"A QUICK LOOK AT ME."** (`.ab-op`, 220vh, pinned). Each line is sized once,
+   at its *widest*, to span the column (capped by the screen's height), so the
+   scroll only ever moves the width axis and nothing reflows. "A QUICK" opens
+   62 → 125 while "LOOK AT" closes 125 → 62; then "ME." rises out of its mask and
+   its dot lands last, with a small overshoot; the serif line fades in under it.
+   The composition is anchored under the nav (just above the middle on a tall
+   phone) so "ME." never sits on the floor of the screen.
+2. **about me.** On computers, a **Mac desk** (`.dk`): the page's own paper as
+   the wallpaper — never a macOS wallpaper — a real menu bar (Finder's menus,
+   status icons, Brussels date and time, and an input menu that lists the
+   languages), the memoji in the middle, the CVs as PDF files and the `desk`
+   folders around it (drag them, double-click to open, right-click for
+   Open / Copy link / Get Info / Move to Trash, which refuses), and the toolkit
+   as a dock with magnification. "about me" is selected like a word in a text
+   field: the highlight sweeps across on `--ease-io`, then the two handles show.
+   The languages are one line, flag + level, right under the bio — small, but
+   where a recruiter reads.
+   **On phones (≤860px) the desk becomes an iPhone** (`.ip`): a home screen in
+   container units, with the profile as a medium widget, the first four tools
+   beside a small widget (the `desk` entry that has a `widget`), the other tools
+   as apps, the Search pill, and a dock with the CVs and the links. A folder
+   that is also a tool (GitHub) lives on the tool's icon instead of twice.
+3. **What I'm into** (`.ab-wall`). Four rows of pills, each list three times,
+   drift with the scroll in alternating directions — never on their own. Filled
+   pills lead somewhere (`href` + `note` in `interests`); the others say honestly
+   that nothing came of them yet.
+4. **The timeline**, unchanged (§11.3), under `04 — The path`.
+
+Everything a visitor reads here comes from `data.js`: `bio`, `languages`,
+`cv`, `desk`, `toolGroups` (with `appIcon` / `label` slots), `interests`,
+`copy.aboutVoice`.
 
 ---
 
@@ -1836,11 +1894,11 @@ small control joins that list.
 - Hidden interactive content is removed from the tab order: `.menu-link` and
   `.to-top` get `tabIndex={-1}` while hidden.
 - The auto-hiding nav returns on `:focus-within`.
-- One `<h1>` per page. On About, where the design's heading *is* the bio, an
-  `.sr-only` `<h1>` supplies it.
+- One `<h1>` per page. On About, where the design's heading is the giant
+  "A QUICK LOOK AT ME." (`aria-hidden`, it is drawn letter-width by letter-width),
+  an `.sr-only` `<h1>` supplies it.
 - `<main id="main">`, `<header class="nav">`, `<nav aria-label="Primary">`,
-  `<footer>`, `<article>` for a project page, `<aside>` for the rail and the id
-  card.
+  `<footer>`, `<article>` for a project page, `<aside>` for the rail.
 
 ### ARIA — used where it earns its place
 
@@ -1854,7 +1912,9 @@ small control joins that list.
 | Decorative SVG, canvas, spacers | `aria-hidden="true"` |
 | Card | `aria-label={title}` on the single wrapping `<a>` |
 | Sort | `aria-label` states current order **and** what clicking does |
-| Duplicated marquee row | `aria-hidden="true"` on the second copy |
+| Passion rows (each list three times) | Only the middle copy of the first row is focusable and read; every other pill is `aria-hidden` with `tabIndex -1` · the picked pill is `aria-pressed` · the note below is `aria-live="polite"` |
+| Mac input menu | `aria-haspopup="menu"`, `aria-expanded`, `menuitemradio` + `aria-checked` |
+| Desk folders, dock, iPhone apps | Real links / buttons with an `aria-label` (the iPhone dock has no visible labels); a language level carries its language in an `.sr-only` span |
 | Topic chips | wrapped in `role="group"` with `aria-label` |
 
 ### Motion
@@ -2062,6 +2122,15 @@ This document is a **retroactive formalisation**. The system was designed in the
 stylesheet first; this file names what was already there, measures it, and turns
 the implicit rules into explicit ones. Nothing here proposes a change to the
 site — where the two disagree, the stylesheet wins and this file is wrong.
+
+### Changes since 1.0
+
+- **2026-11-21 — About rebuilt** (§11.6). The scroll-filled bio, the floating id
+  card, the toolkit rows and the interests marquee are gone; in their place the
+  "A QUICK LOOK AT ME." opener, the Mac desk / iPhone home screen and the
+  passions wall. The timeline is untouched. This adds the only quoted face
+  (the system font) and the only quoted materials (frosted glass, icon
+  gradients), both confined to the device mocks — see §3 and §5.
 
 ### Known tensions
 
