@@ -550,7 +550,7 @@ function Interests(){
             <span className="eyebrow rv rv-fade">Beyond the data</span>
             <Words as="h2" className="sec-title" text="What I'm into" dot/>
           </div>
-          <Link to="/outside/" className="link-arrow rv rv-fade" style={{ '--d': '.12s' }}>
+          <Link to="/world/" className="link-arrow rv rv-fade" style={{ '--d': '.12s' }}>
             The rest of it <Icon.ArrowUR/>
           </Link>
         </header>

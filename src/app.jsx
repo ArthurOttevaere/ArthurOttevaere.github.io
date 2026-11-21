@@ -11,7 +11,7 @@ const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;
 const NAV = [
   { label: 'Work',    to: '/work/',    route: 'work' },
   { label: 'About',   to: '/about/',   route: 'about' },
-  { label: 'Outside', to: '/outside/', route: 'outside' },
+  { label: 'World',   to: '/world/',   route: 'world' },
   { label: 'Contact', to: '/contact/', route: 'contact' },
 ];
 // what the nav band shows: Home is a tab of its own, the mark stays the mark
@@ -480,7 +480,7 @@ function App(){
     if (loc.route === 'work' && loc.sub){ const p = projById(loc.sub); t = (p ? p.title : 'Project') + ' · ' + base; }
     else if (loc.route === 'work')    t = 'Projects · ' + base;
     else if (loc.route === 'about')   t = 'About · ' + base;
-    else if (loc.route === 'outside') t = 'Outside · ' + base;
+    else if (loc.route === 'world')   t = 'Around the world · ' + base;
     else if (loc.route === 'contact') t = 'Contact · ' + base;
     else if (loc.route === '404')     t = 'Not found · ' + base;
     document.title = t;
@@ -543,7 +543,7 @@ function App(){
   let Page;
   if (loc.route === 'work')         Page = loc.sub ? <ProjectPage id={loc.sub}/> : <Projects/>;
   else if (loc.route === 'about')   Page = <About/>;
-  else if (loc.route === 'outside') Page = <Outside/>;
+  else if (loc.route === 'world')   Page = <World/>;
   else if (loc.route === 'contact') Page = <Contact/>;
   else if (loc.route === '404')     Page = <NotFound/>;
   else                              Page = <Home ready={ready}/>;

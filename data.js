@@ -245,85 +245,99 @@ window.PORTFOLIO_DATA = {
       { icon: "Plane",    label: "Travel" },
     ],
 
-    /* ── Outside — the /outside/ page ──────────────────────────────
-       Everything here is optional and everything degrades: a field
-       left as "" simply does not render, so you can add a race now
-       and its photo, time or date whenever you have them. Nothing
-       shows a placeholder and nothing shows "coming soon".
+    /* ── World — the /world/ page (the globe) ────────────────────────
+       Everything here is optional and degrades: a field left out simply
+       does not render. No rebuild is needed after editing this block —
+       reload the page. Country names follow Natural Earth: "Czechia",
+       "United States of America", "United Kingdom". A name it does not
+       know is reported in the browser console.
 
-       After editing this block:
-         • adding or renaming a COUNTRY → `npm run map` (it redraws
-           the world with the new shape) then `npm run build`
-         • adding a race, a time, a date → nothing. Reload the page.
-         • adding a PHOTO → drop the file in assets/images/races/,
-           run `npm run images`, then put its path below. */
-    outside: {
+       How a country is drawn comes from `as`, its strongest tie:
+         "lived" (orange) · "studied" (pale orange) · "worked" (ink)
+         · "visited" (grey). A country with nothing more to say than
+         "been there" just goes in `visited`.
 
-      /* The thin line under the title. Put only the distances you
-         have actually raced — a record row with a gap in it reads
-         as an omission. Order is the order shown. */
-      pbs: [
-        { distance: "5K",            time: "18:10" },
-        { distance: "10K",           time: "37:24" },
-        { distance: "Half marathon", time: "1:19:27" },
+       `items` are the lines of a country's card. Each one has a `tag`
+       (lived / studied / worked / visited), and optionally:
+         when    "2022 — 2025", "Born"… shown in mono on the left
+         what    the line itself
+         where   the smaller line under it
+         at      [longitude, latitude] — puts a marker on the globe,
+                 shown when that tag's filter is on
+         mark    the marker's label (short: a city, a school)
+         next    true = it has not happened yet (drawn in orange)    */
+    world: {
+      places: {
+        "Belgium": { as: "lived", city: "Tournai · Péruwelz · Mons",
+          line: "Good waffles, the best fries in the world, and it is always good to be home.",
+          items: [
+            { tag: "lived",   when: "Born",           what: "Tournai", where: "Where I was born and grew up", at: [3.389, 50.606], mark: "Tournai" },
+            { tag: "lived",   when: "Lived",          what: "Péruwelz", at: [3.508, 50.509], mark: "Péruwelz" },
+            { tag: "lived",   when: "Lived",          what: "Mons",     at: [3.952, 50.454], mark: "Mons" },
+            { tag: "worked",  when: "Feb 2022 — now", what: "Student employee", where: "Colruyt Group, Tournai", at: [3.389, 50.606], mark: "Colruyt" },
+            { tag: "studied", when: "2022 — 2025",    what: "Bachelor in Business Engineering", where: "UCLouvain FUCaM Mons · cum laude", at: [3.954, 50.456], mark: "FUCaM Mons" },
+            { tag: "worked",  when: "Jan — Feb 2025", what: "Business & data analyst internship", where: "Global Net (Bunzl Group), Tournai", at: [3.389, 50.606], mark: "Global Net" },
+            { tag: "studied", when: "2025 — 2027",    what: "Master, Business Analytics", where: "UCLouvain FUCaM Mons", at: [3.954, 50.456], mark: "FUCaM Mons" },
+            { tag: "worked",  when: "Feb — May 2027", what: "Data consultant internship", where: "Easi – Data4Decisions, Nivelles", next: true, at: [4.325, 50.598], mark: "Easi" },
+          ] },
+        "Netherlands": { as: "studied", city: "Rotterdam",
+          line: "The best experience of my studies so far: a new international city, a renowned school, and a lot of people I would never have met otherwise.",
+          items: [
+            { tag: "studied", when: "Sep — Dec 2026", what: "Academic exchange", where: "Rotterdam School of Management", at: [4.525, 51.918], mark: "RSM" },
+            { tag: "lived",   when: "Sep — Dec 2026", what: "Rotterdam", at: [4.47, 51.92], mark: "Rotterdam" },
+          ] },
+        "United States of America": { as: "visited",
+          items: [
+            { tag: "visited", what: "New York",      at: [-74.006, 40.713], mark: "New York" },
+            { tag: "visited", what: "Philadelphia",  at: [-75.165, 39.953], mark: "Philadelphia" },
+            { tag: "visited", what: "Washington DC", at: [-77.037, 38.907], mark: "Washington" },
+            { tag: "visited", what: "New Jersey",    at: [-74.45, 40.3],    mark: "New Jersey" },
+          ] },
+        "Mexico": { as: "visited",
+          items: [ { tag: "visited", what: "Playa del Carmen", at: [-87.073, 20.629], mark: "Playa del Carmen" } ] },
+      },
+
+      // Been there, nothing more to add (yet). Move one into `places` to give it cities.
+      visited: [
+        "Austria", "Czechia", "France", "Germany", "Greece", "Hungary", "Italy",
+        "Luxembourg", "Russia", "Slovenia", "Spain", "Switzerland", "Turkey", "United Kingdom",
       ],
 
-      /* The races, newest first — but you do not have to keep them
-         in order: anything with a `date` is sorted by it automatically,
-         and the ones still missing a date stay where you put them,
-         after the dated ones. Fill a date in and the card moves itself.
-
-           name      the race, as it is actually called
-           place     "City, CC" — shown in the italic serif
-           date      "YYYY-MM-DD". Drop it and the card simply has no date.
-           distance  free text: "Half marathon", "10K", "Trail · 21 km"…
-           time      "1:19:27" or "37:24". This is the card's payoff,
-                     set large in tabular figures.
-           photo     a path under /assets/images/races/. WITHOUT one the
-                     card falls back to a typographic panel with the time
-                     set big — that is a real design, not a hole, so an
-                     empty photo is perfectly fine to ship.
-           note      one short line, if the race deserves one. Optional. */
+      /* Races — a marker each, with the time as its label. `photo` (under
+         /assets/images/races/, then `npm run images`) shows on its card. */
       races: [
-        { name: "Rotterdam Half Marathon", place: "Rotterdam, NL", date: "2026-09-20",
-          distance: "Half marathon", time: "1:19:27", photo: "/assets/images/races/rotterdam-2026.jpg", note: "" },
-
-        { name: "Semi-marathon de Mons",   place: "Mons, BE", date: "",
-          distance: "Half marathon", time: "1:26:06", photo: "/assets/images/races/mons-half-marathon.jpg", note: "" },
+        { name: "Rotterdam Half Marathon", country: "Netherlands", at: [4.48, 51.92], date: "Sep 2026",
+          distance: "Half marathon", time: "1:19:27", photo: "/assets/images/races/rotterdam-2026.jpg" },
+        { name: "Semi-marathon de Mons",   country: "Belgium",     at: [3.95, 50.45], date: "",
+          distance: "Half marathon", time: "1:26:06", photo: "/assets/images/races/mons-half-marathon.jpg" },
       ],
 
-      /* Countries visited. Spelling must match Natural Earth, which is
-         where the map comes from — "Czechia", not "Czech Republic";
-         "United States of America", not "USA". `npm run map` prints a
-         warning naming anything it could not draw.
-
-         A plain string puts the dot at the country's own centre. To
-         move it somewhere you actually went, use the long form:
-           { name: "Russia", at: [37.6, 55.8] }   // [lon, lat] */
-      countries: [
-        "Austria", "Belgium", "Czechia", "France", "Germany", "Greece",
-        "Hungary", "Italy", "Luxembourg", "Netherlands", "Russia",
-        "Slovenia", "Spain", "Switzerland", "Turkey", "United Kingdom",
-        "Mexico", "United States of America",
-      ],
-
-      /* The two allegiances. `kind` is the mono label, `name` the thing,
-         `note` the one line that says why. `icon` is a key from
-         src/icons.jsx. Drop the whole array and the section disappears. */
-      supports: [
-        /* `image` is the picture in the round slot on the left — a portrait for
-           a person, a crest for a club. Drop the file in
-           assets/images/supports/, run `npm run images`, then put its path
-           here. Leave it "" and the slot falls back to the `icon` glyph, so
-           the row is complete either way.
-             fit: "cover"   fills the circle and crops — for a face
-             fit: "contain" sits whole inside it — for a crest or a logo */
-        { kind: "Formula 1", icon: "F1", name: "Max Verstappen",
-          image: "/assets/images/supports/max-verstappen.jpg", fit: "cover",
-          note: "The way he drives, and the fact that he says exactly what he thinks. For me, one of the best there has ever been." },
-        { kind: "Football", icon: "Football", name: "RSC Anderlecht",
-          image: "/assets/images/supports/anderlecht.png", fit: "contain",
-          note: "Inherited. My dad has supported them since I was small, and it came down to me." },
+      /* "Play the journey" — the steps, in order. 4.5 s each.
+           fit   what the camera frames: a country name, or
+                 [longitude, latitude, radius in degrees] for a city
+           pin   [longitude, latitude] of the dot, labelled with the
+                 first part of `place`
+           tag   the chip on the step (lived / studied / worked / raced / visited)
+           overview: true + at — the last step, back out to the whole globe */
+      tour: [
+        { fit: "Belgium", pin: [3.389, 50.606], when: "The start", tag: "lived",   title: "Born in Tournai", place: "Tournai, Belgium",
+          body: "Good waffles, the best fries in the world, and it is always good to be home." },
+        { fit: "Belgium", pin: [3.389, 50.606], when: "Feb 2022",  tag: "worked",  title: "Student job", place: "Colruyt Group, Tournai",
+          body: "Restocking, cold storage and checkout, alongside my studies. Still going." },
+        { fit: "Belgium", pin: [3.954, 50.456], when: "Sep 2022",  tag: "studied", title: "Business Engineering", place: "Mons, Belgium",
+          body: "Bachelor at UCLouvain FUCaM Mons, finished cum laude." },
+        { fit: "Belgium", pin: [3.389, 50.606], when: "Jan 2025",  tag: "worked",  title: "First internship", place: "Global Net, Tournai",
+          body: "Margin and rotation across a catalogue of thousands of products, and an Excel tool that surfaces higher-margin substitutes." },
+        { fit: "Belgium", pin: [3.954, 50.456], when: "Sep 2025",  tag: "studied", title: "Master, Business Analytics", place: "Mons, Belgium",
+          body: "Same school, now on the analytics track: machine learning, optimisation, web mining." },
+        { fit: "Netherlands", pin: [4.47, 51.92], when: "Sep 2026", tag: "studied", title: "Exchange semester", place: "Rotterdam, Netherlands",
+          body: "The best experience of my studies so far: a new international city, a renowned school, and a lot of people." },
+        { fit: [4.48, 51.92, 0.45], when: "Sep 2026", tag: "raced", title: "Rotterdam Half Marathon", place: "Rotterdam, Netherlands",
+          body: "1:19:27. My half-marathon best." },
+        { fit: "Belgium", pin: [4.325, 50.598], when: "Feb 2027", tag: "worked", title: "Data consultant internship", place: "Easi, Nivelles",
+          body: "Fourteen weeks building BI and data solutions for clients in healthcare, construction and industry. Next." },
+        { overview: true, at: [-30, 36], when: "So far", tag: "visited", title: "And everywhere else", place: "18 countries, 3 continents",
+          body: "Every other country drawn in grey is one I have been to." },
       ],
     },
   },
@@ -336,7 +350,7 @@ window.PORTFOLIO_DATA = {
     workLede:    "A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.",
     contactLede: "Internships, freelance, coffee chats — all welcome. Usually reply within a day.",
     aboutCta:    "Got an internship, a project, or just a question?",
-    outsideLede: "Away from the spreadsheets. The races I've run, the places I've been, and the two teams I can't be objective about.",
+    worldLede:   "Where I grew up, studied and worked, and the places I've been. Turn it, or press play.",
   },
 
   /* ── Projects ───────────────────────────────────────────────── */

@@ -4,7 +4,7 @@
    WHAT IT DOES
      1. bundles src/*.jsx into dist/app.js (minified, no in-browser Babel);
      2. writes one small HTML file per address — /work/, /work/<id>/,
-        /about/, /contact/, 404.html — each a copy of index.html with its
+        /about/, /world/, /contact/, 404.html — each a copy of index.html with its
         own <title>, description and preview image, so a link shared in
         iMessage, WhatsApp or LinkedIn shows the right thing;
      3. regenerates sitemap.xml.
@@ -42,7 +42,7 @@ const FILES = [
   'src/home.jsx',
   'src/work.jsx',
   'src/about.jsx',
-  'src/outside.jsx',
+  'src/world.jsx',
   'src/contact.jsx',
   'src/app.jsx',
 ];
@@ -146,6 +146,10 @@ async function pages(){
   };
 
   const bio = Array.isArray(P.bio) ? P.bio[0] : '';
+  const worldMeta = {
+    title: 'Around the world · ' + name, path: '/world/',
+    description: trim(copy.worldLede || "Where I grew up, studied and worked, and the places I've been.", 180),
+    image: siteImage, imageAlt: name + ' — around the world' };
   const list = [
     { out: 'work/index.html', meta: {
       title: 'Projects · ' + name, path: '/work/',
@@ -155,10 +159,9 @@ async function pages(){
       title: 'About · ' + name, path: '/about/',
       description: trim(bio || 'Business Engineering student in Business Analytics.', 180),
       image: siteImage, imageAlt: 'About ' + name } },
-    { out: 'outside/index.html', meta: {
-      title: 'Outside · ' + name, path: '/outside/',
-      description: trim(copy.outsideLede || "Away from the spreadsheets — the races I've run and the places I've been.", 180),
-      image: siteImage, imageAlt: name + ' — outside the portfolio' } },
+    { out: 'world/index.html', meta: worldMeta },
+    // the page's old address: same page, canonical pointing at the new one
+    { out: 'outside/index.html', meta: worldMeta },
     { out: 'contact/index.html', meta: {
       title: 'Contact · ' + name, path: '/contact/',
       description: trim(copy.contactLede || 'Internships, freelance, coffee chats — all welcome. Usually reply within a day.', 180),
@@ -182,11 +185,11 @@ async function pages(){
   }
 
   for (const item of list) await writePage(template, item.out, item.meta);
-  console.log(`✓ ${list.length} share pages (work, about, outside, contact, 404, ${projects.length} projects)`);
+  console.log(`✓ ${list.length} share pages (work, about, world, contact, 404, ${projects.length} projects)`);
 
   // sitemap
   const today = new Date().toISOString().slice(0, 10);
-  const urls = ['/', '/work/', '/about/', '/outside/', '/contact/'].concat(projects.map(p => `/work/${p.id}/`));
+  const urls = ['/', '/work/', '/about/', '/world/', '/contact/'].concat(projects.map(p => `/work/${p.id}/`));
   const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + urls.map(u => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')
     + '\n</urlset>\n';
@@ -207,34 +210,10 @@ async function versionAssets(){
   await writeFile('index.html', html);
 }
 
-/* ── 3 · the map's freshness ────────────────────────────────────
-   assets/map/world.js is generated separately, from the country list
-   in data.js. Adding a country there and forgetting `npm run map`
-   would drop it from the map silently — the page would simply not
-   draw a shape it cannot find. So say so here, where it is noticed. */
-async function checkMap(D){
-  const wanted = (((D.profile || {}).outside || {}).countries || [])
-    .map(c => (typeof c === 'string' ? c : c && c.name)).filter(Boolean);
-  if (!wanted.length) return;
-
-  if (!existsSync('assets/map/world.js')){
-    console.warn('⚠ assets/map/world.js is missing — run `npm run map`');
-    return;
-  }
-  const ctx = { window: {} };
-  vm.createContext(ctx);
-  vm.runInContext(await readFile('assets/map/world.js', 'utf8'), ctx);
-  const drawn = (ctx.window.WORLD_MAP || {}).shapes || {};
-  const missing = wanted.filter(n => !drawn[n]);
-  if (missing.length) console.warn(`⚠ the map has no shape for ${missing.join(', ')} — run \`npm run map\``);
-  else console.log(`✓ map covers all ${wanted.length} countries`);
-}
-
 export async function build(){
   await bundle();
   await versionAssets();
   await pages();
-  await checkMap(await loadData());
 }
 
 build().catch(err => { console.error(err); process.exit(1); });
