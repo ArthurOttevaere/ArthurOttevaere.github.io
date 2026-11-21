@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#B9BCC4" stop-opacity=".9"/>
+      <stop offset=".22" stop-color="#EEF0F4" stop-opacity=".85"/>
+      <stop offset=".55" stop-color="#D9DCE2" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#9FA3AC" stop-opacity=".9"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9CCD3"/>
+    </linearGradient>
+    <linearGradient id="inside" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6E727B"/><stop offset="1" stop-color="#A9ADB5"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".22"/></filter>
+  </defs>
+  <g filter="url(#sh)">
+    <!-- the can, slightly tapered, made of a translucent mesh -->
+    <path d="M58 62 L72 220 Q74 232 88 232 L168 232 Q182 232 184 220 L198 62 Z" fill="url(#body)" stroke="#8E929B" stroke-width="2"/>
+    <g stroke="#7D818A" stroke-opacity=".45" stroke-width="3" stroke-linecap="round">
+      <path d="M86 78 L94 220"/><path d="M107 78 L111 220"/><path d="M128 78 L128 220"/><path d="M149 78 L145 220"/><path d="M170 78 L162 220"/>
+    </g>
+    <path d="M60 84 Q128 96 196 84" fill="none" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="3"/>
+    <!-- the rim, seen a little from above -->
+    <ellipse cx="128" cy="62" rx="72" ry="16" fill="url(#inside)"/>
+    <ellipse cx="128" cy="62" rx="72" ry="16" fill="none" stroke="url(#rim)" stroke-width="7"/>
+  </g>
+</svg>

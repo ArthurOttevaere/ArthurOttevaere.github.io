@@ -1340,11 +1340,115 @@ html[data-theme="dark"] .dk-dock{background:rgba(44,44,50,.55);box-shadow:inset 
 .ip-search{display:flex;align-items:center;gap:1.6cqw;align-self:center;margin:5cqw 0 3.4cqw;padding:1.8cqw 4cqw;border-radius:999px;flex:none;
   font-size:3.4cqw;font-weight:500;color:color-mix(in srgb,var(--ink) 70%,transparent);background:color-mix(in srgb,var(--ink) 8%,transparent);
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
-.ip-dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5.2cqw;margin:0 3cqw 8cqw;padding:3.6cqw;border-radius:9cqw;flex:none;
+.ip-dock{display:flex;justify-content:center;gap:5.2cqw;margin:0 3cqw 8cqw;padding:3.6cqw;border-radius:9cqw;flex:none;
   background:color-mix(in srgb,#fff 42%,transparent);-webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 0 0 1px rgba(16,16,20,.06)}
+.ip-dock .ip-app{flex:0 0 17.8cqw}
 html[data-theme="dark"] .ip-dock{background:rgba(44,44,50,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 .ip-home-bar{position:absolute;left:50%;bottom:2.2cqw;width:36cqw;height:1.4cqw;margin-left:-18cqw;border-radius:999px;background:var(--ink);opacity:.85}
+
+/* the MacBook whose lid opens onto the desk (computers). Sizes come from
+   about.jsx: --mw the laptop's width, --s the desk's scale in the panel. */
+.ab-mac{position:relative;height:340vh;margin-top:clamp(20px,3vw,40px)}
+.ab-mac.is-still{height:auto}
+.ab-mac-stage{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;justify-content:center;
+  padding:calc(var(--nav-h) + 20px) var(--gutter) 30px;overflow:hidden}
+.ab-mac.is-still .ab-mac-stage{position:relative;height:auto}
+.mac-cam{perspective:4600px;perspective-origin:50% 90%}   /* the eye at the hinge's height (MAC_EYE in about.jsx) */
+.mac{--mw:1100px;--s:.84;position:relative;width:var(--mw);transform-origin:50% 100%;transform-style:preserve-3d;will-change:transform;margin-bottom:26px}
+.mac-lid{position:relative;width:100%;transform-origin:50% 100%;will-change:transform}
+.mac-screen{position:relative;padding:14px;border-radius:20px 20px 6px 6px;background:#0B0B0D;
+  box-shadow:0 0 0 1.5px #B9B7B2,0 0 0 3px #E4E2DD,0 40px 70px -40px rgba(16,16,20,.55)}
+.mac-notch{position:absolute;left:50%;top:14px;width:170px;height:22px;margin-left:-85px;border-radius:0 0 10px 10px;background:#0B0B0D;z-index:8}
+.mac-notch::after{content:"";position:absolute;left:50%;top:7px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:#1E2230;box-shadow:inset 0 0 0 1.5px #0E1018}
+.mac-display{position:relative;width:calc(var(--mw) - 28px);height:calc((var(--mw) - 28px) * .625);overflow:hidden;border-radius:6px;background:#000;opacity:0}
+.mac-fit{width:1280px;height:800px;transform:scale(var(--s));transform-origin:0 0;pointer-events:none}
+.ab-mac-stage.is-live .mac-fit{pointer-events:auto}
+/* the lid's two faces: the screen, and behind it the aluminium with the
+   site's own mark. Each hides its back, so the browser shows the right one. */
+.mac-lid{transform-style:preserve-3d}
+.mac-screen{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+/* rotateX(180°) flips the panel top-to-bottom, so its corners are written
+   upside down: 6px here lands at the hinge, 22px at the lid's free edge */
+.mac-back{position:absolute;inset:0;border-radius:6px 6px 20px 20px;transform:rotateX(180deg);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;background:linear-gradient(180deg,#ECEAE5,#D9D7D2 60%,#CBC9C4);
+  box-shadow:inset 0 0 0 1px rgba(16,16,20,.12)}
+.mac-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 88px/1 var(--f-display);font-variation-settings:'wdth' 125;letter-spacing:-.04em;color:#B4B2AD}
+.mac-mark i{display:inline-block;width:.2em;height:.2em;margin-left:.04em;border-radius:50%;background:var(--accent)}
+.mac-lid.is-back .mac-screen{visibility:hidden}
+.mac-lid:not(.is-back) .mac-back{visibility:hidden}
+/* the keyboard half: exactly the lid's width (closed, the two edges meet),
+   aluminium, a real keyboard between two speaker grilles, the trackpad, and
+   the front lip hanging from the far edge. Its corners follow the lid's:
+   small at the hinge, rounded at the front. */
+.mac-deck{position:absolute;left:0;top:100%;width:100%;height:calc((var(--mw) - 28px) * .625 + 28px);transform-origin:50% 0;transform:rotateX(90deg) translateZ(-2px);
+  transform-style:preserve-3d;border-radius:6px 6px 20px 20px;
+  background:linear-gradient(180deg,#C9C7C2 0%,#E3E1DC 6%,#EAE8E3 60%,#E2E0DB 100%);
+  box-shadow:inset 0 0 0 1px rgba(16,16,20,.14)}
+.mac-kb{position:absolute;left:12.5%;right:12.5%;top:5%;height:44%;display:flex;flex-direction:column;gap:1.1%;padding:.9%;
+  border-radius:10px;background:#CFCDC8;box-shadow:inset 0 1px 3px rgba(16,16,20,.25)}
+.mac-row{display:flex;gap:.55%;flex:1 1 0}
+.mac-row.is-fn{flex:.62 1 0}
+.mac-kb i,.mac-arrows > i,.mac-arrows span i{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;font-style:normal;
+  font:500 calc(var(--mw) * .0105)/1 -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#E2E2E5;
+  border-radius:calc(var(--mw) * .0042);background:linear-gradient(180deg,#2A2A2E,#1B1B1E);box-shadow:inset 0 -1px 0 rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.5)}
+.mac-kb .k-fn{font-size:calc(var(--mw) * .0075)}
+.mac-kb .k-m,.mac-kb .k-mr{align-items:flex-end;justify-content:flex-start;padding:0 0 .45em .55em;font-size:calc(var(--mw) * .0072)}
+.mac-kb .k-mr{justify-content:flex-end;padding:0 .55em .45em 0}
+.mac-kb .k-id{background:radial-gradient(circle,#2F2F33 52%,#1B1B1E 54%)}
+.mac-arrows{display:flex;gap:4%;align-items:flex-end;min-width:0}
+.mac-arrows > i{height:48%;font-size:calc(var(--mw) * .006) !important}
+.mac-arrows > span{flex:1 1 0;display:flex;flex-direction:column;gap:6%;height:100%}
+.mac-arrows > span i{font-size:calc(var(--mw) * .006) !important}
+.mac-grille{position:absolute;top:5%;height:44%;width:7.5%;
+  background:radial-gradient(circle,rgba(16,16,20,.32) .7px,transparent 1px) 0 0 / 5px 5px}
+.mac-grille.l{left:3%}.mac-grille.r{right:3%}
+.mac-pad{position:absolute;left:28%;right:28%;top:53.5%;height:41%;border-radius:12px;
+  background:linear-gradient(180deg,#DCDAD5,#E4E2DD);box-shadow:inset 0 0 0 1px rgba(16,16,20,.1),inset 0 1px 2px rgba(16,16,20,.06)}
+/* the front lip: the base's thickness, seen from the front. It runs the
+   full width, like the base it belongs to, and its ends darken and round off
+   the way the rounded sides of an aluminium body turn away from the light. */
+.mac-lip{position:absolute;left:0;right:0;top:100%;height:13px;transform-origin:50% 0;transform:rotateX(-90deg);border-radius:20px 20px 20px 20px / 6px 6px 10px 10px;
+  background:
+    linear-gradient(90deg,rgba(16,16,20,.26),transparent 1.6%,transparent 98.4%,rgba(16,16,20,.26)),
+    linear-gradient(180deg,#F6F5F1 0%,#DEDCD7 35%,#BDBBB6 100%);
+  box-shadow:0 22px 30px -18px rgba(16,16,20,.45)}
+.mac-scoop{position:absolute;left:50%;top:0;width:12%;height:4px;margin-left:-6%;border-radius:0 0 8px 8px;background:linear-gradient(180deg,#9F9D98,#C9C7C2)}
+html[data-theme="dark"] .mac-screen{box-shadow:0 0 0 1.5px #5A5A60,0 0 0 3px #8A8A90,0 40px 70px -40px rgba(0,0,0,.8)}
+/* the desk, at its design size inside the panel */
+.dk.in-mac{height:800px;min-height:0;border:0;border-radius:0}
+.dk.in-mac .mb{padding-left:18px}
+.dk.in-mac .ab-ttl{font-size:104px}
+.dk.in-mac .ab-bio p{font-size:17.5px}
+
+/* Face ID on the iPhone (phones) */
+.ip.is-lockable .ip-island{display:flex;align-items:center;justify-content:space-between;padding:0 2.6cqw;color:#fff;
+  transition:width .45s var(--ease-pill),margin-left .45s var(--ease-pill),height .45s var(--ease-pill),top .45s var(--ease-pill)}
+.ip-time,.ip-sys{transition:opacity .2s ease}
+.ip.is-scan .ip-time,.ip.is-scan .ip-sys,.ip.is-open .ip-time,.ip.is-open .ip-sys{opacity:0}
+.ip.is-scan .ip-island,.ip.is-open .ip-island{width:52cqw;margin-left:-26cqw;height:11cqw;top:2.4cqw}
+.ip-pad,.ip-scan{height:5.6cqw;width:auto;opacity:0;transition:opacity .25s ease .2s}
+.ip-pad{fill:#fff;color:#fff}
+.ip-pad .shk{transform-box:fill-box;transform-origin:100% 100%;transition:transform .35s var(--ease-pill)}
+.ip.is-scan .ip-pad,.ip.is-scan .ip-scan,.ip.is-open .ip-pad{opacity:1}
+.ip.is-scan .ip-scan{animation:ip-spin .8s linear infinite}
+.ip.is-open .ip-scan{opacity:0;transition-delay:0s}
+.ip.is-open .ip-pad .shk{transform:translate(-2px,-1.6px) rotate(-22deg)}
+@keyframes ip-spin{to{transform:rotate(360deg)}}
+.ip-lock{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding-top:19cqw;
+  background:var(--paper-2) var(--grain);color:var(--ink);transition:transform .6s var(--ease-expo),opacity .45s ease}
+.ip.is-lockable .ip-status{z-index:3}
+.ip.is-lockable.is-locked{cursor:pointer}
+.ip-lock-date{font-size:4.4cqw;font-weight:600;opacity:.75}
+.ip-lock-time{font-size:23cqw;line-height:1;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ip-lock-hint{margin-top:auto;margin-bottom:5cqw;min-height:4cqw;font-size:3.4cqw;font-weight:500;opacity:.55}
+.ip-lock-btns{display:flex;justify-content:space-between;width:100%;padding:0 10cqw 13cqw}
+.ip-lock-btns i{display:grid;place-items:center;width:13cqw;height:13cqw;border-radius:50%;color:var(--ink);
+  background:color-mix(in srgb,var(--ink) 9%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.ip-lock-btns svg{width:5.4cqw;height:5.4cqw}
+.ip.is-home .ip-lock{transform:translateY(-100%);opacity:0;pointer-events:none}
+.ip.is-lockable .ip-home,.ip.is-lockable .ip-search,.ip.is-lockable .ip-dock{transition:transform .7s var(--ease-expo) .12s,opacity .45s ease .12s}
+.ip.is-lockable:not(.is-home) .ip-home,.ip.is-lockable:not(.is-home) .ip-search,.ip.is-lockable:not(.is-home) .ip-dock{transform:scale(1.14);opacity:0}
 
 /* act 3 · the passions wall */
 .ab-pass .sec-head{margin-bottom:0}
