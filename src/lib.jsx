@@ -56,7 +56,8 @@ function parsePath(pathname){
   const r = parts[0].toLowerCase();
   if (r === 'work')    return { route: 'work', sub: (parts[1] || '').toLowerCase() };
   if (r === 'about')   return { route: 'about', sub: '' };
-  if (r === 'outside') return { route: 'outside', sub: '' };
+  // /outside/ was this page's old address: links to it still land here
+  if (r === 'world' || r === 'outside') return { route: 'world', sub: '' };
   if (r === 'contact') return { route: 'contact', sub: '' };
   return { route: '404', sub: '' };
 }

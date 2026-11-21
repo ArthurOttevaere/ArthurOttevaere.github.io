@@ -410,15 +410,14 @@ foreground/background pair so it never has to be styled twice:
    is the only way a tint survives the theme switch.
 2. **Orange is a decision, not an accent.** Before making something orange, ask
    which of its five jobs it is doing: a surface that holds the whole screen, a
-   dot, a fill that tracks progress, focus, or — once, on the Outside map — a
-   fill the pointer reveals. If it is none of those, it is not orange.
+   dot, a fill that tracks progress, focus, or — once, on the World globe — a
+   country's fill that says what it is to me. If it is none of those, it is not
+   orange.
 
-   The fifth was added for `.atlas-on`, and it is the only place a colour
-   answers a hover. It earns it because it adds a *reading* rather than the
-   information: every country visited is already filled in ink at rest, and
-   the pointer simply picks out the one it is over. Nothing is hidden behind
-   the hover, which is why it can be gated on a real pointer and a phone loses
-   nothing. Do not read this as permission for orange hover states elsewhere.
+   The fifth is `.gl-land.k-lived` / `.k-studied` (orange, and orange mixed
+   into paper): the globe's legend. It is a category, never a hover state —
+   hovering a country only darkens its outline. Do not read it as permission
+   for orange fills elsewhere.
 3. **`--faint` is never a sentence.** It is for numerals and ticks. If a reader
    has to read it, it is `--muted`.
 4. **Small orange text is `--accent-ink`.** Always. `.sec-n`, `.pill-up`,
@@ -624,7 +623,6 @@ Two blocks deliberately sit wider than the shell, and only two:
 | Block | Width | Why |
 |---|---|---|
 | `.foot` | `min(1360px, 100% − 40px)` | Its rounded crown has to read as an object *under* the page, not a block inside it. |
-| `.atlas` (Outside) | `min(1560px, 100% − 2 × clamp(24px, 3vw, 40px))` | A map is a spread, not an illustration in a column. The formula collapses back to the gutter below the shell's own width, so a phone still gets its margins — the gutter rule is bent at desktop scale only, never broken. |
 
 ### Vertical rhythm
 
@@ -652,7 +650,7 @@ token; do not measure the band.
 | `.contact-grid` | `1fr` + `0.92fr`, gap `clamp(32,5vw,76)` | — | — | — |
 | `.take-grid` | 2 columns | — | 1 column | — |
 | `.ab-grid` (About) | `1fr` + `270px` | — | — | — |
-| `.race-grid` (Outside) | 2 columns, gap `clamp(44,5.6vw,84) / clamp(16,1.8vw,26)`; every second card offset down by `clamp(26,4.4vw,72)` | — | 1 column, no offset | — |
+| `.gl` (World) | `minmax(290px,380px)` side column + the globe | — | — | ≤900: one column — intro, globe, play/card, tally, legend |
 
 Row gaps are always larger than column gaps in the card grids — roughly 2.5×.
 That is what keeps a grid of cards reading as rows of work rather than a
@@ -1156,16 +1154,17 @@ Everything else is lazy.
 ### Where the content lives
 
 `data.js` — **the only file you edit to change what the site says.** It holds
-`profile`, `copy`, `projects` and `homeDeck`. `profile.outside` carries the
-Outside page: `pbs`, `races`, `countries`, `supports`. The stylesheet never
+`profile`, `copy`, `projects` and `homeDeck`. `profile.world` carries the
+World page (`/world/`, formerly `/outside/`): `places`, `visited`, `races`,
+`tour`. The stylesheet never
 mentions a project, a date or a name; the components never hard-code a sentence
 that `copy` can override.
 
 Editing `data.js` needs **no rebuild** for the site itself. It does need
 `npm run build` to regenerate the per-project share pages, so run it after
-adding or renaming a project — and `npm run map` after adding a country, because
-the world is drawn ahead of time from that list. `npm run build` warns if the
-two have drifted apart.
+adding or renaming a project. Countries need nothing: the globe draws from
+Natural Earth at runtime (`assets/map/`, refreshed with `npm run geo`) and
+names an unknown country in the browser console.
 
 ### Tone
 

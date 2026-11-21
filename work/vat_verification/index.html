@@ -67,7 +67,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
 
 <!-- The charter itself. Everything visual lives in this one file. -->
-<link rel="stylesheet" href="/assets/css/site.css?v=8e0628850455">
+<link rel="stylesheet" href="/assets/css/site.css?v=5a8830b4f8ca">
 
 <!-- Runs before the first paint: theme, the .js flag the reveals depend on,
      the rewrite of old #/work/f1 links to the new /work/f1/ addresses, and the
@@ -88,6 +88,12 @@
     var p = h.slice(2).replace(/\/+$/, '');
     var to = p ? '/' + p + '/' : '/';
     try { history.replaceState(null, '', to); } catch (e) { location.replace(to); }
+  }
+
+  // /outside/ became /world/: the old address keeps working, and the bar
+  // shows the new one.
+  if (/^\/outside\/?$/.test(location.pathname)) {
+    try { history.replaceState(null, '', '/world/' + location.search + location.hash); } catch (e) {}
   }
 
   // The splash is the front door: it plays when you arrive at the home page,
@@ -188,7 +194,7 @@
 
 <!-- Content — edit data.js to update the portfolio. No rebuild needed for the
      site itself; run npm run build to refresh the per-project share pages. -->
-<script defer src="/data.js?v=208b96b28868"></script>
-<script defer src="/dist/app.js?v=c63e8847e5bb"></script>
+<script defer src="/data.js?v=28f90a8155b7"></script>
+<script defer src="/dist/app.js?v=1717c4af16a6"></script>
 </body>
 </html>
