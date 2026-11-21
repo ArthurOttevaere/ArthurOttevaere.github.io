@@ -191,13 +191,45 @@ window.PORTFOLIO_DATA = {
                  it out and the card simply has no mark. Drop the files in
                  /assets/logos/orgs/ — SVG for wordmarks, or a PNG with a
                  transparent background; any width works, the height is
-                 capped. */
+                 capped.
+       Click a card and it turns over. Its back is drawn like a profile
+       page; every field below is OPTIONAL and simply drops out if missing:
+       `org`       = name on the back (defaults to the part of `place`
+                     before " · ").
+       `handle`    = the small mono line under it, e.g. "@uclouvain.fucam".
+       `city`      = where it is, e.g. "Mons, BE".
+       `at`        = [longitude, latitude] — printed in the banner when
+                     there is no photo.
+       `banner`    = photo for the banner, e.g.
+                     "/assets/images/timeline/mons.webp" (wide crop, about
+                     4.5 : 1, 1200 px wide is plenty). No photo → a paper
+                     plate with the city name.
+       `bannerPos` = CSS object-position for the crop, e.g. "50% 30%".
+       `credit`    = photo credit shown in the banner corner (needed for
+                     CC BY / BY-SA photos), e.g. "Photo · Name · CC BY-SA 4.0".
+       `about`     = one to three short lines about what you did there —
+                     keep each to one line (about 44 characters). */
     timeline: [
-      { period: "2025-09 — Present", title: "Master in Business Engineering - Business Analytics track", place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg" },
-      { period: "2026-09 — 2026-12", title: "Erasmus Semester",                                          place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education", logo: "/assets/logos/orgs/erasmus-rotterdam.svg" },
-      { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",                          place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg" },
-      { period: "2025-01 — 2025-02", title: "Business Internship",                                       place: "Global Net Belgium", type: "Internship", logo: "/assets/logos/orgs/globalnet.svg" },
-      { period: "2027-02 — 2027-05", title: "Data Consultant Internship",                                place: "EASI",               type: "Internship", logo: "/assets/logos/orgs/easi.svg" },
+      { period: "2025-09 — Present", title: "Master in Business Engineering - Business Analytics track", place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg",
+        org: "UCLouvain FUCaM Mons", handle: "@uclouvain.fucam", city: "Mons, BE", at: [3.954, 50.456],
+        banner: "/assets/images/timeline/mons.webp", bannerPos: "50% 22%",
+        about: ["Machine learning, optimisation, web mining", "Projects: surgical scheduling, Movix"] },
+      { period: "2026-09 — 2026-12", title: "Erasmus Semester",                                          place: "Erasmus Universiteit Rotterdam · Rotterdam School of Management", type: "Education", logo: "/assets/logos/orgs/erasmus-rotterdam.svg",
+        org: "Rotterdam School of Management", handle: "@rsm.erasmus", city: "Rotterdam, NL", at: [4.526, 51.917],
+        banner: "/assets/images/timeline/rotterdam.webp", bannerPos: "50% 45%",
+        about: ["Exchange semester at Erasmus University", "Corporate strategy, supply chain, innovation"] },
+      { period: "2022-09 — 2025-06", title: "Bachelor in Business Engineering",                          place: "UCLouvain FUCaM Mons · Louvain School of Management", type: "Education",  logo: "/assets/logos/orgs/uclouvain.svg",
+        org: "UCLouvain FUCaM Mons", handle: "@uclouvain.fucam", city: "Mons, BE", at: [3.954, 50.456],
+        banner: "/assets/images/timeline/mons.webp", bannerPos: "50% 22%",
+        about: ["Graduated cum laude", "Econometrics, statistics, data, finance"] },
+      { period: "2025-01 — 2025-02", title: "Business Internship",                                       place: "Global Net Belgium", type: "Internship", logo: "/assets/logos/orgs/globalnet.svg",
+        org: "Global Net", handle: "@globalnet.bunzl", city: "Tournai, BE", at: [3.389, 50.606],
+        banner: "/assets/images/timeline/tournai.webp", bannerPos: "50% 35%",
+        about: ["Margin & rotation across thousands of SKUs", "Excel tool for higher-margin substitutes"] },
+      { period: "2027-02 — 2027-05", title: "Data Consultant Internship",                                place: "EASI",               type: "Internship", logo: "/assets/logos/orgs/easi.svg",
+        org: "Easi", handle: "@easi.data4decisions", city: "Nivelles, BE", at: [4.328, 50.598],
+        banner: "/assets/images/timeline/nivelles.webp", bannerPos: "50% 55%",
+        about: ["14-week BI and data consulting internship", "Healthcare, construction & industry clients"] },
     ],
 
     /* About — skill tags (flat list, kept for the command palette etc.) */

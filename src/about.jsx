@@ -163,6 +163,101 @@ function TimelineCardBody({ e }){
   );
 }
 
+/* ── The back of a card ────────────────────────────────────────────────
+   Click a step and it turns over, like a profile page: the place in the
+   banner, the school's or company's mark in a round avatar biting into it,
+   then the name, a handle-like line and what I did there. Every field is
+   optional in data.js; a step without a photo gets a paper plate with the
+   city set in the serif and its coordinates. */
+function fmtCoords(at){
+  if (!at || at.length < 2) return '';
+  const [lon, lat] = at;
+  return Math.abs(lat).toFixed(3) + '°' + (lat >= 0 ? 'N' : 'S') + ' · ' + Math.abs(lon).toFixed(3) + '°' + (lon >= 0 ? 'E' : 'W');
+}
+
+function TimelineCardBack({ e }){
+  const org = e.org || String(e.place || e.title || '').split(' · ')[0];
+  const town = e.city ? e.city.split(',')[0] : '';
+  const sub = [e.handle, e.city].filter(Boolean).join(' · ');
+  const about = Array.isArray(e.about) ? e.about.slice(0, 3) : (e.about ? [e.about] : []);
+  return (
+    <div className="tl-back">
+      <div className={'tl-b-banner' + (e.banner ? ' has-photo' : '')}>
+        {e.banner
+          ? <img src={e.banner} alt="" loading="lazy" decoding="async" style={e.bannerPos ? { objectPosition: e.bannerPos } : null}/>
+          : <span className="tl-b-plate">
+              {town ? <em>{town}</em> : null}
+              {e.at ? <span className="tl-b-coords tabular">{fmtCoords(e.at)}</span> : null}
+            </span>}
+        {e.banner && e.credit ? <span className="tl-b-credit">{e.credit}</span> : null}
+        <span className="tl-b-x" aria-hidden="true">
+          <svg viewBox="0 0 12 12" width="10" height="10"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+        </span>
+      </div>
+      <div className="tl-b-head">
+        <span className="tl-b-av">{e.logo ? <img src={e.logo} alt="" loading="lazy" decoding="async"/> : <b>{org.slice(0, 1)}</b>}</span>
+        <span className={'tl-b-pill' + (e.upcoming ? ' up' : '')}>{e.upcoming ? 'Upcoming' : formatPeriod(e.period)}</span>
+      </div>
+      <div className="tl-b-body">
+        <span className="tl-b-name">{org}<i aria-hidden="true"/></span>
+        {sub ? <span className="tl-b-handle">{sub}</span> : null}
+        {about.length ? <ul className="tl-b-list">{about.map((t, k) => <li key={k}>{t}</li>)}</ul> : null}
+      </div>
+    </div>
+  );
+}
+
+/* Turning a card over is done on the DOM, not in React state: the travelling
+   timeline repaints its cards every frame and must not re-render for this.
+   The face you are not looking at is made inert so it is neither focusable
+   nor read out. In the vertical list the card also grows to the height of
+   its back; on the travelling stage it keeps its footprint (the layout
+   measures it) and the back simply reaches further away from the axis. */
+function flipCard(card, on){
+  if (!card) return;
+  const was = card.classList.contains('is-flipped');
+  if (on == null) on = !was;
+  if (on === was) return;
+  const front = card.querySelector('.tl-front'), back = card.querySelector('.tl-back');
+  card.classList.toggle('is-flipped', on);
+  card.setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (front) front.inert = on;
+  if (back) back.inert = !on;
+  if (!front || !back) return;
+  if (card.dataset.mode === 'list'){
+    front.style.minHeight = on ? back.offsetHeight + 'px' : '';
+    return;
+  }
+  // on the stage: if the back would leave the screen, tighten it, and if
+  // that is still not enough, keep only its first line
+  back.classList.remove('is-compact', 'is-min');
+  if (!on) return;
+  const stage = card.closest('.tl-stage');
+  if (!stage) return;
+  const top = card.offsetTop, room = card.dataset.grow === 'up' ? top + card.offsetHeight - 8 : stage.clientHeight - top - 8;
+  if (back.offsetHeight > room) back.classList.add('is-compact');
+  if (back.offsetHeight > room) back.classList.add('is-min');
+}
+
+function FlipCard({ e, cardRef, mode, className }){
+  const onKey = ev => {
+    if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); flipCard(ev.currentTarget); }
+    else if (ev.key === 'Escape') flipCard(ev.currentTarget, false);
+  };
+  return (
+    <article ref={cardRef} data-mode={mode} data-grow="down"
+             className={'tl-card' + (e.upcoming ? ' up' : '') + (className ? ' ' + className : '')}
+             role="button" tabIndex={0} aria-pressed="false"
+             aria-label={e.title + (e.place ? ', ' + e.place : '') + ' — turn the card over'}
+             onClick={ev => flipCard(ev.currentTarget)} onKeyDown={onKey}>
+      <div className="tl-flip">
+        <div className="tl-front"><TimelineCardBody e={e}/></div>
+        <TimelineCardBack e={e}/>
+      </div>
+    </article>
+  );
+}
+
 /* The travelling version. Three ideas hold it together:
    · the axis is real time — a month is always the same number of pixels;
    · you never move: the whole of time slides past a dot fixed at 30% of the
@@ -329,6 +424,7 @@ function TimelineTravel({ entries }){
         const up = lanes[i] % 2 === 0, b = rowEdge(lanes[i]);
         c.style.left = (x(entries[i].start) - 24) + 'px';
         c.style.top  = (up ? b - c.offsetHeight : b) + 'px';
+        c.dataset.grow = up ? 'up' : 'down';
         // Above the axis the thread runs down to the line itself; below it, the
         // bar already sits right on top of the card, so a short tick is enough.
         const s = stemRefs.current[i];
@@ -385,6 +481,7 @@ function TimelineTravel({ entries }){
         const tr = 'translate3d(' + dx.toFixed(1) + 'px,' + ((1 - inK) * (up ? 14 : -14)).toFixed(1) + 'px,0)';
         c.style.opacity = a.toFixed(3);
         c.style.visibility = a < .008 ? 'hidden' : 'visible';
+        if (a < .05) flipCard(c, false);
         c.style.transform = tr;
         c.classList.toggle('now', T >= e.start && T <= e.end);
         const s = stemRefs.current[i];
@@ -445,9 +542,7 @@ function TimelineTravel({ entries }){
             ))}
             <span className="tl-today" ref={todayRef}><i/><span>Today</span></span>
             {entries.map((e, i) => (
-              <article key={'card' + i} className={'tl-card' + (e.upcoming ? ' up' : '')} ref={el => { cardRefs.current[i] = el; }}>
-                <TimelineCardBody e={e}/>
-              </article>
+              <FlipCard key={'card' + i} e={e} mode="stage" cardRef={el => { cardRefs.current[i] = el; }}/>
             ))}
           </div>
           <span className="tl-readout" ref={readRef}/>
@@ -481,9 +576,7 @@ function TimelineList({ entries }){
           {entries.map((e, i) => (
             <li className="tl-v-item" key={i} ref={el => { itemRefs.current[i] = el; }}>
               <span className="tl-v-node" aria-hidden="true"/>
-              <div className={'tl-card rv rv-up' + (e.upcoming ? ' up' : '')}>
-                <TimelineCardBody e={e}/>
-              </div>
+              <FlipCard e={e} mode="list" className="rv rv-up"/>
             </li>
           ))}
         </ol>
