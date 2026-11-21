@@ -685,8 +685,69 @@ html.lenis,html.lenis body{height:auto}
 .featured{padding:clamp(110px,13vw,190px) 0 clamp(70px,9vw,130px)}
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:clamp(34px,4vw,58px);flex-wrap:wrap}
 .sec-head .eyebrow{margin-bottom:14px}
-.feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(40px,5vw,66px) clamp(16px,1.8vw,26px)}
-@media (max-width:720px){ .feat-grid{grid-template-columns:1fr;gap:44px} }
+
+/* The heading on the left, the folder on the right; stacked on a phone. */
+.feat-split{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:clamp(28px,4vw,56px) clamp(32px,5vw,72px)}
+.feat-split .sec-head{flex-direction:column;align-items:flex-start;justify-content:flex-start;margin:0;gap:28px}
+.feat-note{font-family:var(--f-voice);font-style:italic;font-size:clamp(19px,1.7vw,23px);line-height:1.25;color:var(--ink-2);max-width:22em;margin:20px 0 0}
+@media (max-width:860px){ .feat-split{grid-template-columns:minmax(0,1fr)} .pf-wrap{justify-self:center} }
+
+/* ─── The project folder ───────────────────────────────────────────────────
+   Back panel with its tab → three sheets → frosted pocket. Drawn at 424 × 354
+   inside a 470-high box (room for the sheets to rise) and scaled as a whole
+   by --s, which the component sets from the column width.
+   Timing read off the reference video at 30 fps: closed → open in ~100 ms
+   with a ~7 % overshoot, settled by ~250 ms; the text only arrives as the
+   sheets come up. Closing is a plain, quicker ease with no bounce. */
+.pf-wrap{display:flex;justify-content:center}
+.pf{--s:1;position:relative;width:calc(424px * var(--s));height:calc(470px * var(--s));-webkit-tap-highlight-color:transparent}
+.pf-in{position:absolute;left:0;top:0;width:424px;height:470px;transform:scale(var(--s));transform-origin:0 0}
+.pf-back,.pf-front,.pf-edge{position:absolute;left:0;top:116px;width:424px;height:354px;display:block;overflow:visible}
+.pf-back{filter:drop-shadow(0 22px 26px rgba(232,68,15,.28)) drop-shadow(0 4px 6px rgba(20,60,110,.08))}
+html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) drop-shadow(0 4px 6px rgba(0,0,0,.3))}   /* an orange shadow on black reads as a glow */
+
+.pf-sheet{position:absolute;left:117px;top:156px;width:190px;height:250px;box-sizing:border-box;padding:20px 17px 0;
+    background:#fff;border-radius:9px;color:#15171a;overflow:hidden;
+    box-shadow:0 0 0 .5px rgba(20,40,70,.10),0 2px 3px rgba(20,40,70,.06),0 10px 22px rgba(20,60,110,.10);
+    transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(var(--k));
+    transition:transform .24s cubic-bezier(.4,0,.2,1);will-change:transform}
+.pf-sheet-c{display:block;opacity:0;transition:opacity .12s linear}
+.pf-sheet-t{display:block;font-family:'Newsreader',Georgia,'Times New Roman',serif;font-weight:700;font-size:25px;line-height:1;
+    letter-spacing:-.025em;white-space:nowrap;font-variation-settings:'opsz' 40}
+.pf-sheet-d{margin-top:9px;font-family:-apple-system,BlinkMacSystemFont,var(--f-display);font-size:10.5px;line-height:1.38;color:#8C9198;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.pf-sheet-r{display:block;border-top:1px solid #E6E8EB;margin-top:14px}
+.pf-sheet-r + .pf-sheet-r{margin-top:11px;width:72%}
+/* rest: three blank sheets, small, nearly upright */
+.pf-s1{--x:-50px;--y:-12px;--r:-5deg;--k:.62;z-index:1}
+.pf-s2{--x:-20px;--y:-20px;--r:-2.5deg;--k:.62;z-index:2}
+.pf-s3{--x:14px;--y:-28px;--r:1.5deg;--k:.62;z-index:3;clip-path:polygon(0 0,calc(100% - 34px) 0,100% 34px,100% 100%,0 100%)}
+.pf-s3::after{content:"";position:absolute;right:0;top:0;width:34px;height:34px;   /* the turned-down corner */
+    background:linear-gradient(225deg,transparent 50%,#E9ECEF 50%,#F7F8F9 78%,#fff);
+    border-bottom-left-radius:6px;box-shadow:-2px 2px 4px rgba(20,40,70,.12)}
+/* open: one spring for all three, they leave together */
+.pf.open .pf-sheet{transition:transform .4s cubic-bezier(.2,1.25,.4,1);
+    transition-timing-function:linear(0,0.0893,0.2855,0.5079,0.7084,0.8646,0.9714,1.034,1.0624,1.0678,1.0597,1.0456,1.0306,1.0175,1.0075,1.0009,0.9971,0.9956,0.9954,0.9961,0.9971,0.9981,0.999,0.9996,1,1.0002,1.0003,1.0003,1.0003,1.0002,1.0001,1.0001,1)}
+.pf.open .pf-sheet-c{opacity:1;transition:opacity .2s cubic-bezier(.2,.8,.2,1) .04s}
+.pf.open .pf-s1{--x:-122px;--y:-30px;--r:-15deg;--k:1}
+.pf.open .pf-s2{--x:-25px;--y:-90px;--r:-4deg;--k:1}
+.pf.open .pf-s3{--x:62px;--y:-96px;--r:6deg;--k:1}
+@media (hover:hover) and (pointer:fine){
+  .pf.open .pf-sheet:hover{--y:-108px;transition-duration:.3s}
+  .pf.open .pf-s1:hover{--y:-42px}
+}
+
+.pf-front{z-index:5;color:#fff;
+    background:radial-gradient(60% 55% at 64% 40%,rgba(255,224,206,.62),transparent 70%),linear-gradient(180deg,rgba(255,176,140,.80),rgba(255,134,92,.86));
+    -webkit-backdrop-filter:blur(12px) saturate(1.5);backdrop-filter:blur(12px) saturate(1.5)}
+.pf-edge{z-index:6;pointer-events:none}
+.pf-label{position:absolute;left:28px;bottom:46px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',var(--f-display);
+    font-size:33px;font-weight:600;letter-spacing:-.015em;line-height:1}
+.pf-count{position:absolute;left:29px;bottom:25px;font-family:-apple-system,BlinkMacSystemFont,var(--f-display);font-size:13px;font-weight:500;color:rgba(130,34,0,.6)}
+.pf-front:focus-visible{outline:none}
+.pf-front:focus-visible ~ .pf-edge path{stroke:var(--ink);stroke-width:2.5}
+.pf-sheet:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){ .pf-sheet,.pf.open .pf-sheet,.pf-sheet-c,.pf.open .pf-sheet-c{transition:none} }
 
 /* The way out of the deck: navigation at the scale of the four cards above
    it, in the same language as the "next project" row on a project page. */

@@ -298,42 +298,125 @@ function IntroCta(){
   );
 }
 
-/* ── Selected work — the featured grid ─────────────────────────────────── */
+/* ── Selected work — the folder ────────────────────────────────────────────
+   The home page no longer repeats the Work grid. It shows one folder with a
+   few project sheets peeking out; hover it and they rise and fan out. A sheet
+   opens its project, the pocket opens /work/. */
 function Featured(){
   const all   = PROJS();
   const picks = DATA().homeDeck;
   const chosen = (Array.isArray(picks) && picks.length)
     ? picks.map(id => all.find(p => p.id === id)).filter(Boolean)
     : [...all].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-  const list = chosen.slice(0, 4);
+  const list = chosen.slice(0, 3);
   if (!list.length) return null;
   return (
     <section className="featured" id="work">
-      <div className="shell">
+      <div className="shell feat-split">
         <header className="sec-head">
           <div>
             <span className="eyebrow rv rv-fade">Selected work</span>
             <Words as="h2" className="sec-title" text="Things I've built" dot dotId="featured-dot"/>
+            <p className="feat-note rv rv-up" style={{ '--d': '.08s' }}>
+              {COPY('featuredNote', 'Dashboards, models and the occasional Formula 1 build — open the folder.')}
+            </p>
           </div>
           <Link to="/work/" className="link-arrow rv rv-fade" style={{ '--d': '.12s' }}>
-            View all work <Icon.ArrowUR/>
+            View all {all.length} projects <Icon.ArrowUR/>
           </Link>
         </header>
-        <div className="feat-grid">
-          {list.map((p, i) => <ProjectCard key={p.id} p={p} delay={(i % 2) * .09} eager={i < 2}/>)}
-        </div>
-        {/* The way out of the deck. The link in the header is for someone
-            already looking for it; this one is for everyone who just read
-            four cards and wants the rest. */}
-        <Link to="/work/" className="all-work rv rv-up">
-          <span className="all-work-text">
-            <span className="all-work-k">Everything else</span>
-            <span className="all-work-t">View all {all.length} projects</span>
-          </span>
-          <span className="all-work-go" aria-hidden="true"><Icon.ArrowUR/></span>
-        </Link>
+        <ProjectFolder list={list} total={all.length}/>
       </div>
     </section>
+  );
+}
+
+// The folder is drawn at one size (424 × 354) and scaled as a whole, so the
+// pocket's clip path can stay in plain pixels. Bottom corners are
+// continuous-curvature and the same on both layers; the back stops 3px short
+// so no sliver of it shows under the pocket.
+const FOLDER_BACK  = 'M0 24 C0 11 11 0 24 0 L146 0 C160 0 166 5 174 14 L182 23 C188 29 194 31 204 31 L400 31 C413 31 424 42 424 55 L424 312 C424 341 414 351 385 351 L39 351 C10 351 0 341 0 312 Z';
+const FOLDER_FRONT = 'M0 168 C0 152 12 140 28 140 L176 140 C214 140 222 80 262 80 L396 80 C412 80 424 92 424 108 L424 314 C424 344 414 354 384 354 L40 354 C10 354 0 344 0 314 Z';
+
+function ProjectFolder({ list, total }){
+  const ref = useRef(null);
+  const [open, setOpen]   = useState(false);
+  const [scale, setScale] = useState(1.12);
+  // back → front: the first pick is the sheet on top, with the turned corner
+  const sheets = list.slice().reverse();
+
+  // fit the column: full size on a desktop, smaller on a phone, always
+  // leaving room on both sides for the fan
+  useEffect(() => {
+    // (measured on the section, not the folder's own column, which is sized
+    // by the folder itself)
+    const el = ref.current && ref.current.closest('.feat-split');
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const fit = () => {
+      const stacked = window.matchMedia('(max-width: 860px)').matches;
+      const room = stacked ? el.clientWidth - 64 : el.clientWidth * .46;
+      setScale(clamp(room / 424, .6, 1.12));
+    };
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // On a phone nothing hovers: the first tap opens the folder, and only then
+  // do the sheets and the pocket behave as links. A tap elsewhere closes it.
+  useEffect(() => {
+    if (!open) return;
+    const away = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
+
+  const hover = () => window.matchMedia('(hover: hover)').matches;
+  const firstTap = e => { if (!open && !hover()){ e.preventDefault(); setOpen(true); } };
+
+  return (
+    <div className="pf-wrap rv rv-up" style={{ '--d': '.1s' }}>
+      <div ref={ref} className={'pf' + (open ? ' open' : '')} style={{ '--s': scale }}
+           onPointerEnter={e => { if (e.pointerType === 'mouse') setOpen(true); }}
+           onPointerLeave={e => { if (e.pointerType === 'mouse') setOpen(false); }}
+           onFocus={e => { if (e.target.matches(':focus-visible')) setOpen(true); }}  // keyboard only: a tap must not open and follow in one go
+           onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+        <div className="pf-in">
+          <svg className="pf-back" viewBox="0 0 424 354" aria-hidden="true">
+            <defs>
+              <linearGradient id="pf-back-g" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#FF6A2E"/><stop offset="1" stopColor="#E8440F"/>
+              </linearGradient>
+            </defs>
+            <path d={FOLDER_BACK} fill="url(#pf-back-g)"/>
+          </svg>
+          {sheets.map((p, i) => (
+            <Link key={p.id} to={projectPath(p.id)} className={'pf-sheet pf-s' + (i + 1)}
+                  tabIndex={open ? 0 : -1} onClick={firstTap}>
+              <span className="pf-sheet-c">
+                <span className="pf-sheet-t">{splitTitle(p)[0]}</span>
+                <span className="pf-sheet-d">{p.summary}</span>
+                <span className="pf-sheet-r"/><span className="pf-sheet-r"/>
+              </span>
+            </Link>
+          ))}
+          <Link to="/work/" className="pf-front" onClick={firstTap}
+                aria-label={'Projects — view all ' + total}
+                style={{ clipPath: "path('" + FOLDER_FRONT + "')" }}>
+            <span className="pf-label">Projects</span>
+            <span className="pf-count">{total} projects ›</span>
+          </Link>
+          <svg className="pf-edge" viewBox="0 0 424 354" aria-hidden="true">
+            <defs>
+              <linearGradient id="pf-edge-g" x1="0" y1="0" x2="0" y2="1">
+                <stop offset=".2" stopColor="#fff" stopOpacity=".6"/><stop offset=".55" stopColor="#fff" stopOpacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d={FOLDER_FRONT} fill="none" stroke="url(#pf-edge-g)" strokeWidth="1.2"/>
+          </svg>
+        </div>
+      </div>
+    </div>
   );
 }
 
