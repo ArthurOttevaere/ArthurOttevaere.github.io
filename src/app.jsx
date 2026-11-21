@@ -9,7 +9,7 @@
 const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;
 
 const NAV = [
-  { label: 'Work',    to: '/work/',    route: 'work' },
+  { label: 'Projects', to: '/work/',    route: 'work' },
   { label: 'About',   to: '/about/',   route: 'about' },
   { label: 'World',   to: '/world/',   route: 'world' },
   { label: 'Contact', to: '/contact/', route: 'contact' },
