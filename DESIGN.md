@@ -426,8 +426,8 @@ foreground/background pair so it never has to be styled twice:
 
 ### The documented hex exceptions
 
-Five places write a literal colour, and each has a reason. This list is closed —
-adding a sixth needs a line here.
+Six places write a literal colour, and each has a reason. This list is closed —
+adding a seventh needs a line here.
 
 | Where | Value | Why |
 |---|---|---|
@@ -435,6 +435,7 @@ adding a sixth needs a line here.
 | `.nav` shadow | `rgba(0,0,0,.45)` | Same. |
 | `.foot-tile` shadows | `rgba(0,0,0,.45 / .5)` | Same. |
 | Footer gradient + sheen | `#fff` inside `color-mix` | White is used as a *lightener* on the orange, not as a colour. |
+| `--bubble-fg` | `#FFFFFF` | White on an orange message bubble (Arthur's reply in the contact thread, the typing dots). A messaging-app reference only reads with white on the bubble, so this one place departs from `--on-accent`. |
 | `TOP_COLOR` in `app.jsx` | The four theme colours | `<meta name="theme-color">` cannot read a CSS variable. **If you change `--paper` or `--accent`, change `app.jsx:24` and `index.html:109` too.** |
 
 ---
@@ -1420,16 +1421,32 @@ A section head is normally: `.eyebrow` (mono, `--muted`, `margin-bottom: 14px`)
 A dark card on a light page, in both themes.
 
 **Anatomy** — `background: var(--form-bg)`, `radius 22px`,
-`padding clamp(18px, 2.2vw, 28px)`, `gap 16px`. Inside: topic chips → email
-field → message field with a live counter → submit → a note.
+`padding clamp(18px, 2.2vw, 28px)`, `gap 18px`, `align-self: start` (the card
+ends with its content; it does not stretch to the left column). It reads as a
+message being written: a `To` header → `About` and the topic chips → one
+composer (`From` + email on top, the message under it, the counter and Send at
+its foot) → a note.
 
 | Part | Spec |
 |---|---|
+| `.f-k` | The mono labels `To`, `About`, `From`: 11px, uppercase, `opacity .5` |
+| `.f-head` | A 36px `--form-fg` disc with the `a.` mark (orange dot), then `To` + the name; a `--form-line` rule under it |
 | `.topic` | Pill, `1px --form-line`, `7px 13px`, `13.5px`, `opacity .72` → `1` on hover; selected inverts to `--form-fg` on `--form-bg`. `aria-pressed`. |
-| `.input` | `radius 12px`, `13px 15px`, `15.5px`, transparent bg, `--form-line` border. Focus: border → `--accent`, bg → `form-fg @ 5%`. Placeholder at `opacity .4`. |
-| `textarea.input` | `resize: vertical`, `min-height: 132px`, `line-height 1.5`, `maxLength 600` |
-| `.count` | Mono 11px at `opacity .5`, live `n / 600` |
-| `.send` | `52px`, `radius 12px`, `--form-fg` on `--form-bg` inverted; hover turns orange; disabled `opacity .4` |
+| `.compose` | One box, `radius 16px`, `--form-line` border; `:focus-within` lifts the border to `form-fg @ 42%` and the bg to `form-fg @ 4%` |
+| `.c-from` / `.c-in` | A row with a `--form-line` rule under it; borderless input, `15.5px`; an invalid email turns `--accent` |
+| `.c-msg` | Borderless, `resize: none`, `min-height: 128px`, `line-height 1.5`, `maxLength 600` |
+| `.count` | Mono 11px at `opacity .5`, live `n / 600`; orange past 520 |
+| `.compose .send` | `42px` pill at the composer's foot, outlined and quiet (`opacity .55`) until the form can be sent, then `.ready`: `--accent` fill, `--on-accent` text. The one fill on the form that says "ready". |
+
+**The bubbles around it** — the block's messaging reference lives outside the
+form. The dot of `Let's talk.` opens into a typing bubble (`.dot.typing`,
+`.6em × .32em`, three `--bubble-fg` dots pulsing): once about a second after
+the title lands, on hover, and every 11 s while on screen (`useTyping` in
+`contact.jsx`). The title is always two lines (`.contact-title .wn{display:block}`)
+so the bubble never pushes `talk` from one line to the other. After the first
+beat a two-line `.thread` appears under the lede: theirs in `ink @ 7%` on paper,
+the reply in `--accent`, then `Read 09:41` in mono; one tight corner (`6px`) is
+the tail. Hidden under 600px; static under reduced motion; `aria-hidden`.
 
 **States** — the submit looks disabled until the email matches
 `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` **and** the message is longer than 6 characters, but

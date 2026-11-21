@@ -34,6 +34,7 @@
   --accent:#FF4A12;
   --accent-ink:#C83500;        /* same orange, darkened for small text on paper */
   --on-accent:#101014;         /* what sits ON the orange */
+  --bubble-fg:#FFFFFF;         /* text and typing dots on an orange message bubble */
   --ok:#1F8A4C;
 
   /* the dark form card (contact) keeps its own pair, so it stays a
@@ -789,6 +790,35 @@ html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) 
 .contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);gap:clamp(32px,5vw,76px);align-items:stretch}
 .contact-l{display:flex;flex-direction:column;gap:18px}
 .contact-title{font-weight:800;font-stretch:96%;font-size:clamp(60px,9.6vw,150px);line-height:.86;letter-spacing:-.05em}
+/* "Let's" / "talk." always on two lines, so the typing bubble never sends the
+   last word back and forth between lines. */
+.contact-title .wn{display:block}
+/* The dot opens into a typing bubble, up and to the right from where it sits,
+   so the word never moves. useTyping in contact.jsx toggles .typing. */
+.contact-title .dot{position:relative;vertical-align:baseline;transition:width .5s var(--ease-pill),height .5s var(--ease-pill),border-radius .5s var(--ease-pill)}
+.dot .ty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:.055em;opacity:0;transition:opacity .18s ease}
+.dot .ty i{display:block;width:.068em;height:.068em;border-radius:50%;background:var(--bubble-fg)}
+.contact-title .dot.typing{width:.6em;height:.32em;border-radius:.16em .16em .16em .045em}
+.contact-title .dot.typing .ty{opacity:1;transition:opacity .25s ease .28s}
+.dot.typing .ty i{animation:ty-pulse 1.15s ease-in-out infinite}
+.dot.typing .ty i:nth-child(2){animation-delay:.16s}
+.dot.typing .ty i:nth-child(3){animation-delay:.32s}
+@keyframes ty-pulse{0%,70%,100%{opacity:.4;transform:none}35%{opacity:1;transform:translateY(-.02em)}}
+/* A two-line thread in the space under the lede: theirs in a quiet tint,
+   Arthur's reply in orange, then "Read". One tight corner is the tail. */
+.thread{margin-top:auto;padding-top:34px;display:flex;flex-direction:column;gap:6px;max-width:400px}
+.thread + .socials{margin-top:0}
+.bub{max-width:86%;padding:10px 15px 11px;font-size:15.5px;line-height:1.32;letter-spacing:-.005em;border-radius:20px}
+.bub-in{align-self:flex-start;background:color-mix(in oklab,var(--ink) 7%,var(--paper));color:var(--ink);border-bottom-left-radius:6px}
+.bub-out{align-self:flex-end;margin-top:4px;background:var(--accent);color:var(--bubble-fg);border-bottom-right-radius:6px}
+.bub-read{align-self:flex-end;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;color:var(--muted);padding-right:4px}
+.bub-read b{font-weight:500;color:var(--ink-2)}
+.js .thread > *{opacity:0;transform:translateY(10px) scale(.94)}
+.js .thread .bub-in{transform-origin:0 100%}
+.js .thread .bub-out{transform-origin:100% 100%}
+.js .thread.on > *{opacity:1;transform:none;transition:opacity .35s ease var(--t),transform .55s var(--ease-pill) var(--t)}
+@media (max-width:600px){ .thread{display:none} }
+@media (prefers-reduced-motion:reduce){ .js .thread > *{opacity:1!important;transform:none!important;transition:none!important} }
 .contact-l p{font-size:clamp(16px,1.4vw,19px);color:var(--muted);max-width:40ch;text-wrap:pretty}
 .socials{display:flex;gap:10px;margin-top:auto;padding-top:30px}
 .soc{
@@ -802,7 +832,8 @@ html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) 
 @media (hover:hover) and (pointer:fine){.contact-mail:hover{color:var(--ink)}}
 .form{
   background:var(--form-bg);color:var(--form-fg);border-radius:22px;
-  padding:clamp(18px,2.2vw,28px);display:grid;gap:16px;align-content:start;
+  padding:clamp(18px,2.2vw,28px);display:grid;gap:18px;align-content:start;
+  align-self:start;   /* ends where its content ends, not at the left column's height */
 }
 .topics{display:flex;flex-wrap:wrap;gap:6px}
 .topic{
@@ -811,20 +842,37 @@ html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) 
 }
 @media (hover:hover) and (pointer:fine){.topic:hover{opacity:1}}
 .topic.on{background:var(--form-fg);color:var(--form-bg);border-color:var(--form-fg);opacity:1}
-.field{display:grid;gap:8px}
-.field-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.field-label{font-size:13px;font-weight:500;letter-spacing:.01em}
-.count{font-family:var(--f-mono);font-size:11px;opacity:.5}
-.input{
-  width:100%;border:1px solid var(--form-line);background:transparent;color:var(--form-fg);
-  border-radius:12px;padding:13px 15px;font-size:15.5px;outline:none;
+/* The form reads as a message being written: a "To" header, the topic as
+   "About", then one composer, From on top and the message under it, with the
+   count and Send at its foot. */
+.f-k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.5;flex:none;min-width:46px}
+.f-head{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--form-line)}
+.f-av{
+  width:36px;height:36px;border-radius:50%;background:var(--form-fg);color:var(--form-bg);flex:none;
+  display:flex;align-items:center;justify-content:center;padding:0 0 3px 1px;
+  font-weight:800;font-size:19px;letter-spacing:-.04em;line-height:1;
+}
+.f-av i{display:inline-block;align-self:flex-end;margin:0 0 9px 1px;width:4.5px;height:4.5px;border-radius:50%;background:var(--accent)}
+.f-to{display:flex;align-items:baseline;font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+.f-to .f-k{min-width:0;margin-right:10px}
+.f-row{display:flex;align-items:center;gap:12px}
+.compose{
+  border:1px solid var(--form-line);border-radius:16px;display:flex;flex-direction:column;
   transition:border-color .2s ease,background-color .2s ease;
 }
-.input::placeholder{color:var(--form-fg);opacity:.4}
-.input:focus{border-color:var(--accent);background:color-mix(in oklab,var(--form-fg) 5%,transparent)}
-textarea.input{resize:vertical;min-height:132px;line-height:1.5}
+.compose:focus-within{border-color:color-mix(in oklab,var(--form-fg) 42%,transparent);background:color-mix(in oklab,var(--form-fg) 4%,transparent)}
+.c-from{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--form-line);cursor:text}
+.c-in,.c-msg{width:100%;border:0;background:transparent;color:var(--form-fg);outline:none;font:inherit;font-size:15.5px}
+.c-in{padding:15px 0}
+.c-in[aria-invalid="true"]{color:var(--accent)}
+.c-in::placeholder,.c-msg::placeholder{color:var(--form-fg);opacity:.38}
+.c-msg{resize:none;min-height:128px;padding:14px 16px 6px;line-height:1.5}
+.c-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 16px}
+.count{font-family:var(--f-mono);font-size:11px;opacity:.5;transition:opacity .2s ease,color .2s ease}
+.count.near{opacity:.9;color:var(--accent)}
 /* Safari on iPhone zooms the whole page into any field under 16px */
-@media (pointer:coarse){ .input{font-size:16px} }
+@media (pointer:coarse){ .c-in,.c-msg{font-size:16px} }
+@media (max-width:420px){ .f-row{align-items:flex-start;flex-direction:column;gap:10px} }
 .send{
   height:52px;border-radius:12px;background:var(--form-fg);color:var(--form-bg);
   font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;
@@ -844,6 +892,17 @@ textarea.input{resize:vertical;min-height:132px;line-height:1.5}
    and what it answers with is the reason (.form-note.is-hint) */
 .send:disabled,.send[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
 .send.sent{background:var(--accent);color:var(--on-accent);opacity:1}
+/* In the composer Send is a pill at the foot, quiet until there is something
+   to send, then orange: the one fill on the form that says "ready". */
+.compose .send{
+  height:42px;border-radius:999px;padding:0 18px 0 20px;font-size:14.5px;
+  background:transparent;color:var(--form-fg);box-shadow:inset 0 0 0 1px var(--form-line);
+}
+.compose .send[aria-disabled="true"]{opacity:.55}
+.compose .send.ready,.compose .send.sent{background:var(--accent);color:var(--on-accent);box-shadow:none;opacity:1}
+@media (hover:hover) and (pointer:fine){
+  .compose .send.ready:hover{background:var(--form-fg);color:var(--form-bg)}
+}
 .form-note{font-family:var(--f-mono);font-size:11.5px;line-height:1.5;opacity:.6}
 .form-note.is-hint{opacity:.95}
 .form-err{font-family:var(--f-mono);font-size:12px;color:var(--accent)}

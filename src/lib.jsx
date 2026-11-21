@@ -523,7 +523,7 @@ function useScrollFrame(fn, deps){
 // word rise out of nothing) and the dot has to be free to grow — the home
 // hand-off scales it up to catch the orange page. `.wn` keeps the two glued
 // on the same line.
-function Words({ text, className, delay, dot, dotId, as }){
+function Words({ text, className, delay, dot, dotId, dotRef, dotKids, as }){
   const Tag = as || 'span';
   const words = String(text || '').split(/\s+/).filter(Boolean);
   return (
@@ -534,7 +534,7 @@ function Words({ text, className, delay, dot, dotId, as }){
         return (
           <React.Fragment key={i}>
             {dot && last
-              ? <span className="wn">{word}<span className="dot" id={dotId}/></span>
+              ? <span className="wn">{word}<span className="dot" id={dotId} ref={dotRef}>{dotKids}</span></span>
               : word}
             {last ? null : ' '}
           </React.Fragment>
