@@ -1444,7 +1444,7 @@ form. The dot of `Let's talk.` opens into a typing bubble (`.dot.typing`,
 the title lands, on hover, and every 11 s while on screen (`useTyping` in
 `contact.jsx`). The title is always two lines (`.contact-title .wn{display:block}`)
 so the bubble never pushes `talk` from one line to the other. After the first
-beat a two-line `.thread` appears under the lede: theirs in `ink @ 7%` on paper,
+beat a two-line `.thread` appears under the lede: theirs in `ink @ 12%` on paper (`17%` in dark),
 the reply in `--accent`, then `Read 09:41` in mono; one tight corner (`6px`) is
 the tail. Hidden under 600px; static under reduced motion; `aria-hidden`.
 

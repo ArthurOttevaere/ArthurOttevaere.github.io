@@ -809,7 +809,8 @@ html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) 
 .thread{margin-top:auto;padding-top:34px;display:flex;flex-direction:column;gap:6px;max-width:400px}
 .thread + .socials{margin-top:0}
 .bub{max-width:86%;padding:10px 15px 11px;font-size:15.5px;line-height:1.32;letter-spacing:-.005em;border-radius:20px}
-.bub-in{align-self:flex-start;background:color-mix(in oklab,var(--ink) 7%,var(--paper));color:var(--ink);border-bottom-left-radius:6px}
+.bub-in{align-self:flex-start;background:color-mix(in oklab,var(--ink) 12%,var(--paper));color:var(--ink);border-bottom-left-radius:6px}
+[data-theme="dark"] .bub-in{background:color-mix(in oklab,var(--ink) 17%,var(--paper))}
 .bub-out{align-self:flex-end;margin-top:4px;background:var(--accent);color:var(--bubble-fg);border-bottom-right-radius:6px}
 .bub-read{align-self:flex-end;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;color:var(--muted);padding-right:4px}
 .bub-read b{font-weight:500;color:var(--ink-2)}
