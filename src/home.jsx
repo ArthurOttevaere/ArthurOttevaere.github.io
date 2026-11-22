@@ -38,6 +38,7 @@ function HeroScene({ ready }){
   const innerRef = useRef(null);
   const footRef  = useRef(null);
   const wordRefs = useRef([]);
+  useRunaway(dotRef);                            // five clicks on the dot: see run.jsx
 
   const full  = (P.name || 'Arthur Ottevaere').trim().split(/\s+/);
   const first = (full.shift() || '').toUpperCase();

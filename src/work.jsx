@@ -515,14 +515,17 @@ function Outro({ p }){
 }
 
 /* ── Nothing here ──────────────────────────────────────────────────────── */
+// The title has lost its full stop: the dot went for a run, and it is on the
+// track right below, playing itself until someone takes over.
 function NotFound(){
   return (
     <div className="page nf">
       <div className="nf-in shell">
-        <span className="eyebrow">404</span>
-        <h1 className="sec-title">Nothing at this address<span className="dot"/></h1>
-        <p className="lede" style={{ margin: '0 auto' }}>The link is broken, or the page moved. The projects are all still there.</p>
-        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+        <span className="eyebrow">404 · Not found</span>
+        <h1 className="sec-title nf-title">This page went for a run<span className="nf-gap" aria-hidden="true"/></h1>
+        <p className="lede nf-lede">The link is broken, or the page moved. Its full stop is still here, on the track below: <em>take over whenever you like.</em></p>
+        <RunGame attract/>
+        <div className="nf-ctas">
           <Link to="/" className="btn btn-ink">Home <Icon.Arrow/></Link>
           <Link to="/work/" className="btn btn-line">See the work</Link>
         </div>

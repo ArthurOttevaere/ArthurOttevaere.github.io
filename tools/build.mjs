@@ -44,6 +44,7 @@ const FILES = [
   'src/about.jsx',
   'src/world.jsx',
   'src/contact.jsx',
+  'src/run.jsx',
   'src/app.jsx',
 ];
 
