@@ -517,4 +517,4 @@ function NightSky(){
   return <canvas ref={ref} className="sky" aria-hidden="true"/>;
 }
 
-Object.assign(window, { Home });
+Object.assign(window, { Home, FOLDER_BACK, FOLDER_FRONT });   // the folder paths are reused by the Projects title (work.jsx)
