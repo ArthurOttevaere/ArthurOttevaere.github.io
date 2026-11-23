@@ -258,16 +258,18 @@ function MacKeyboard(){
 }
 
 /* A rim — a rounded rectangle's edge, extruded (see .mac-rim in site.css): a
-   straight run from r to W − r, and 24 facets per corner, each centred on the
+   straight run from r to W − r, and facets along each corner, each centred on the
    arc and turned to its tangent. 'lip' is the base's front edge, hanging
    from the deck's front; 'edge' the lid's free edge, standing back from the
    screen toward the lid's back face (its black glass 2px proud). */
-const RIM_K = 24, RIM_STEP = 90 / RIM_K, RIM_SW = (2 * Math.sin(RIM_STEP / 2 * Math.PI / 180) * 1.6).toFixed(4);
+// Every facet is a 3D layer: 14 per corner on the front edge (enough for a
+// smooth end), 8 on the lid's edge (barely ever seen).
 function MacRim({ kind }){
   const lip = kind === 'lip', pre = lip ? '' : 'translateZ(2px) ';
+  const K = lip ? 14 : 8, STEP = 90 / K, SW = (2 * Math.sin(STEP / 2 * Math.PI / 180) * 1.6).toFixed(4);
   const facets = [];
-  for (let i = 0; i < RIM_K; i++){
-    const ph = (i + .5) * RIM_STEP, rad = ph * Math.PI / 180;
+  for (let i = 0; i < K; i++){
+    const ph = (i + .5) * STEP, rad = ph * Math.PI / 180;
     const s = Math.sin(rad).toFixed(4), co = (1 - Math.cos(rad)).toFixed(4);
     const vars = {
       '--k': (Math.pow(ph / 90, 1.3) * (lip ? .8 : 1)).toFixed(3),
@@ -279,9 +281,9 @@ function MacRim({ kind }){
       const turn = (lip === left ? 1 : -1) * ph;              // lip left +, lip right −, edge left −, edge right +
       facets.push(<span key={i + (left ? 'l' : 'r')} className={'mac-rim rim-' + kind} style={{
         ...vars,
-        left: left ? `calc(var(--r) * (1 - ${s}) - var(--r) * ${RIM_SW} / 2)` : `calc(100% - var(--r) * (1 - ${s}) - var(--r) * ${RIM_SW} / 2)`,
+        left: left ? `calc(var(--r) * (1 - ${s}) - var(--r) * ${SW} / 2)` : `calc(100% - var(--r) * (1 - ${s}) - var(--r) * ${SW} / 2)`,
         top: lip ? `calc(100% - var(--r) * ${co})` : `calc(var(--r) * ${co})`,
-        width: `calc(var(--r) * ${RIM_SW})`,
+        width: `calc(var(--r) * ${SW})`,
         transform: pre + 'rotate(' + turn + 'deg) rotateX(-90deg)',
       }}/>);
     }
@@ -318,7 +320,7 @@ function macLidFaces(cam, mac, lid, eyeY, lift, tilt, s, angle){
 function MacBook(){
   const still = reduceMotion();
   const sceneRef = useRef(null), stageRef = useRef(null), camRef = useRef(null), macRef = useRef(null), lidRef = useRef(null);
-  const dimRef = useRef(null), spillRef = useRef(null), floorRef = useRef(null), sm = useRef({ o: 0, c: 0, raf: 0, last: 0 });
+  const dimRef = useRef(null), spillRef = useRef(null), floorRef = useRef(null), faceRef = useRef(null), sm = useRef({ o: 0, c: 0, raf: 0, last: 0 });
   const [awake, setAwake] = useState(still);
 
   function size(){
@@ -343,17 +345,31 @@ function MacBook(){
   }
   function pose(o, c){
     const cam = camRef.current, mac = macRef.current, lid = lidRef.current; if (!cam || !mac || !lid) return;
-    const angle = -90 + 90 * o, tilt = -MAC_CAM.e0 * (1 - c), s = MAC_CAM.s0 + (1 - MAC_CAM.s0) * c;
+    // Never exactly flat. Open and level, the lid's and the laptop's transforms
+    // would both turn into the identity; Safari then stops painting the screen
+    // as a 3D layer and paints only the part it thinks is on screen — worked out
+    // from the document position, which position:sticky has left behind — so the
+    // desk went black while you read and came back once the lid moved. A
+    // fiftieth of a degree keeps both 3D and is invisible.
+    const angle = Math.min(-90 + 90 * o, -.02), tilt = Math.min(-MAC_CAM.e0 * (1 - c), -.02), s = MAC_CAM.s0 + (1 - MAC_CAM.s0) * c;
     const lh = lid.offsetHeight || mac._lh || 500, lift = -lh * MAC_CAM.lift * (1 - c);
     lid.style.transform = 'rotateX(' + angle.toFixed(2) + 'deg)';
     mac.style.transform = 'translateY(' + lift.toFixed(1) + 'px) rotateX(' + tilt.toFixed(2) + 'deg) scale(' + s.toFixed(4) + ')';
-    // the eye level with the top of the base (2px under the hinge), as in
-    // Apple's front shots: open, the deck is seen edge-on and vanishes
-    const eyeY = lh + 2;
+    // the eye at the hinge, level with the top of the base as in Apple's front
+    // shots, 2px above the deck's plane rather than in it
+    const eyeY = lh;
     cam.style.perspective = MAC_PERSP + 'px';
     cam.style.perspectiveOrigin = '50% ' + eyeY + 'px';
     lid.classList.toggle('is-back', !macLidFaces(cam, mac, lid, eyeY, lift, tilt, s, angle));
-    mac.classList.toggle('flat', Math.abs(tilt) < .4 && o > .985);
+    // open and level, the deck is seen edge-on and what is drawn on it would
+    // show as a dashed hairline under the screen: fade it out. A fade on a flat
+    // wrapper, never a visibility switch on the pieces.
+    // Once gone, it leaves the scene (display:none), one layer fewer.
+    if (faceRef.current){
+      const f = o < .9 ? 1 : clamp((Math.abs(tilt) - .1) / 1.4, 0, 1);
+      faceRef.current.style.opacity = f.toFixed(3);
+      faceRef.current.style.display = f <= 0 ? 'none' : '';
+    }
     if (dimRef.current) dimRef.current.style.opacity = (.82 * Math.pow(1 - o, 1.4)).toFixed(3);
     if (spillRef.current) spillRef.current.style.opacity = clamp(Math.sin(Math.PI * o) * .9 + .18 * o, 0, 1).toFixed(3);
     if (floorRef.current){ floorRef.current.style.opacity = (.45 + .55 * o).toFixed(3); floorRef.current.style.transform = 'scaleX(' + (.92 + .08 * o).toFixed(3) + ')'; }
@@ -403,11 +419,13 @@ function MacBook(){
             {/* the keyboard half: a plane lying flat from the hinge toward you,
                 its front edge hanging from the far side */}
             <div className="mac-deck" aria-hidden="true">
-              <span className="mac-grille l"/>
-              <MacKeyboard/>
-              <span className="mac-grille r"/>
-              <span className="mac-pad"/>
-              <span className="mac-spill" ref={spillRef}/>
+              <span className="mac-deck-face" ref={faceRef}>
+                <span className="mac-grille l"/>
+                <MacKeyboard/>
+                <span className="mac-grille r"/>
+                <span className="mac-pad"/>
+                <span className="mac-spill" ref={spillRef}/>
+              </span>
               <MacRim kind="lip"/>
             </div>
           </div>

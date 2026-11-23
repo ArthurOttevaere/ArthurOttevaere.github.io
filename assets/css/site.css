@@ -1419,15 +1419,16 @@ html[data-theme="dark"] .mac{
   --seam:#0C0C0E; --well:#070708; --key-1:#1C1C1F; --key-2:#121214; --key-ink:#8E8E94; --grille:rgba(0,0,0,.6);
   --mark-1:#6A6B70; --mark-2:#34353A}
 
-/* the lid: two faces. Which one shows is decided in about.jsx (Safari does
-   not honour backface-visibility on a lid this full of layers). */
+/* the lid: two faces. Which one shows is decided in about.jsx, by
+   visibility; no backface-visibility on either face (Safari ignores it on a
+   lid this full of layers). The transforms are never exactly flat, even open
+   and level: see pose() in about.jsx for why Safari needs that. */
 .mac-lid{position:relative;width:100%;transform-origin:50% 100%;transform-style:preserve-3d;will-change:transform}
 .mac-lid.is-back .mac-screen{visibility:hidden}
 .mac-lid:not(.is-back) .mac-back{visibility:hidden}
 /* front: a thin aluminium rim round black glass, a faint reflection on it */
 .mac-screen{position:relative;padding:calc(var(--mw) * .023) calc(var(--mw) * .026) calc(var(--mw) * .036);
   border-radius:var(--r) var(--r) calc(var(--mw) * .011) calc(var(--mw) * .011);background:#050506;
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
   box-shadow:0 0 0 calc(var(--mw) * .0032) var(--al-rim),0 0 0 calc(var(--mw) * .0032 + .6px) rgba(16,16,20,.28),inset 0 0 0 1px rgba(255,255,255,.07)}
 .mac-screen::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:9;
   background:linear-gradient(118deg,rgba(255,255,255,.075) 0%,rgba(255,255,255,.02) 26%,transparent 42%)}
@@ -1446,7 +1447,6 @@ html[data-theme="dark"] .mac{
    flips it, so its corners are written upside down (hinge first) and it
    sits the lid's thickness behind the screen. */
 .mac-back{position:absolute;inset:0;transform:translateZ(calc(var(--lt) * -1)) rotateX(180deg);
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
   border-radius:calc(var(--mw) * .011) calc(var(--mw) * .011) var(--r) var(--r);
   background:repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
     linear-gradient(180deg,var(--al-1) 0%,var(--al-2) 35%,var(--al-3) 72%,var(--al-4) 100%);
@@ -1460,12 +1460,14 @@ html[data-theme="dark"] .mac{
    well, a flush trackpad; small corners at the hinge, round at the front.
    It lies flat from the hinge toward you, 2px under it. */
 .mac-deck{position:absolute;left:0;top:100%;width:100%;height:var(--lh);transform-origin:50% 0;transform:rotateX(90deg) translateZ(-2px);
-  transform-style:preserve-3d;border-radius:calc(var(--mw) * .006) calc(var(--mw) * .006) var(--r) var(--r);
+  transform-style:preserve-3d;border-radius:calc(var(--mw) * .006) calc(var(--mw) * .006) var(--r) var(--r)}
+/* everything drawn on the deck — the aluminium itself included — in one flat
+   wrapper; the deck element only carries the rims. about.jsx fades the
+   wrapper out as the deck turns edge-on (open and level), where it would
+   show as a dashed hairline under the screen, then sets display:none. */
+.mac-deck-face{position:absolute;inset:0;border-radius:inherit;
   background:linear-gradient(180deg,var(--hinge-1) 0,var(--hinge-2) calc(var(--mw) * .018),var(--al-2) calc(var(--mw) * .02),var(--al-1) 30%,var(--al-2) 100%);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 0 0 1.6px rgba(16,16,20,.1)}
-/* open and level, the deck is seen edge-on: what is drawn on it would show
-   as a dashed hairline under the screen */
-.mac.flat .mac-deck > :not(.mac-rim){visibility:hidden}
 .mac-kb{position:absolute;left:11.4%;right:11.4%;top:7%;height:40%;display:flex;flex-direction:column;gap:1.2%;padding:.75%;
   border-radius:calc(var(--mw) * .012);background:var(--well);box-shadow:inset 0 1px 2px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.4)}
 .mac-row{display:flex;gap:.62%;flex:1 1 0}
@@ -1495,8 +1497,8 @@ html[data-theme="dark"] .mac-spill{background:linear-gradient(180deg,rgba(210,21
 
 /* ── the rims: the lid's free edge and the base's front edge ──────────
    A flat strip can't follow a rounded corner in 3D (its ends poke out past
-   it), so each rim is a straight run between the corners plus 24 facets per
-   corner laid along the radius (MacRim in about.jsx). Facets overlap, keep
+   it), so each rim is a straight run between the corners plus facets
+   along each corner (14 on the front edge, 8 on the lid's) laid along the radius (MacRim in about.jsx). Facets overlap, keep
    the full height (their gradients line up) and darken as they turn from
    the light; the lip's are clipped to round its ends. Both rims hang from
    their plane's outline, perpendicular to it. Never give a facet a radius
@@ -1546,7 +1548,9 @@ html[data-theme="dark"] .mac-floor{background:radial-gradient(50% 9% at 50% 46%,
 .dk.in-mac .mb-i{height:24px;border-radius:7px}
 .dk.in-mac .dk-dock{--i:56px;height:calc(var(--i) + 12px);padding:6px;gap:4px;align-items:center;border-radius:26px;
   background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.24));
-  -webkit-backdrop-filter:blur(22px) saturate(1.9);backdrop-filter:blur(22px) saturate(1.9);
+  /* no backdrop blur in here: over a plain wallpaper it shows nothing, and
+     inside the MacBook's 3D it is a known way to make Safari drop layers */
+  -webkit-backdrop-filter:none;backdrop-filter:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(255,255,255,.45),inset 0 -1px 1px rgba(255,255,255,.3),
     0 0 0 .5px rgba(16,16,20,.14),0 14px 34px -16px rgba(16,16,20,.42)}
 html[data-theme="dark"] .dk.in-mac .dk-dock{background:linear-gradient(180deg,rgba(70,70,78,.52),rgba(42,42,48,.44));

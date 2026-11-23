@@ -1733,15 +1733,21 @@ short: it is a fix for a dataset quirk, not a way to edit geography.
    the menu bar, a front edge 2.6% of the lid (lit edge, flat band, underside
    into shadow, a band lit by the table), the scoop and two feet. Silver is
    cool, never warm; the dark theme makes it space black. The lid's free edge
-   and the base's front edge are rims of 24 facets per corner, so they follow
-   the rounded corners in 3D (never a radius or a blend mode on a facet). It
+   and the base's front edge are rims of facets along each corner (14 on the front edge, 8 on the lid's),
+   so they follow the rounded corners in 3D (never a radius or a blend mode on
+   a facet). It
    arrives shut, seen from 20° above; over the first 40% of the scroll the lid
    rises while the camera comes down and in, on the curve measured on Apple's
    MacBook Pro film (`.55,0,.12,1`, the camera on `.45,0,.18,1`), smoothed so
    a wheel notch glides. The screen is lit from the first crack, dimmed while
    it faces away, and its light falls on the keys. It stays open and usable
-   while you read and shuts over the last 20%. The eye sits level with the top
-   of the base, so open, the deck is edge-on and its drawing is hidden. Which
+   while you read and shuts over the last 20%. The eye sits at the hinge, 2px
+   above the base's plane, so open, the deck is edge-on and its drawing — aluminium
+   included — fades out on a flat wrapper, then leaves the scene. The
+   transforms are never exactly flat, even open and level (a fiftieth of a
+   degree): flat, Safari paints the screen only where it thinks it is on
+   screen, measured from a document position that position:sticky has left
+   behind, and the desk went black while you read. Which
    face of the lid shows is computed by projecting its corners through the
    same transforms the browser applies (Safari ignores `backface-visibility`
    there); the faces swap when the lid is edge-on. No glow round it, no
