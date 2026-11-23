@@ -1726,15 +1726,28 @@ short: it is a fix for a dataset quirk, not a way to edit geography.
    field: the highlight sweeps across on `--ease-io`, then the two handles show.
    The languages are one line, flag + level, right under the bio — small, but
    where a recruiter reads.
-   **The desk lives inside a MacBook** (`.ab-mac`, 340vh, pinned). It arrives
-   closed, seen from above — aluminium lid with the site's "a." — and over the
-   first 40% of the scroll the lid rises on its hinge over a real keyboard,
-   the camera comes level and the screen wakes; it stays open and usable while
-   you read, and closes again over the last 20% as you leave. The desk is drawn
-   at 1280 × 800 and scaled into the panel. Which face of the lid you see is
-   computed in JS from the eye's position, not left to `backface-visibility`
-   (Safari ignored it and showed the screen mirrored). Closed, the lid lies at
-   exactly −90° and the base sits 2px lower, so their outlines coincide.
+   **The desk lives inside a MacBook** (`.ab-mac`, 340vh, pinned) — a MacBook
+   Pro 14" drawn from Apple's own stills and films (worked out in
+   `lab/mac-open`). Every size is a fraction of the laptop's width (`--mw`):
+   lid 1 : .65, plan corners 3%, bezels 2.6 / 2.3 / 3.6%, a notch as tall as
+   the menu bar, a front edge 2.6% of the lid (lit edge, flat band, underside
+   into shadow, a band lit by the table), the scoop and two feet. Silver is
+   cool, never warm; the dark theme makes it space black. The lid's free edge
+   and the base's front edge are rims of 24 facets per corner, so they follow
+   the rounded corners in 3D (never a radius or a blend mode on a facet). It
+   arrives shut, seen from 20° above; over the first 40% of the scroll the lid
+   rises while the camera comes down and in, on the curve measured on Apple's
+   MacBook Pro film (`.55,0,.12,1`, the camera on `.45,0,.18,1`), smoothed so
+   a wheel notch glides. The screen is lit from the first crack, dimmed while
+   it faces away, and its light falls on the keys. It stays open and usable
+   while you read and shuts over the last 20%. The eye sits level with the top
+   of the base, so open, the deck is edge-on and its drawing is hidden. Which
+   face of the lid shows is computed by projecting its corners through the
+   same transforms the browser applies (Safari ignores `backface-visibility`
+   there); the faces swap when the lid is edge-on. No glow round it, no
+   reflection under it — only its contact shadow. Inside, the desk is drawn at
+   1280 × 800 the way macOS 27 draws it: a menu bar with no bar, the Dock and
+   menus in Liquid Glass.
    **On phones (≤860px) the desk becomes an iPhone** (`.ip`): a home screen in
    container units, with the profile as a medium widget, the first four tools
    beside a small widget (the `desk` entry that has a `widget`), the other tools
