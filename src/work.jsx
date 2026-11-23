@@ -7,6 +7,97 @@
 
 const { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } = React;
 
+/* ── The title ─────────────────────────────────────────────────────────────
+   On the home page “Projects” is written on the folder; here the folder is
+   opened. The period of the title unfolds into that same folder (FOLDER_BACK
+   / FOLDER_FRONT, home.jsx) and the first three projects of the grid rise out
+   of it, then it closes back into the dot. A mouse over the word opens it
+   again; a new filter makes it peek for a second at what it now holds. Phones
+   get the entrance only. */
+function ProjectsTitle({ list, filter }){
+  const [open, setOpen]   = useState(false);
+  const [shown, setShown] = useState(list);        // what the sheets show
+  const hover = useRef(false);
+  const timer = useRef(0);
+  const lastFilter = useRef(filter);
+
+  // The entrance waits for the words: it starts when the reveal marks the
+  // title `.in` (after the page transition), not when the component mounts.
+  const holdRef = useRef(null);
+  useEffect(() => {
+    const h1 = holdRef.current && holdRef.current.querySelector('.page-title');
+    if (!h1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let a = 0, b = 0;
+    const go = () => {
+      a = setTimeout(() => setOpen(true), 650);
+      b = setTimeout(() => { if (!hover.current) setOpen(false); }, 2100);
+    };
+    let mo = null;
+    if (h1.classList.contains('in')) go();
+    else {
+      mo = new MutationObserver(() => { if (h1.classList.contains('in')){ mo.disconnect(); go(); } });
+      mo.observe(h1, { attributes: true, attributeFilter: ['class'] });
+    }
+    return () => { if (mo) mo.disconnect(); clearTimeout(a); clearTimeout(b); clearTimeout(timer.current); };
+  }, []);
+
+  useEffect(() => {
+    if (filter === lastFilter.current){ setShown(list); return; }   // a new sort: follow quietly
+    lastFilter.current = filter;
+    clearTimeout(timer.current);
+    if (hover.current){
+      // already open: the sheets drop back in, change, and rise again
+      setOpen(false);
+      timer.current = setTimeout(() => { setShown(list); if (hover.current) setOpen(true); }, 170);
+      return;
+    }
+    setShown(list);
+    setOpen(true);
+    timer.current = setTimeout(() => { if (!hover.current) setOpen(false); }, 1150);
+  }, [list, filter]);
+
+  const enter = e => { if (e.pointerType !== 'mouse') return; hover.current = true; clearTimeout(timer.current); setOpen(true); };
+  const leave = e => { if (e.pointerType !== 'mouse') return; hover.current = false; setOpen(false); };
+
+  // back → front: the first card of the grid is the sheet on top
+  const sheets = shown.slice(0, 3).reverse();
+  const folder = (
+    <span className={'tf' + (open ? ' open' : '')} aria-hidden="true">
+      <svg className="tf-back" viewBox="0 0 424 354">
+        <defs>
+          <linearGradient id="tf-back-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FF6A2E"/><stop offset="1" stopColor="#E8440F"/>
+          </linearGradient>
+        </defs>
+        <path d={FOLDER_BACK} fill="url(#tf-back-g)"/>
+      </svg>
+      {sheets.map((p, i) => (
+        <Link key={p.id} to={projectPath(p.id)} className={'tf-s tf-s' + (i + 1 + (3 - sheets.length))} tabIndex={-1}>
+          <span className="tf-img"><CoverArt cover={p.cover} title="" sizes="96px" eager/></span>
+          <i/><i/>
+        </Link>
+      ))}
+      <svg className="tf-front" viewBox="0 0 424 354">
+        <defs>
+          <linearGradient id="tf-front-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="rgb(255,176,140)" stopOpacity=".92"/><stop offset="1" stopColor="rgb(255,134,92)" stopOpacity=".95"/>
+          </linearGradient>
+          <linearGradient id="tf-edge-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset=".2" stopColor="#fff" stopOpacity=".7"/><stop offset=".55" stopColor="#fff" stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d={FOLDER_FRONT} fill="url(#tf-front-g)" stroke="url(#tf-edge-g)" strokeWidth="2"/>
+      </svg>
+    </span>
+  );
+
+  return (
+    <div ref={holdRef} className={'tf-hold' + (open ? ' is-open' : '')} onPointerEnter={enter} onPointerLeave={leave}>
+      <Words as="h1" className="page-title" text="Projects" dot dotKids={folder}/>
+    </div>
+  );
+}
+
 /* ── Index ─────────────────────────────────────────────────────────────── */
 function Projects(){
   const projects = PROJS();
@@ -69,7 +160,7 @@ function Projects(){
       <div className="shell">
         <header className="page-head">
           <span className="eyebrow rv rv-fade">Selected work · {projectYears()}</span>
-          <Words as="h1" className="page-title" text="Projects" dot/>
+          <ProjectsTitle list={list} filter={filter}/>
           <p className="lede rv rv-up" style={{ '--d': '.1s' }}>{COPY('workLede', 'A mix of coursework and weekend builds. Each one is a small bet on a tool I wanted to get fluent in.')}</p>
         </header>
 
