@@ -201,12 +201,30 @@ function AboutMe({ narrow }){
 }
 
 /* ── the MacBook ─────────────────────────────────────────────────────
-   A pinned scene: the laptop arrives closed, seen a little from above; the
-   scroll lifts the lid on its hinge (rotateX about its bottom edge) while the
-   camera comes level, and the screen wakes once it is nearly upright. The
-   desk inside is drawn at one design size (1280 × 800, the panel's 16:10)
-   and scaled to the panel, so it is the same desk at every width. */
-const MAC_W = 1280, MAC_H = 800, MAC_BEZEL = 14, MAC_PERSP = 4600, MAC_EYE = .9;
+   A pinned scene, worked out in lab/mac-open from Apple's own product films
+   and stills. The laptop arrives shut, seen from 20° above; the scroll lifts
+   the lid on its hinge while the camera comes down and in, on the curve
+   measured on Apple's MacBook Pro film (slow start, fast middle, long soft
+   tail), smoothed so a wheel notch glides instead of jumping. The screen is
+   lit from the first crack (dimmed while it faces away) and its light falls
+   on the keys. The desk inside is drawn at one design size (1280 × 800) and
+   scaled to the panel, so it is the same desk at every width. */
+const MAC_W = 1280, MAC_PERSP = 5200;
+// the lid's proportions, as fractions of the laptop's width (see site.css)
+const MAC_GEO = { side: .026, top: .023, chin: .036, base: .0222 };
+const MAC_LID = (1 - 2 * MAC_GEO.side) * .625 + MAC_GEO.top + MAC_GEO.chin;
+// the camera: how far above it starts (deg), its start scale, how far the
+// shut laptop is lifted (× the lid's height)
+const MAC_CAM = { e0: 20, s0: .84, lift: .46 };
+
+/* CSS cubic-bezier, solved for x. Apple's MacBook Pro film, measured frame by
+   frame: the lid on (.55,0,.12,1), the camera a touch ahead on (.45,0,.18,1). */
+function bezierEase(x1, y1, x2, y2){
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = t => ((ax * t + bx) * t + cx) * t, Y = t => ((ay * t + by) * t + cy) * t, dX = t => (3 * ax * t + 2 * bx) * t + cx;
+  return x => { x = clamp(x, 0, 1); let t = x; for (let i = 0; i < 6; i++){ const d = dX(t); if (Math.abs(d) < 1e-6) break; t -= (X(t) - x) / d; } return Y(clamp(t, 0, 1)); };
+}
+const macLidEase = bezierEase(.55, 0, .12, 1), macCamEase = bezierEase(.45, 0, .18, 1);
 
 /* The keyboard, row by row, as on a MacBook: [label, width in key units,
    kind]. Every row adds up to 14.5 units, so the right edge is straight.
@@ -238,66 +256,129 @@ function MacKeyboard(){
     </span>
   );
 }
+
+/* A rim — a rounded rectangle's edge, extruded (see .mac-rim in site.css): a
+   straight run from r to W − r, and 24 facets per corner, each centred on the
+   arc and turned to its tangent. 'lip' is the base's front edge, hanging
+   from the deck's front; 'edge' the lid's free edge, standing back from the
+   screen toward the lid's back face (its black glass 2px proud). */
+const RIM_K = 24, RIM_STEP = 90 / RIM_K, RIM_SW = (2 * Math.sin(RIM_STEP / 2 * Math.PI / 180) * 1.6).toFixed(4);
+function MacRim({ kind }){
+  const lip = kind === 'lip', pre = lip ? '' : 'translateZ(2px) ';
+  const facets = [];
+  for (let i = 0; i < RIM_K; i++){
+    const ph = (i + .5) * RIM_STEP, rad = ph * Math.PI / 180;
+    const s = Math.sin(rad).toFixed(4), co = (1 - Math.cos(rad)).toFixed(4);
+    const vars = {
+      '--k': (Math.pow(ph / 90, 1.3) * (lip ? .8 : 1)).toFixed(3),
+      '--hl': lip ? (Math.exp(-Math.pow((ph - 58) / 24, 2)) * .32).toFixed(3) : 0,
+      '--cut': lip ? (40 * Math.pow(ph / 90, 2.2)).toFixed(2) + '%' : '0%',
+      '--cutt': lip ? (14 * Math.pow(ph / 90, 3.2)).toFixed(2) + '%' : '0%',
+    };
+    for (const left of [true, false]){
+      const turn = (lip === left ? 1 : -1) * ph;              // lip left +, lip right −, edge left −, edge right +
+      facets.push(<span key={i + (left ? 'l' : 'r')} className={'mac-rim rim-' + kind} style={{
+        ...vars,
+        left: left ? `calc(var(--r) * (1 - ${s}) - var(--r) * ${RIM_SW} / 2)` : `calc(100% - var(--r) * (1 - ${s}) - var(--r) * ${RIM_SW} / 2)`,
+        top: lip ? `calc(100% - var(--r) * ${co})` : `calc(var(--r) * ${co})`,
+        width: `calc(var(--r) * ${RIM_SW})`,
+        transform: pre + 'rotate(' + turn + 'deg) rotateX(-90deg)',
+      }}/>);
+    }
+  }
+  return (
+    <React.Fragment>
+      <span className={'mac-rim rim-' + kind + ' rim-c'} style={{ left: 'var(--r)', right: 'var(--r)', top: lip ? '100%' : 0, transform: pre + 'rotateX(-90deg)', '--k': 0 }}>
+        {lip ? <React.Fragment><span className="mac-scoop"/><span className="mac-foot l"/><span className="mac-foot r"/></React.Fragment> : null}
+      </span>
+      {facets}
+    </React.Fragment>
+  );
+}
+
+/* Which face of the lid is turned to you. Safari ignores backface-visibility
+   on a lid this full of layers, so the lid's corners are projected through
+   the very transforms the browser applies (perspective about its origin, the
+   laptop's transform about its bottom centre, the lid's about its own) and
+   the winding of the projected triangle decides. Exact at every angle: the
+   faces swap when the lid is seen edge-on, so the swap never shows. */
+function macLidFaces(cam, mac, lid, eyeY, lift, tilt, s, angle){
+  const P = new DOMMatrix(); P.m34 = -1 / MAC_PERSP;
+  const pox = cam.clientWidth / 2;
+  const C = new DOMMatrix().translate(pox, eyeY).multiply(P).translate(-pox, -eyeY);
+  const mw = mac.offsetWidth, mh = mac.offsetHeight, lw = lid.offsetWidth, lh = lid.offsetHeight;
+  const M = new DOMMatrix().translate(mac.offsetLeft + mw / 2, mac.offsetTop + mh).translate(0, lift).rotate(tilt, 0, 0).scale(s).translate(-mw / 2, -mh);
+  const L = new DOMMatrix().translate(lid.offsetLeft + lw / 2, lid.offsetTop + lh).rotate(angle, 0, 0).translate(-lw / 2, -lh);
+  const A = C.multiply(M).multiply(L);
+  const pr = (x, y) => { const q = A.transformPoint(new DOMPoint(x, y, 0, 1)); return [q.x / q.w, q.y / q.w]; };
+  const a = pr(0, 0), b = pr(lw, 0), c = pr(0, lh);
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) > 0;
+}
+
 function MacBook(){
   const still = reduceMotion();
-  const sceneRef = useRef(null), stageRef = useRef(null), camRef = useRef(null), macRef = useRef(null), lidRef = useRef(null), dispRef = useRef(null);
+  const sceneRef = useRef(null), stageRef = useRef(null), camRef = useRef(null), macRef = useRef(null), lidRef = useRef(null);
+  const dimRef = useRef(null), spillRef = useRef(null), floorRef = useRef(null), sm = useRef({ o: 0, c: 0, raf: 0, last: 0 });
   const [awake, setAwake] = useState(still);
 
   function size(){
     const stage = stageRef.current, mac = macRef.current; if (!stage || !mac) return;
     const cs = getComputedStyle(stage);
     const availW = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    const availH = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 26;   // 26 = the front lip
-    const fromH = (availH - 2 * MAC_BEZEL) * MAC_W / MAC_H + 2 * MAC_BEZEL;
-    const mw = Math.max(560, Math.min(availW * .94, fromH, 1240));
+    const availH = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const mw = Math.max(560, Math.min(availW * .94, availH / (MAC_LID + MAC_GEO.base * 1.2 + .06), 1240));
     mac.style.setProperty('--mw', mw + 'px');
-    mac.style.setProperty('--s', ((mw - 2 * MAC_BEZEL) / MAC_W).toFixed(4));
-    mac._lh = (mw - 2 * MAC_BEZEL) * MAC_H / MAC_W + 2 * MAC_BEZEL;     // the lid's height
+    mac.style.setProperty('--s', (mw * (1 - 2 * MAC_GEO.side) / MAC_W).toFixed(4));
+    mac.style.setProperty('--lh', (mw * MAC_LID).toFixed(2) + 'px');
+    mac._lh = mw * MAC_LID;
   }
-  function frame(){
-    const scene = sceneRef.current, lid = lidRef.current, mac = macRef.current; if (!scene || !lid) return;
+  // where the scroll says the lid (o) and the camera (c) should be: open over
+  // the first 40% of the scene, open while you read, shut over the last 20%
+  function target(){
+    const scene = sceneRef.current; if (!scene) return { o: 1, c: 1 };
     const run = scene.offsetHeight - window.innerHeight;
     const p = (still || run <= 0) ? 1 : clamp(-scene.getBoundingClientRect().top / run, 0, 1);
-    // opens over the first 40% of the scroll, stays open (and usable) while you
-    // read, and closes again over the last 20% as you leave for the next act
-    const o = easeIO(clamp(p / .4, 0, 1)) * (1 - easeIO(clamp((p - .8) / .2, 0, 1)));
-    // Negative rotateX brings a top edge toward you. Closed, the lid lies flat
-    // at −90°, exactly over the base: the base sits 2px lower (translateZ in
-    // its CSS), so the two never fight and their outlines coincide; the
-    // camera starts above the laptop (everything tipped toward you by up to
-    // 30°) and comes level, at the hinge's height, as the lid comes upright.
-    const angle = -90 + 90 * o, tilt = -30 * (1 - o);
+    const u = clamp(p / .4, 0, 1), out = 1 - easeIO(clamp((p - .8) / .2, 0, 1));
+    return { o: macLidEase(u) * out, c: macCamEase(u) * out };
+  }
+  function pose(o, c){
+    const cam = camRef.current, mac = macRef.current, lid = lidRef.current; if (!cam || !mac || !lid) return;
+    const angle = -90 + 90 * o, tilt = -MAC_CAM.e0 * (1 - c), s = MAC_CAM.s0 + (1 - MAC_CAM.s0) * c;
+    const lh = lid.offsetHeight || mac._lh || 500, lift = -lh * MAC_CAM.lift * (1 - c);
     lid.style.transform = 'rotateX(' + angle.toFixed(2) + 'deg)';
-    // closed, the laptop lies toward you below the hinge: lift it so it sits
-    // in the middle of the screen, and let it settle as it opens
-    const lh = lid.offsetHeight || mac._lh || 500;
-    const lift = -lh * .62 * (1 - o);
-    mac.style.transform = 'translateY(' + lift.toFixed(1) + 'px) rotateX(' + tilt.toFixed(2) + 'deg) scale(' + (.84 + .16 * o).toFixed(3) + ')';
-
-    /* Which face of the lid is turned to you — worked out here rather than left
-       to backface-visibility, which Safari does not honour on a lid this full
-       of layers (it showed the screen, mirrored, while the lid was still
-       lying on the keyboard). The eye sits where perspective-origin puts it;
-       the screen shows only when the vector to the eye meets its front. */
-    const cam = camRef.current;
-    if (cam){
-      const th = (angle + tilt) * Math.PI / 180;
-      const eyeY = cam.offsetHeight * MAC_EYE, hingeY = lh + lift;
-      const cy = hingeY - lh / 2 * Math.cos(th), cz = -lh / 2 * Math.sin(th);
-      const facing = (eyeY - cy) * -Math.sin(th) + (MAC_PERSP - cz) * Math.cos(th) > 0;
-      lid.classList.toggle('is-back', !facing);
-    }
-    const wake = clamp((o - .55) / .35, 0, 1);              // the screen lights up as it comes upright
-    if (dispRef.current) dispRef.current.style.opacity = wake.toFixed(3);
-    if (o > .95) setAwake(true);
+    mac.style.transform = 'translateY(' + lift.toFixed(1) + 'px) rotateX(' + tilt.toFixed(2) + 'deg) scale(' + s.toFixed(4) + ')';
+    // the eye level with the top of the base (2px under the hinge), as in
+    // Apple's front shots: open, the deck is seen edge-on and vanishes
+    const eyeY = lh + 2;
+    cam.style.perspective = MAC_PERSP + 'px';
+    cam.style.perspectiveOrigin = '50% ' + eyeY + 'px';
+    lid.classList.toggle('is-back', !macLidFaces(cam, mac, lid, eyeY, lift, tilt, s, angle));
+    mac.classList.toggle('flat', Math.abs(tilt) < .4 && o > .985);
+    if (dimRef.current) dimRef.current.style.opacity = (.82 * Math.pow(1 - o, 1.4)).toFixed(3);
+    if (spillRef.current) spillRef.current.style.opacity = clamp(Math.sin(Math.PI * o) * .9 + .18 * o, 0, 1).toFixed(3);
+    if (floorRef.current){ floorRef.current.style.opacity = (.45 + .55 * o).toFixed(3); floorRef.current.style.transform = 'scaleX(' + (.92 + .08 * o).toFixed(3) + ')'; }
+    if (o > .35) setAwake(true);                             // the desk wakes as the lid swings up
     // on the stage, not the section: React rewrites the section's className
     if (stageRef.current) stageRef.current.classList.toggle('is-live', still || o > .98);
   }
+  // glide toward the scroll position (≈ 90 ms time constant)
+  function step(now){
+    const m = sm.current; m.raf = 0;
+    const dt = Math.min(64, now - (m.last || now)); m.last = now;
+    const t = target(), k = still ? 1 : 1 - Math.exp(-dt / 90);
+    m.o += (t.o - m.o) * k; m.c += (t.c - m.c) * k;
+    const settled = Math.abs(t.o - m.o) < .0005 && Math.abs(t.c - m.c) < .0005;
+    if (settled){ m.o = t.o; m.c = t.c; }
+    pose(m.o, m.c);
+    if (!settled) m.raf = requestAnimationFrame(step); else m.last = 0;
+  }
+  function frame(){ const m = sm.current; if (!m.raf) m.raf = requestAnimationFrame(step); }
   useEffect(() => {
-    const run = () => { size(); frame(); };
+    const t = target(); sm.current.o = t.o; sm.current.c = t.c;
+    const run = () => { size(); pose(sm.current.o, sm.current.c); };
     run();
     window.addEventListener('resize', run);
-    return () => window.removeEventListener('resize', run);
+    return () => { window.removeEventListener('resize', run); cancelAnimationFrame(sm.current.raf); };
   }, []);
   useScrollFrame(frame, []);
 
@@ -306,24 +387,28 @@ function MacBook(){
       <div className="ab-mac-stage" ref={stageRef}>
         <div className="mac-cam" ref={camRef}>
           <div className="mac" ref={macRef}>
+            <span className="mac-floor" ref={floorRef} aria-hidden="true"/>
             <div className="mac-lid" ref={lidRef}>
+              <MacRim kind="edge"/>
               {/* the outside of the lid, shown while it is the face turned to you */}
               <span className="mac-back" aria-hidden="true"><span className="mac-mark">a<i/></span></span>
               <div className="mac-screen">
                 <span className="mac-notch" aria-hidden="true"/>
-                <div className="mac-display" ref={dispRef}>
+                <div className="mac-display">
                   <div className="mac-fit"><Desk on={awake} inMac/></div>
+                  <span className="mac-dim" ref={dimRef} aria-hidden="true"/>
                 </div>
               </div>
             </div>
             {/* the keyboard half: a plane lying flat from the hinge toward you,
-                with its front lip hanging from the far edge */}
+                its front edge hanging from the far side */}
             <div className="mac-deck" aria-hidden="true">
               <span className="mac-grille l"/>
               <MacKeyboard/>
               <span className="mac-grille r"/>
               <span className="mac-pad"/>
-              <span className="mac-lip"><span className="mac-scoop"/></span>
+              <span className="mac-spill" ref={spillRef}/>
+              <MacRim kind="lip"/>
             </div>
           </div>
         </div>
