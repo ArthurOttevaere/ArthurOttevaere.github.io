@@ -19,7 +19,6 @@ function About(){
       <AboutMe narrow={narrow}/>
       <Passions/>
       <Timeline narrow={narrow}/>
-      <AboutCta/>
     </div>
   );
 }
@@ -1445,17 +1444,6 @@ function Passions(){
         </div>
       </div>
     </section>
-  );
-}
-
-function AboutCta(){
-  return (
-    <div className="shell">
-      <div className="ab-cta">
-        <p className="rv rv-up">{COPY('aboutCta', 'Got an internship, a project, or just a question?')}</p>
-        <Link to="/contact/" className="btn btn-ink rv rv-up" style={{ '--d': '.08s' }}>Let's talk <Icon.ArrowUR/></Link>
-      </div>
-    </div>
   );
 }
 

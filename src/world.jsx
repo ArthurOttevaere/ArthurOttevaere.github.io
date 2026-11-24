@@ -142,21 +142,7 @@ function World(){
           </div>
         </div>
       </section>
-      <div className="shell"><WorldOut/></div>
     </div>
-  );
-}
-
-// The way out of a page is a real destination, not a footnote.
-function WorldOut(){
-  return (
-    <Link to="/about/" className="all-work rv rv-up">
-      <span className="all-work-text">
-        <span className="all-work-k">Back to the day job</span>
-        <span className="all-work-t">The path, the toolkit, the person</span>
-      </span>
-      <span className="all-work-go" aria-hidden="true"><Icon.ArrowUR/></span>
-    </Link>
   );
 }
 

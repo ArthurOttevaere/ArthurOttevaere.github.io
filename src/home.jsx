@@ -113,8 +113,9 @@ function HeroScene({ ready }){
 
       const fd  = document.getElementById('featured-dot');
       const fdr = fd ? fd.getBoundingClientRect() : null;
-      // scroll position at which the projects heading sits 30% down the screen
-      const S1 = fdr ? (y + fdr.top + fdr.height / 2 - .30 * vh) : Infinity;
+      // The disc is home while the projects heading is still low on the screen
+      // (62% down), so by the time the folder is in view the dot is at rest.
+      const S1 = fdr ? (y + fdr.top + fdr.height / 2 - .62 * vh) : Infinity;
       const S0 = Math.max(F1 + .08 * vh, S1 - .8 * vh);
 
       // Once the hand-off is complete, leave the finished scene alone.
