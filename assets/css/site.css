@@ -909,6 +909,49 @@ html[data-theme="dark"] .pf-back{filter:drop-shadow(0 22px 28px rgba(0,0,0,.5)) 
 .form-note{font-family:var(--f-mono);font-size:11.5px;line-height:1.5;opacity:.6}
 .form-note.is-hint{opacity:.95}
 .form-err{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+
+/* ── The letter (sendLetter in contact.jsx) ──────────────────────────────
+   Nothing of it exists until Send. The paper and the envelope are cream in
+   both themes: they are objects, like the dark card they replace. The
+   envelope's pieces sit in the wrap's own stacking context (z 1 back, 2 the
+   card, 3 the letter, 4 the front flaps, 0→5 the top flap, 6 the seal), so
+   the letter really slips between them; .ltr-env itself never takes a
+   z-index or a transform while that happens. */
+.form-wrap{position:relative;z-index:2;align-self:start}
+.form.again{animation:form-again .6s var(--ease-expo) both}
+@keyframes form-again{from{opacity:0;transform:translateY(14px)}}
+.ltr-sheet{position:absolute;z-index:3;pointer-events:none;--lp:#FCFCFA;--lp-back:#ECEBE6}
+.ltr-in{position:absolute;inset:0}
+.ltr-panel{position:absolute;left:0;width:100%;box-shadow:0 1px 0 rgba(16,16,20,.05),0 1px 3px rgba(16,16,20,.10)}
+.ltr-panel:first-child{border-radius:6px 6px 0 0}
+.ltr-panel:last-child{border-radius:0 0 6px 6px}
+.ltr-face{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+.ltr-fa{background:var(--lp)}
+.ltr-fb{background:var(--lp-back)}
+.ltr-fb .ltr{opacity:.04}
+.ltr-shade{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(16,16,20,0),rgba(16,16,20,.55));opacity:0}
+.ltr{position:absolute;left:0;width:100%;box-sizing:border-box;padding:30px 34px 28px;display:flex;flex-direction:column;gap:16px;color:#101014}
+.ltr-k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.5;margin-right:10px}
+.ltr-top{display:flex;align-items:baseline;font-size:15.5px;font-weight:600;letter-spacing:-.01em;padding-bottom:14px;border-bottom:1px solid rgba(16,16,20,.14)}
+.ltr-date{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;opacity:.5;font-weight:400}
+.ltr-re{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.ltr-body{flex:1;margin:6px 0 0;font-family:var(--f-voice);font-size:25px;line-height:1.3;letter-spacing:-.005em;text-wrap:pretty;overflow:hidden;max-width:none;color:inherit}
+.ltr-sign{font-family:var(--f-mono);font-size:12px;display:flex;align-items:baseline}
+.ltr-sign i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:auto}
+.ltr-env{position:absolute;left:0;top:0;pointer-events:none}
+.ltr-env > svg{position:absolute;display:block;overflow:visible;max-width:none}
+.ltr-back{z-index:1}
+.ltr-front{z-index:4}
+.ltr-flap{z-index:0;transform-origin:50% 0;transform:perspective(1000px) rotateX(180deg)}
+.ltr-flap .out{opacity:0}
+.ltr-cast{position:absolute;z-index:1;border-radius:3px 3px 12px 12px;box-shadow:0 22px 44px -14px rgba(0,0,0,.42),0 3px 8px -2px rgba(0,0,0,.16)}
+.ltr-seal{position:absolute;z-index:6;width:64px;height:64px;opacity:0;pointer-events:none}
+.ltr-seal svg{display:block;overflow:visible;max-width:none}
+/* the full stop opens into a "Sent" bubble, the same shape as the typing one */
+.dot .snt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.1em;font-weight:500;letter-spacing:.04em;color:var(--bubble-fg);opacity:0;transition:opacity .15s ease}
+.contact-title .dot.sent{width:.6em;height:.32em;border-radius:.16em .16em .16em .045em}
+.contact-title .dot.sent .snt{opacity:1;transition:opacity .25s ease .28s}
+@media (max-width:520px){ .ltr{padding:22px 22px 20px;gap:12px} .ltr-body{font-size:20px} }
 @media (max-width:860px){ .contact-grid{grid-template-columns:1fr} .socials{margin-top:6px;padding-top:10px} }
 
 /* ─── 13 · Work page ───────────────────────────────────────────── */

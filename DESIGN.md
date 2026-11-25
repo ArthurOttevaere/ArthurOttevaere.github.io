@@ -1477,9 +1477,33 @@ it is `aria-disabled`, not `disabled`: it still answers a press, and what it ans
 with is the reason. `.form-note` becomes `.is-hint` for as long as there is one, and
 focus goes to the field in question. An email is judged once you have left the field,
 never while you are typing it. `noValidate` keeps the browser's own bubbles out.
-Then: `Send` → `Sending…` → `Sent — talk soon` (orange, with a check) → resets
-after `3.6s`. On failure, `.form-note` is replaced by `.form-err` naming the
-direct email address.
+Under reduced motion: `Send` → `Sending…` → `Sent — talk soon` (orange, with a
+check) → resets after `3.6s`. Otherwise Send plays **the letter** (below). On
+failure, `.form-note` is replaced by `.form-err` naming the direct email address.
+
+**The letter** — `sendLetter` in `contact.jsx`, plain DOM + Web Animations built
+inside `.form-wrap` and removed at the end; nothing of it exists before Send, so
+the section at rest is unchanged. The card turns to cream paper from the button
+(`clip-path` circle, `.56s`), the paper is set as a letter (To / Re / the message
+in Instrument Serif / From) and folds in half (`rotateX`, `.86s`, starting while the
+paper is still spreading). A cream envelope rises into the card's own footprint
+(`46px`, `1s`, ease-out-quint), the letter shrinks early on one layer and glides
+in on another, the flap closes while it settles, and an orange wax seal with the
+`a.` debossed drops on the tip. The request leaves at Send; the sealed envelope
+waits for the answer. Sent: the envelope folds into the seal, which then flies
+alone to the full stop of `Let's talk.` (X and Y on two nested layers with their
+own easing, so one curve; it flattens to `--accent` on the way), and the dot opens
+into a `Sent` bubble (`.dot.sent`) for `1.7s`; the form comes back empty
+(`.form.again`). If the title is off screen (phone), the seal pops in place
+instead. Failed: the envelope fades and the form returns with the message intact.
+The paper, envelope and seal are cream/orange in both themes, objects like the
+dark card. Rules learnt building it: every move of the first part is created at
+Send with its own `delay` (no JS timer chain that can drift); animations are
+`persist()`ed (WebKit drops a finished filling animation once a later one targets
+the same property); no SVG filters on the envelope or seal (WebKit paints
+filtered layers black for a frame), shadows are offset copies of each shape; the
+envelope container never carries a transform or z-index while the letter slips
+between its pieces.
 
 **Fields** — `autocomplete="email"` and `enterkeyhint="next"` on the email, and
 Return there moves on to the message. Fields go to `16px` under `(pointer: coarse)`,
